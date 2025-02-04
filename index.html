@@ -1,6 +1,91 @@
-<html>
-<head></head>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>코인 지갑 추첨</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            width: 80%;
+            max-width: 500px;
+        }
+        button {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #e68900;
+        }
+        .result {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        input {
+            padding: 10px;
+            width: 90%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
 <body>
-<p>뭘 하려 했더라</p>
+    <div class="container">
+        <h1>코인 지갑 추첨</h1>
+        <input type="text" id="nickname" placeholder="닉네임 입력">
+        <input type="text" id="wallet" placeholder="코인 지갑 주소 입력">
+        <button onclick="addParticipant()">참여자 추가</button>
+        <button onclick="drawWinners()">추첨하기</button>
+        <div class="result" id="result">여기에 결과가 표시됩니다.</div>
+        <ul id="participantList"></ul>
+    </div>
+
+    <script>
+        let participants = [];
+
+        function addParticipant() {
+            let nickname = document.getElementById("nickname").value.trim();
+            let wallet = document.getElementById("wallet").value.trim();
+            if (nickname && wallet) {
+                participants.push({ nickname, wallet });
+                document.getElementById("participantList").innerHTML += `<li>${nickname} - ${wallet}</li>`;
+                document.getElementById("nickname").value = "";
+                document.getElementById("wallet").value = "";
+            } else {
+                alert("닉네임과 지갑 주소를 입력하세요.");
+            }
+        }
+
+        function drawWinners() {
+            if (participants.length === 0) {
+                alert("참여자가 없습니다.");
+                return;
+            }
+            
+            let winners = [...participants]; // 모든 참여자가 당첨됨
+            let resultText = "<h3>당첨자 명단:</h3><ul>";
+            winners.forEach(winner => {
+                resultText += `<li>${winner.nickname} - ${winner.wallet}</li>`;
+            });
+            resultText += "</ul>";
+            document.getElementById("result").innerHTML = resultText;
+        }
+    </script>
 </body>
 </html>
