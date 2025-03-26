@@ -60,7 +60,7 @@
             .then(data => {
                 const ip = data.ip;
                 const link = document.getElementById('s7-link');
-                link.href = `http://${ip}:8080`;
+                link.href = `https://${ip}:8443`;
             })
             .catch(error => {
                 console.error("IP를 가져오는 중 에러 발생:", error);
