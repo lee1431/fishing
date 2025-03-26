@@ -51,6 +51,21 @@
       color: #888;
     }
   </style>
+
+  <script>
+    const url = "https://raw.githubusercontent.com/lee1431/fishing/main/ip.json";
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                const ip = data.ip;
+                const link = document.getElementById('s7-link');
+                link.href = `http://${ip}:8080`;
+            })
+            .catch(error => {
+                console.error("IP를 가져오는 중 에러 발생:", error);
+            });
+  </script>
 </head>
 <body>
   <header>
@@ -78,7 +93,7 @@
       We believe in a world where poop is no longer taboo, but celebrated as the spark of sustainable living. Explore our research, experiments, and community.
     </p>
     
-    <a href="http://14.51.129.138:8080">Water Logging Page</a>
+    <a id="s7-link" href="#">Water Logging Page</a>
   </section>
 
   <footer>
