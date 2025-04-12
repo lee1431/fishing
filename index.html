@@ -1,30 +1,327 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-	<meta charset="UTF-8">
-	<title>llsshh.com</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>스탕스 - STANCE</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #f9f9f9;
+      color: #333;
+    }
+    header {
+      background-color: #1f1f1f;
+      color: white;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    h1 {
+      margin: 0;
+      font-size: 2.5rem;
+    }
+    section.hero {
+      padding: 3rem 1rem;
+      text-align: center;
+      background: linear-gradient(to bottom, #e8ecef, #ffffff);
+    }
+    .hero h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    .hero p {
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      padding: 1rem;
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    nav a {
+      text-decoration: none;
+      color: #2E8B57;
+      font-weight: bold;
+    }
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.9rem;
+      color: #999;
+    }
 	
-	<link href="./bootstrap/css/bootstrap.min.css" rel="stylesheet">
-	<link href="./bootstrap/font/bootstrap-icons.css" rel="stylesheet">
+	.project-card {
+	  width: 300px;
+	  background-color: #f5f8fc;
+	  border-radius: 1rem;
+	  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+	  overflow: hidden;
+	  text-align: center;
+	  transition: transform 0.3s ease, box-shadow 0.3s ease;
+	}
+	.project-card:hover {
+	  transform: translateY(-8px);
+	  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+	}
+	.project-card img {
+	  width: 100%;
+	  height: 180px;
+	  object-fit: cover;
+	}
+	.project-card h3 {
+	  margin: 1rem 0 0.5rem;
+	  font-size: 1.25rem;
+	  color: #2E8B57;
+	}
+	.project-card p {
+	  padding: 0 1rem 1.5rem;
+	  font-size: 0.95rem;
+	  color: #444;
+	}
 	
+	#mangoFace.fade-glow {
+	  box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+	}
+	
+	.sticky-mango {
+	  position: fixed;
+	  bottom: 20px;
+	  left: 20px;
+	  width: 120px;
+	  z-index: 9999;
+	  transition: opacity 0.6s ease;
+	  cursor: pointer;
+	}
+	.sticky-mango:hover {
+	  box-shadow: 0 0 10px #ffa500cc;
+	  transform: scale(1.03);
+	}
+
+	#scrollToTop {
+	  position: fixed;
+	  bottom: 20px;
+	  right: 20px;
+	  z-index: 999;
+	  display: none;
+	  background-color: transparent;
+	  border: none;
+	  font-size: 2.2rem;
+	  cursor: pointer;
+	  transition: transform 0.3s ease;
+	}
+
+	#scrollToTop:hover {
+	  transform: scale(1.2) rotate(-15deg);
+	}
+	
+	form input, form textarea {
+	  width: 100%;
+	  padding: 0.8rem;
+	  border: 1px solid #ccc;
+	  border-radius: 1rem;
+	  font-size: 1rem;
+	  font-family: inherit;
+	}
+
+	form button {
+	  background-color: #ffb347;
+	  color: white;
+	  padding: 0.8rem 2rem;
+	  font-size: 1rem;
+	  border: none;
+	  border-radius: 2rem;
+	  cursor: pointer;
+	  transition: transform 0.3s ease;
+	}
+
+	form button:hover {
+	  background-color: #ff9944;
+	  transform: scale(1.05);
+	}
+
+
+  </style>
 </head>
 <body>
-	
-	<h1 class="display-1 mt-3 mb-3">&emsp;※ Daily Logging</h1>
-	
-	<br><hr><br>	
-	<div><a href="./aqualoop.html"><p>AquaLoop</p></a></div>
-	<div><a href="./humanstation.html"><p>HumanStation</p></a></div>
-	<div><a href="./emang.html"><p>애망나니 (愛亡拿尼)</p></a></div>
-	<p>...</p>
 
-	
-	<br><hr><br>
-	<div><a href="./event.html"><p>Event Page</p></a></div>
+  <header>
+    <h1>STANCE</h1>
+    <p>기술과 감성, 스스로의 태도를 담다.</p>
+  </header>
 
+  <nav>
+    <a href="#about">소개</a>
+    <a href="#projects">프로젝트</a>
+    <a href="#contact">문의</a>
+  </nav>
+
+
+
+  <section class="hero">
+    <h2>스탕스는 독립적인 기술 실험 브랜드입니다.</h2>
+    <p>
+      전자공학, 인공지능, 환경 관측, 감성 콘텐츠까지<br />
+      스탕스는 하나의 정체성에 얽매이지 않습니다.<br />
+      우리의 삶과 시대에 맞는 기술을 고민하고, 실험하며, 기록합니다.
+    </p>
+  </section>
+
+  <section id="about" style="padding: 4rem 1rem; background-color: #f0f4f8;">
+  <div style="max-width: 1000px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 2rem; align-items: center;">
+    
+    <!-- 이미지 영역 -->
+    <div style="flex: 1 1 300px; text-align: center;">
+      <img src="mg.png" alt="Emang character" style="max-width: 100%; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    </div>
+
+    <!-- 설명 텍스트 영역 -->
+    <div style="flex: 2 1 400px;">
+      <h2 style="font-size: 2rem; margin-bottom: 1rem;">About STANCE</h2>
+      <p style="font-size: 1.1rem; line-height: 1.7; color: #333;">
+        STANCE는 단순한 브랜드가 아닙니다.<br/>
+        의문에서 시작하고, 관찰을 통해 질문을 던지며,<br/>
+        기술과 감성의 경계에서 자신만의 태도를 세웁니다.
+      </p>
+      <p style="margin-top: 1rem; font-style: italic; color: #666;">
+        "왜 망고가 여기에?"  
+        그 순간, STANCE는 이미 당신 곁에 있었습니다.
+      </p>
+    </div>
 	
-<script src="./bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="./jquery/jquery-3.7.1.min.js"></script>
+	<!-- <img id="mangoFace" src="./org_mgface.png" alt="망고 얼굴" style="width:300px; transition: opacity 0.6s ease;"> -->
+
+    
+  </div>
+</section>
+
+
+<section id="projects" style="padding: 4rem 1rem; background-color: #ffffff;">
+  <div style="max-width: 1200px; margin: 0 auto;">
+    <h2 style="font-size: 2rem; text-align: center; margin-bottom: 2rem;">Our Projects</h2>
+    
+    <div style="display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center;">
+      
+      <!-- 프로젝트 카드 -->
+      <div class="project-card">
+        <img src="./rootnode.png" alt="센티넬 프로젝트">
+        <h3>센티넬</h3>
+        <p>GPT가 수조의 상황을 감지하고 판단하는 자동 관찰 시스템</p>
+      </div>
+
+      <div class="project-card">
+        <img src="./emang.png" alt="애망나니 브랜드">
+        <h3>애망나니</h3>
+        <p>정신나간 감성의 의인화된 철학 브랜드, ‘사랑이 망가진 나니’</p>
+      </div>
+
+      <div class="project-card">
+        <img src="./mordorenode.png" alt="QR 코드 퍼즐 리워드">
+        <h3>QR 퍼즐</h3>
+        <p>QR을 맞추면 다음 페이지로 넘어가는, 정체불명의 리워드 게임</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<section id="contact" style="padding: 4rem 1rem; background-color: #f9f9f9;">
+  <div style="max-width: 600px; margin: 0 auto; text-align: center;">
+    <h2 style="font-size: 2rem; margin-bottom: 1.5rem;">망고를 전해주세요 🍑</h2>
+    <form id="contactForm">
+      <input type="text" name="name" placeholder="당신의 망고 이름" required><br><br>
+      <input type="email" name="email" placeholder="망고의 회신 경로" required><br><br>
+      <textarea name="message" rows="5" placeholder="당신의 망고 사연을 들려주세요" required></textarea><br><br>
+      <button type="submit">🥭 망고 쏘기</button>
+    </form>
+    <p style="margin-top: 1rem; font-size: 0.9rem; color: #999;">망고는 사람을 기억합니다.</p>
+  </div>
+</section>
+
+
+
+<img id="mangoFace" src="./org_mgface.png" alt="망고 얼굴" class="sticky-mango">
+<button id="scrollToTop" title="맨 위로">🥭</button>
+
+
+
+  <footer>
+    © 2025 STANCE. All rights reserved.
+  </footer>
+  
+
+<script>
+let clickCount = 0;
+let lastClickTime = Date.now();
+let isClean = false;
+const mango = document.getElementById('mangoFace');
+
+// 클릭 이벤트
+mango.addEventListener('click', () => {
+  clickCount++;
+  lastClickTime = Date.now();
+
+  if (clickCount >= 5 && !isClean) {
+    isClean = true;
+    clickCount = 0;
+
+    // 페이드 아웃
+    mango.style.opacity = '0';
+
+    // 이미지 전환 후 페이드 인
+    setTimeout(() => {
+      mango.src = './clear_mgface.png';
+      mango.style.opacity = '1';
+    }, 600);
+  }
+});
+
+// 자동 복귀 타이머 체크
+setInterval(() => {
+  if (isClean && Date.now() - lastClickTime > 10000) {
+    isClean = false;
+
+    // 페이드 아웃
+    mango.style.opacity = '0';
+
+    setTimeout(() => {
+      mango.src = './org_mgface.png';
+      mango.style.opacity = '1';
+      clickCount = 0; // 다시 처음부터 클릭 유도
+    }, 600);
+  }
+}, 1000);
+
+
+const scrollBtn = document.getElementById("scrollToTop");
+
+window.onscroll = () => {
+  if (window.scrollY > 300) {
+    scrollBtn.style.display = "block";
+  } else {
+    scrollBtn.style.display = "none";
+  }
+};
+
+scrollBtn.onclick = () => {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+
+document.getElementById('contactForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  alert("🥭 당신의 망고가 전송되었습니다. 곧 답장할게요!");
+  this.reset();
+});
+
+
+
+</script>
 
 </body>
 </html>
