@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>창업 아이템 태그 회전</title>
+  <script src="https://www.goat1000.com/tagcanvas.min.js"></script>
+  <style>
+    body {
+      background: #fefefe;
+      font-family: 'Pretendard', sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    header {
+      padding: 2em 1em 1em;
+    }
+    h1 {
+      font-size: 1.8em;
+      color: #222;
+    }
+    canvas {
+      margin-top: 20px;
+    }
+    #tags a {
+      color: #444;
+      text-decoration: none;
+      font-size: 1em;
+      transition: color 0.2s;
+    }
+    #tags a:hover {
+      color: #d33;
+      font-weight: bold;
+    }
+    footer {
+      margin-top: 30px;
+      font-size: 0.9em;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🧠 돌아가는 창업 아이템 목록</h1>
+    <p>아이템을 클릭하면 상세 페이지로 확장할 수 있어요!</p>
+  </header>
+
+  <canvas width="600" height="600" id="tagCanvas">
+    <p>태그캔버스를 지원하지 않는 브라우저입니다.</p>
+  </canvas>
+
+  <div id="tags" style="display:none;">
+    <ul>
+      <li><a href="#" onclick="alert('화덕피자!')">화덕피자</a></li>
+      <li><a href="#" onclick="alert('무인 빵 자판기!')">무인 빵 자판기</a></li>
+      <li><a href="#" onclick="alert('디퓨저 카페!')">디퓨저 카페</a></li>
+      <li><a href="#" onclick="alert('QR코드 굿즈!')">QR코드 굿즈</a></li>
+      <li><a href="#" onclick="alert('이모지 마켓!')">이모지 마켓</a></li>
+      <li><a href="#" onclick="alert('AI 캐릭터 굿즈!')">AI 캐릭터 굿즈</a></li>
+      <li><a href="#" onclick="alert('고기+소금 세트샵!')">고기+소금 세트샵</a></li>
+      <li><a href="#" onclick="alert('빈티지 티셔츠!')">빈티지 티셔츠</a></li>
+      <li><a href="#" onclick="alert('텐트카페!')">텐트카페</a></li>
+    </ul>
+  </div>
+
+  <footer>
+    <p>스탕스 창업 아이디어 정리 페이지 © 2025</p>
+  </footer>
+
+  <script>
+	var tagCanasOptions = {
+		textColour: '#333',
+		outlineColour: '#aaa',
+		reverse: true,
+		depth: 0.8,
+		maxSpeed: 0.05
+	}
+	window.onload = function() {
+		try {
+			TagCanvas.Start('tagCanvas', 'tags', tagCanasOptions);
+		} catch(e) {
+			console.log("TagCanvas 오류:", e);
+		}
+	};
+    
+  </script>
+</body>
+</html>
