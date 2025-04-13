@@ -50,17 +50,7 @@
   </canvas>
 
   <div id="tags" style="display:none;">
-    <ul>
-      <li><a href="#" onclick="alert('화덕피자!')">화덕피자</a></li>
-      <li><a href="#" onclick="alert('무인 빵 자판기!')">무인 빵 자판기</a></li>
-      <li><a href="#" onclick="alert('디퓨저 카페!')">디퓨저 카페</a></li>
-      <li><a href="#" onclick="alert('QR코드 굿즈!')">QR코드 굿즈</a></li>
-      <li><a href="#" onclick="alert('이모지 마켓!')">이모지 마켓</a></li>
-      <li><a href="#" onclick="alert('AI 캐릭터 굿즈!')">AI 캐릭터 굿즈</a></li>
-      <li><a href="#" onclick="alert('고기+소금 세트샵!')">고기+소금 세트샵</a></li>
-      <li><a href="#" onclick="alert('빈티지 티셔츠!')">빈티지 티셔츠</a></li>
-      <li><a href="#" onclick="alert('텐트카페!')">텐트카페</a></li>
-    </ul>
+   <ul id="tagList"></ul>
   </div>
 
   <footer>
@@ -68,7 +58,23 @@
   </footer>
 
   <script>
-	var tagCanasOptions = {
+	
+
+fetch("https://lee1431.github.io/fishing/idea.json")
+    .then(res => res.json())
+    .then(data => {
+      const ul = document.getElementById('tagList');
+      data.ideas.forEach(text => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = "#";
+        a.textContent = text;
+        li.appendChild(a);
+        ul.appendChild(li);
+      });
+
+      // 태그캔버스 시작
+      var tagCanasOptions = {
 		textColour: '#333',
 		outlineColour: '#aaa',
 		reverse: true,
@@ -82,6 +88,10 @@
 			console.log("TagCanvas 오류:", e);
 		}
 	};
+    })
+    .catch(err => {
+      console.error('❌ 아이디어 로딩 실패:', err);
+    });
     
   </script>
 </body>
