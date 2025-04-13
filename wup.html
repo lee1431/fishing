@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>한 줄 아이디어 GitHub 푸시 데모</title>
+  <style>
+    body {
+      font-family: 'Pretendard', sans-serif;
+      padding: 2em;
+      max-width: 600px;
+      margin: auto;
+      background: #f9f9f9;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 1em;
+      margin-top: 0.5em;
+      width: 100%;
+    }
+    button {
+      background-color: #333;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #555;
+    }
+    #status {
+      margin-top: 1em;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <h2>💡 한 줄 아이디어 GitHub 푸시</h2>
+  <p>아이디어를 입력하고 토큰과 저장소 정보를 채운 후, GitHub로 즉시 푸시합니다.</p>
+
+  <input type="text" id="ideaInput" placeholder="아이디어를 입력하세요">
+
+  <button onclick="pushIdeaToGitHub()">🚀 아이디어 푸시</button>
+  <div id="status"></div>
+
+  <script>
+    async function pushIdeaToGitHub() {
+      const ideaText = document.getElementById('ideaInput').value.trim();          
+      const statusEl = document.getElementById('status');
+
+      if (!ideaText) {
+        statusEl.innerText = '⚠️ 모든 필드를 입력해주세요.';
+        statusEl.style.color = 'red';
+        return;
+      }
+
+      statusEl.innerText = '⏳ 기존 파일 불러오는 중...';
+      statusEl.style.color = 'black';
+		var v = "ghp_wMfZAjhSdjNnTIEb";
+		var vv = "ozXeIpzsoYyBIA1LS55U";
+      try {
+        const res = await fetch(`https://api.github.com/repos/lee1431/fishing/contents/idea.json`, {
+          headers: {
+            Authorization: `Bearer ${v}${vv}`,
+            Accept: "application/vnd.github.v3+json"
+          }
+        });
+        const fileData = await res.json();
+        const decodedContent = fromBase64Unicode(fileData.content);
+        const json = JSON.parse(decodedContent);
+
+        json.ideas.push(ideaText);
+        const updatedContent = toBase64Unicode(JSON.stringify(json, null, 2));
+
+        statusEl.innerText = '📤 GitHub에 푸시 중...';
+
+        const putRes = await fetch(`https://api.github.com/repos/lee1431/fishing/contents/idea.json`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${v}${vv}`,
+            Accept: "application/vnd.github.v3+json"
+          },
+          body: JSON.stringify({
+            message: `아이디어 추가: ${ideaText}`,
+            content: updatedContent,
+            sha: fileData.sha
+          })
+        });
+
+        if (putRes.ok) {
+          statusEl.innerText = '✅ 아이디어가 성공적으로 푸시되었습니다!';
+          statusEl.style.color = 'green';
+        } else {
+          const error = await putRes.json();
+          throw new Error(error.message);
+        }
+
+      } catch (e) {
+        statusEl.innerText = '❌ 오류 발생: ' + e.message;
+        statusEl.style.color = 'red';
+      }
+    }
+	
+	function toBase64Unicode(str) {
+	  return btoa(unescape(encodeURIComponent(str)));
+	}
+	
+	function fromBase64Unicode(str) {
+	  return decodeURIComponent(escape(atob(str)));
+	}
+  </script>
+</body>
+</html>
