@@ -2,69 +2,50 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>창업 아이템 태그 회전</title>
+  <title>창업 아이디어 정리</title>  
   <script src="https://www.goat1000.com/tagcanvas.min.js"></script>
   <style>
-    body {
-      background: #fefefe;
-      font-family: 'Pretendard', sans-serif;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-    }
-    header {
-      padding: 2em 1em 1em;
-    }
-    h1 {
-      font-size: 1.8em;
-      color: #222;
-    }
-    canvas {
-      margin-top: 20px;
-    }
-    #tags a {
-      color: #444;
-      text-decoration: none;
-      font-size: 1em;
-      transition: color 0.2s;
-    }
-    #tags a:hover {
-      color: #d33;
-      font-weight: bold;
-    }
-    footer {
-      margin-top: 30px;
-      font-size: 0.9em;
-      color: #888;
-    }
+    body { background: #fdfdfd; text-align: center; font-family: 'Pretendard', sans-serif; }
+    canvas { margin-top: 40px; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>🧠 돌아가는 창업 아이템 목록</h1>
-    <p>아이템을 클릭하면 상세 페이지로 확장할 수 있어요!</p>
-  </header>
 
-  <canvas width="600" height="600" id="tagCanvas">
+  <h2>🧠 돌아가는 창업 아이템 목록</h2>
+
+  <canvas width="1400" height="800" id="myCanvas">
     <p>태그캔버스를 지원하지 않는 브라우저입니다.</p>
   </canvas>
 
   <div id="tags" style="display:none;">
-   <ul id="tagList"></ul>
+    <ul id="tagList">
+      <!-- JS로 아이템 추가됨 -->
+    </ul>
   </div>
 
-  <footer>
-    <p>스탕스 창업 아이디어 정리 페이지 © 2025</p>
-  </footer>
+<script>
+  function fromBase64Unicode(str) {
+    return decodeURIComponent(escape(atob(str)));
+  }
 
-  <script>
-	
+  async function loadIdeas() {
+    const v = "ghp_wMfZAjhSdjNnTIEb";
+    const vv = "ozXeIpzsoYyBIA1LS55U";
 
-fetch("https://llsshh.com/data/idea.json")
-    .then(res => res.json())
-    .then(data => {
+    try {
+      const res = await fetch(`https://api.github.com/repos/lee1431/fishing/contents/idea.json`, {
+        headers: {
+          Authorization: `Bearer ${v}${vv}`,
+          Accept: "application/vnd.github.v3+json"
+        }
+      });
+
+      const fileData = await res.json();
+      const decodedContent = fromBase64Unicode(fileData.content);
+      const json = JSON.parse(decodedContent);
+
       const ul = document.getElementById('tagList');
-      data.ideas.forEach(text => {
+      json.ideas.forEach(text => {
         const li = document.createElement('li');
         const a = document.createElement('a');
         a.href = "#";
@@ -74,25 +55,29 @@ fetch("https://llsshh.com/data/idea.json")
       });
 
       // 태그캔버스 시작
-      var tagCanasOptions = {
-		textColour: '#333',
-		outlineColour: '#aaa',
-		reverse: true,
-		depth: 0.8,
-		maxSpeed: 0.05
-	}
-	window.onload = function() {
-		try {
-			TagCanvas.Start('tagCanvas', 'tags', tagCanasOptions);
-		} catch(e) {
-			console.log("TagCanvas 오류:", e);
-		}
-	};
-    })
-    .catch(err => {
-      console.error('❌ 아이디어 로딩 실패:', err);
-    });
-    
-  </script>
+      TagCanvas.Start('myCanvas', 'tags', {
+        textColour: '#333',
+        outlineColour: '#aaa',
+        reverse: true,
+        depth: 1.0,
+        maxSpeed: 0.08,
+        initial: [0.02, -0.03],
+        shadow: '#999',
+        shadowBlur: 3,
+        zoom: 1.2,
+        weight: false,
+        freezeActive: false,
+        dragControl: false,
+        textFont: 'Pretendard, sans-serif'
+      });
+
+    } catch (e) {
+      console.error("🔥 JSON 불러오기 실패:", e);
+    }
+  }
+
+  window.onload = loadIdeas;
+</script>
+
 </body>
 </html>
