@@ -352,22 +352,27 @@ scrollBtn.onclick = () => {
 };
 
 document.getElementById("contactForm").addEventListener("submit", function (event) {
-  event.preventDefault(); // 기본 제출 막기
+  event.preventDefault(); // 이때는 막는 게 맞음
 
-  const name = event.target.name.value;
-  const email = event.target.email.value;
-  const message = event.target.message.value;
+  const form = event.target;
+  const formData = new FormData(form);
 
-  // 콘솔에 망고 정보 출력
-  console.log("🍑 망고 도착!");
-  console.log("이름:", name);
-  console.log("이메일:", email);
-  console.log("사연:", message);
-
-  alert("🥭 망고가 전송되었습니다! 감사해요 :)");
-
-  // 폼 초기화
-  event.target.reset();
+  fetch(form.action, {
+    method: 'POST',
+    body: formData
+  })
+  .then(res => {
+    if (res.ok) {
+      alert("🥭 망고가 전송되었습니다! 감사해요 :)");
+      form.reset();
+    } else {
+      alert("🚫 망고 전송 실패! 다시 시도해주세요.");
+    }
+  })
+  .catch(err => {
+    console.error("망고 전송 중 오류 발생:", err);
+    alert("⚠️ 네트워크 오류 발생!");
+  });
 });
 
 
