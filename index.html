@@ -272,7 +272,7 @@
 <section id="contact" style="padding: 4rem 1rem; background-color: #f9f9f9;">
   <div style="max-width: 600px; margin: 0 auto; text-align: center;">
     <h2 style="font-size: 2rem; margin-bottom: 1.5rem;">망고를 전해주세요 🍑</h2>
-    <form id="contactForm" method="POST" action="https://mrdindoin.ddns.net/uploadimg/send-mango">
+    <form id="contactForm" method="POST" action="https://mrdindoin.ddns.net/uploadimg/send-mango" onsubmit="alert('🥭 망고 전송 OK!');">
       <input type="text" name="name" placeholder="당신의 망고 이름" required><br><br>
       <input type="email" name="email" placeholder="망고의 회신 경로" required><br><br>
       <textarea name="message" rows="5" placeholder="당신의 망고 사연을 들려주세요" required></textarea><br><br>
@@ -350,26 +350,6 @@ window.onscroll = () => {
 scrollBtn.onclick = () => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
-
-document.getElementById("contactForm").addEventListener("submit", function (event) {
-  event.preventDefault(); // 이때는 막는 게 맞음
-
-  const form = event.target;
-  const formData = new FormData(form);
-
-  fetch(form.action, {
-    method: 'POST',
-    body: formData
-  })
-  .then(res => {
-    if (res.ok) {
-      alert("🥭 망고가 전송되었습니다! 감사해요 :)");
-      form.reset();
-    } else {
-      alert("🚫 망고 전송 실패! 다시 시도해주세요.");
-    }
-  })
-});
 
 
 
