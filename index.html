@@ -270,10 +270,20 @@
 </section>
 
 
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul>
+      {% for message in messages %}
+        <li style="color: green;">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
 <section id="contact" style="padding: 4rem 1rem; background-color: #f9f9f9;">
   <div style="max-width: 600px; margin: 0 auto; text-align: center;">
     <h2 style="font-size: 2rem; margin-bottom: 1.5rem;">망고를 전해주세요 🍑</h2>
-    <form id="contactForm">
+    <form id="contactForm" action="https://mrdindoin.ddns.net/uploadimg/send-mango">
       <input type="text" name="name" placeholder="당신의 망고 이름" required><br><br>
       <input type="email" name="email" placeholder="망고의 회신 경로" required><br><br>
       <textarea name="message" rows="5" placeholder="당신의 망고 사연을 들려주세요" required></textarea><br><br>
@@ -352,11 +362,23 @@ scrollBtn.onclick = () => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
+document.getElementById("contactForm").addEventListener("submit", function (event) {
+  event.preventDefault(); // 기본 제출 막기
 
-document.getElementById('contactForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  alert("🥭 당신의 망고가 전송되었습니다. 곧 답장할게요!");
-  this.reset();
+  const name = event.target.name.value;
+  const email = event.target.email.value;
+  const message = event.target.message.value;
+
+  // 콘솔에 망고 정보 출력
+  console.log("🍑 망고 도착!");
+  console.log("이름:", name);
+  console.log("이메일:", email);
+  console.log("사연:", message);
+
+  alert("🥭 망고가 전송되었습니다! 감사해요 :)");
+
+  // 폼 초기화
+  event.target.reset();
 });
 
 
