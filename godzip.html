@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>외갓집 일기장</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "나눔손글씨 펜", sans-serif;
+      background: #fff9ef;
+      color: #333;
+    }
+
+    header {
+      background: #ffebc8;
+      padding: 2rem;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2.5rem;
+      color: #7b4f2d;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .card-button {
+      background: #fff;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      text-align: center;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card-button:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    }
+
+    footer {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.9rem;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>외갓집 일기장</h1>
+    <p>따뜻한 하루를 기록해요</p>
+  </header>
+
+  <div class="container">
+    <div class="button-grid">
+      <div class="card-button">✏️ 오늘 일기 쓰기</div>
+      <div class="card-button">📅 내 일기 보기</div>
+      <div class="card-button">📸 가족 사진첩</div>
+      <div class="card-button">❤️ 외할머니 응원</div>
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2025 외갓집 일기장
+  </footer>
+
+</body>
+</html>
