@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>가공 각도 계산기</title>
+
+<style>
+  body {
+    font-family: sans-serif;
+    padding: 1em;
+    max-width: 500px;
+    margin: auto;
+  }
+  input {
+    width: 100%;
+    padding: 0.5em;
+    margin: 0.25em 0;
+    box-sizing: border-box;
+    font-size: 1em;
+  }
+  button {
+    width: 100%;
+    padding: 0.5em;
+    margin-top: 0.5em;
+    font-size: 1em;
+  }
+  p {
+    font-weight: bold;
+    margin: 0.5em 0 1em;
+  }
+</style>
+
+</head>
+<body>
+  <h1>가공 각도 계산기</h1>
+
+  <label>X 값: <input type="number" id="x"></label><br>
+  <label>Z 값: <input type="number" id="z"></label><br>
+  <button onclick="calcAngle()">각도 계산 (deg)</button>
+
+  <p id="angleResult"></p>
+
+  <hr>
+
+  <label>X 값: <input type="number" id="x2"></label><br>
+  <label>각도(°): <input type="number" id="angle2"></label><br>
+  <button onclick="calcZ()">Z 계산</button>
+
+  <p id="zResult"></p>
+
+  <hr>
+
+  <label>Z 값: <input type="number" id="z3"></label><br>
+  <label>각도(°): <input type="number" id="angle3"></label><br>
+  <button onclick="calcX()">X 계산</button>
+
+  <p id="xResult"></p>
+
+  <script>
+    function calcAngle() {
+      const x = parseFloat(document.getElementById("x").value);
+      const z = parseFloat(document.getElementById("z").value);
+      if (!isNaN(x) && !isNaN(z)) {
+        const rad = Math.atan(z / x);
+        const deg = rad * (180 / Math.PI);
+        document.getElementById("angleResult").innerText = `각도: ${deg.toFixed(2)}°`;
+      }
+    }
+
+    function calcZ() {
+      const x = parseFloat(document.getElementById("x2").value);
+      const angle = parseFloat(document.getElementById("angle2").value);
+      if (!isNaN(x) && !isNaN(angle)) {
+        const z = x * Math.tan(angle * Math.PI / 180);
+        document.getElementById("zResult").innerText = `Z: ${z.toFixed(2)}`;
+      }
+    }
+
+    function calcX() {
+      const z = parseFloat(document.getElementById("z3").value);
+      const angle = parseFloat(document.getElementById("angle3").value);
+      if (!isNaN(z) && !isNaN(angle)) {
+        const x = z / Math.tan(angle * Math.PI / 180);
+        document.getElementById("xResult").innerText = `X: ${x.toFixed(2)}`;
+      }
+    }
+  </script>
+</body>
+</html>
