@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>애망 프로젝트 체크리스트</title>
+  <style>
+    body {
+      font-family: 'Pretendard', sans-serif;
+      background-color: #f5f5f5;
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .project {
+      background: white;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .done {
+      text-decoration: line-through;
+      color: gray;
+    }
+    progress {
+      width: 100%;
+      height: 16px;
+      margin-top: 0.5rem;
+      appearance: none;
+    }
+    label {
+      font-size: 1.1rem;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    input[type="checkbox"] {
+      transform: scale(1.3);
+      margin-left: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+<h1>✅ 애망 프로젝트 체크리스트</h1>
+
+<div class="project">
+  <label><span>에망 낚시봇</span><input type="checkbox" onchange="toggleDone(this, 25)"></label>
+  <progress value="25" max="100"></progress>
+</div>
+
+<div class="project">
+  <label><span>상추 재배 + 액체비료</span><input type="checkbox" onchange="toggleDone(this, 70)"></label>
+  <progress value="70" max="100"></progress>
+</div>
+
+<div class="project">
+  <label><span>달팽이 이론 수필집 (미니북)</span><input type="checkbox" onchange="toggleDone(this, 10)"></label>
+  <progress value="10" max="100"></progress>
+</div>
+
+<div class="project">
+  <label><span>NoAuth RFID 시스템</span><input type="checkbox" onchange="toggleDone(this, 10)"></label>
+  <progress value="10" max="100"></progress>
+</div>
+
+<div class="project">
+  <label><span>스몰픽쳐 갤러리</span><input type="checkbox" onchange="toggleDone(this, 80)"></label>
+  <progress value="80" max="100"></progress>
+</div>
+
+<div class="project">
+  <label><span>자지X 프로젝트 (지렁이 액기스)</span><input type="checkbox" onchange="toggleDone(this, 40)"></label>
+  <progress value="40" max="100"></progress>
+</div>
+
+<div class="project">
+  <label><span>절삭각도 계산기</span><input type="checkbox" onchange="toggleDone(this, 20)"></label>
+  <progress value="20" max="100"></progress>
+</div>
+
+<div class="project">
+  <label><span>플래닛충주 리뉴얼</span><input type="checkbox" onchange="toggleDone(this, 35)"></label>
+  <progress value="35" max="100"></progress>
+</div>
+
+<div class="project">
+  <label><span>애망룬문자 제작</span><input type="checkbox" onchange="toggleDone(this, 5)"></label>
+  <progress value="5" max="100"></progress>
+</div>
+
+<script>
+  function toggleDone(checkbox, progress) {
+    const label = checkbox.closest("label").querySelector("span");
+    label.classList.toggle("done", checkbox.checked);
+  }
+</script>
+
+</body>
+</html>
