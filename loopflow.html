@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Loop Flow Spiral View</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script>
+    // 기본 세팅
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // 조명
+    const light = new THREE.PointLight(0xffffcc, 1, 100);
+    light.position.set(0, 10, 25);
+    scene.add(light);
+
+    // 나선 생성
+    const spiral = new THREE.Group();
+    const turns = 10;  // 회전 수
+    const pointsPerTurn = 40;  // 회전당 점 개수
+    const spacing = 0.5; // z 간격
+    const radiusStep = 0.2;
+
+    for (let i = 0; i < turns * pointsPerTurn; i++) {
+      const angle = i * (2 * Math.PI / pointsPerTurn);
+      const radius = 1 + i * radiusStep / pointsPerTurn;
+      const x = radius * Math.cos(angle);
+      const y = radius * Math.sin(angle);
+      const z = i * spacing * 0.1;
+
+      const geometry = new THREE.SphereGeometry(0.05, 8, 8);
+      const material = new THREE.MeshStandardMaterial({ color: 0xffd700 });
+      const sphere = new THREE.Mesh(geometry, material);
+      sphere.position.set(x, y, z);
+      spiral.add(sphere);
+    }
+
+    scene.add(spiral);
+    camera.position.z = 10;
+    camera.position.y = 2;
+
+    // 애니메이션 루프
+    function animate() {
+      requestAnimationFrame(animate);
+      spiral.rotation.z += 0.002;
+      spiral.rotation.x += 0.001;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // 반응형
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
