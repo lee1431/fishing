@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>달팽이 철학관</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f4f1ec;
+      color: #333;
+      font-family: 'Pretendard', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    p.slogan {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      color: #666;
+    }
+
+    .slow-card {
+      background-color: #fff;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      max-width: 500px;
+      opacity: 0;
+      animation: fadeInSlow 3s ease-in-out forwards;
+    }
+
+    .quote {
+      font-size: 1.4rem;
+      font-style: italic;
+      color: #444;
+    }
+
+    .notice {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #999;
+    }
+
+    @keyframes fadeInSlow {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <h1>달팽이 철학관 🐌</h1>
+  <p class="slogan">이 속도에 맞다면, 당신도 달팽이입니다.</p>
+
+  <div class="slow-card">
+    <p class="quote" id="daily-quote">
+      로딩 중...
+    </p>
+  </div>
+
+  <p class="notice">※ 하루에 한 번만 들러주세요. 빠른 접속은 철학관의 리듬을 망칩니다.<br>오늘의 한 마디는 매일 오전 06시에 열립니다.</p>
+
+  <script>
+    const quotes = [
+      "아무것도 하지 마셔도 됩니다.",
+      "느리게 걷는 자는 더 많이 본다.",
+      "지금 이 속도면 충분합니다.",
+      "움직이지 않아도 괜찮습니다.",
+      "숨 쉬고 있는 것만으로도 오늘을 잘 살고 있습니다."
+    ];
+
+    const now = new Date();
+    const dailyIndex = Math.floor((Date.now() + 9 * 60 * 60 * 1000) / (1000 * 60 * 60 * 24)) % quotes.length;
+    document.getElementById("daily-quote").innerHTML = `오늘의 느린 한 마디:<br><strong>\"${quotes[dailyIndex]}\"</strong>`;
+  </script>
+</body>
+</html>
