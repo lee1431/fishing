@@ -1,0 +1,17 @@
+[
+  {
+    "icon": "🖼️",
+    "label": "갤러리",
+    "link": "gallery.html"
+  },
+  {
+    "icon": "✍️",
+    "label": "글쓰기",
+    "link": "write.html"
+  },
+  {
+    "icon": "🎽",
+    "label": "O.I",
+    "link": "oi.html"
+  }
+]
