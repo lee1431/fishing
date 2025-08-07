@@ -7,11 +7,16 @@
   {
     "icon": "✍️",
     "label": "글쓰기",
-    "link": "write.html"
+    "link": "book.html"
   },
   {
     "icon": "🎽",
     "label": "O.I",
     "link": "oi.html"
+  },
+  {
+    "icon": "🗓️",
+    "label": "Event",
+    "link": "event.html"
   }
 ]
