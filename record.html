@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>기록관</title>
+
+	<!-- 외부 스타일 -->
+	<link href="./bootstrap/css/bootstrap.min.css" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=EB+Garamond&display=swap" rel="stylesheet">
+
+	<style>
+		body {
+			background-color: #fdfaf6;
+			font-family: 'EB Garamond', serif;
+			color: #2b2b2b;
+		}
+
+		h2 {
+			font-weight: bold;
+			margin-top: 40px;
+			margin-bottom: 20px;
+		}
+
+		.card {
+			background-color: #ffffff;
+			border: 1px solid #d9cbb6;
+			box-shadow: 4px 4px 12px rgba(0,0,0,0.05);
+			transition: transform 0.3s ease;
+		}
+
+		.card:hover {
+			transform: translateY(-5px);
+			box-shadow: 6px 6px 18px rgba(0,0,0,0.08);
+		}
+
+		.card-title {
+			font-size: 1.3rem;
+			color: #3a3a3a;
+		}
+
+		.card-text {
+			font-size: 1rem;
+			color: #5e5e5e;
+		}
+
+		.btn-readlog {
+			background-color: transparent;
+			border: 1px solid #444;
+			color: #444;
+			font-weight: bold;
+			font-family: 'EB Garamond', serif;
+			letter-spacing: 1px;
+			transition: all 0.3s ease;
+		}
+
+		.btn-readlog:hover {
+			background-color: #444;
+			color: #fff;
+		}
+	</style>
+</head>
+<body>
+
+	<div class="container">
+		<h2 class="text-center">기록 갤러리</h2>
+
+		<div class="row justify-content-center" id="gallery-container">			
+		</div>
+		
+	</div>
+
+	<script src="./bootstrap/js/bootstrap.bundle.min.js"></script>
+	
+	<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered modal-lg">
+			<div class="modal-content bg-light border-0">
+				<div class="modal-body p-0">
+					<img id="modalImage" src="" class="img-fluid w-100" alt="팝업 이미지">
+				</div>
+			</div>
+		</div>
+	</div>
+
+</body>
+
+<script>
+  fetch("https://mrdindoin.ddns.net/uploadimg/json/record.json")
+    .then(res => res.json())
+    .then(data => {
+      const container = document.getElementById("gallery-container");
+
+      data.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "card m-3 p-2";
+        card.style.width = "18rem";
+
+        card.innerHTML = `
+          <img src="https://mrdindoin.ddns.net/uploadimg/image/record/${item.file}" 
+               class="card-img-top img-fluid" 
+               alt="${item.title}" 
+               style="cursor:pointer" 
+               onclick="openModal(this)">
+          <div class="card-body">
+            <h5 class="card-title">${item.title}</h5>
+            <p class="card-text">${item.content}</p>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    });
+
+  function openModal(imgElement) {
+    const modalImage = document.getElementById("modalImage");
+    modalImage.src = imgElement.src;
+    const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+    modal.show();
+  }
+</script>
+
+
+</html>
