@@ -119,12 +119,21 @@
       </button>
 
       <div class="track" id="track"></div>
+      <div class="dots" id="dots" role="tablist" aria-label="슬라이드 위치 표시"></div>
 
       <script>
         // --- 데이터 로딩 & 카드 생성 & 슬라이더 초기화 ---
         (async function(){
           const track   = document.getElementById('track');
-          const dotsBox = document.getElementById('dots');
+          let dotsBox = document.getElementById('dots');
+          if(!dotsBox){
+            dotsBox = document.createElement('div');
+            dotsBox.id = 'dots';
+            dotsBox.className = 'dots';
+            dotsBox.setAttribute('role','tablist');
+            dotsBox.setAttribute('aria-label','슬라이드 위치 표시');
+            track.insertAdjacentElement('afterend', dotsBox);
+          }
           const prevBtn = document.querySelector('.prev');
           const nextBtn = document.querySelector('.next');
           const qInput  = document.getElementById('q');
