@@ -189,6 +189,9 @@
             updateUI();
           }
 
+          const onResize = () => { const i = currentIndex(); goToIndex(i, false); rebuildNav(); };
+          window.addEventListener('resize', () => requestAnimationFrame(onResize));
+
           function cardWidth(){
             const first = track.children[0];
             if(!first) return 1;
@@ -280,3 +283,4 @@
       </script>
 </body>
 </html>
+
