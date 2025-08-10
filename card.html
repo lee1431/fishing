@@ -173,30 +173,27 @@
             `).join('');
           }
 
-          // 도트/네비 재생성
-          function rebuildNav(){
-            dotsBox.innerHTML = '';
-            const v = visibleCount();
-            const total = track.children.length;
-            const pages = Math.max(1, Math.ceil(total / v));
-            for(let i=0;i<pages;i++){
-              const b = document.createElement('button');
-              b.className = 'dot';
-              b.type = 'button';
-              b.setAttribute('role', 'tab');
-              b.setAttribute('aria-label', `${i+1}번째 페이지로 이동`);
-              b.addEventListener('click', () => goToPage(i, true));
-              dotsBox.appendChild(b);
+           // 도트/네비 재생성 (페이지 단위)
+            function rebuildNav(){
+              dotsBox.innerHTML = '';
+              const v = visibleCount();
+              const total = track.children.length;
+              const pages = Math.max(1, Math.ceil(total / v));
+            
+              for (let i = 0; i < pages; i++) {
+                const b = document.createElement('button');
+                b.className = 'dot';
+                b.type = 'button';
+                b.setAttribute('role', 'tab');
+                b.setAttribute('aria-label', `${i+1}번째 페이지로 이동`);
+                b.addEventListener('click', () => goToPage(i, true));
+                dotsBox.appendChild(b);
+              }
+            
+              // 한 페이지만 있으면 도트 숨김
+              dotsBox.style.display = (pages <= 1 ? 'none' : 'flex');
+              updateUI();
             }
-            // 한 페이지밖에 없으면 도트 숨김
-            dotsBox.style.display = (pages <= 1 ? 'none' : 'flex');
-            updateUI();
-          });
-              b.addEventListener('click', () => goToIndex(i, true));
-              dotsBox.appendChild(b);
-            });
-            updateUI();
-          }
 
           function cardWidth(){
             const first = track.children[0];
@@ -316,3 +313,4 @@
       </script>
 </body>
 </html>
+
