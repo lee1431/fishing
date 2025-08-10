@@ -176,21 +176,27 @@
           // 도트/네비 재생성
           function rebuildNav(){
             dotsBox.innerHTML = '';
-            const cards = Array.from(track.children);
-            cards.forEach((_, i) => {
+            const v = visibleCount();
+            const total = track.children.length;
+            const pages = Math.max(1, Math.ceil(total / v));
+            for(let i=0;i<pages;i++){
               const b = document.createElement('button');
               b.className = 'dot';
               b.type = 'button';
               b.setAttribute('role', 'tab');
-              b.setAttribute('aria-label', `${i+1}번째 카드로 이동`);
+              b.setAttribute('aria-label', `${i+1}번째 페이지로 이동`);
+              b.addEventListener('click', () => goToPage(i, true));
+              dotsBox.appendChild(b);
+            }
+
+            dotsBox.style.display = (pages <= 1 ? 'none' : 'flex');
+            updateUI();
+          }번째 카드로 이동`);
               b.addEventListener('click', () => goToIndex(i, true));
               dotsBox.appendChild(b);
             });
             updateUI();
           }
-
-          const onResize = () => { const i = currentIndex(); goToIndex(i, false); rebuildNav(); };
-          window.addEventListener('resize', () => requestAnimationFrame(onResize));
 
           function cardWidth(){
             const first = track.children[0];
@@ -198,6 +204,14 @@
             const styles = getComputedStyle(track);
             const gap = parseFloat(styles.columnGap || styles.gap || 0);
             return first.getBoundingClientRect().width + gap;
+          }
+          function visibleCount(){
+            const first = track.children[0];
+            if(!first) return 1;
+            const cw = first.getBoundingClientRect().width;
+            const tw = track.getBoundingClientRect().width;
+            const n = Math.max(1, Math.round(tw / cw));
+            return n;
           }
           function currentIndex(){
             const w = cardWidth();
@@ -209,23 +223,41 @@
             const w = cardWidth();
             track.scrollTo({ left: i * w, behavior: smooth ? 'smooth' : 'auto' });
           }
+          function goToPage(p, smooth=true){
+            const v = visibleCount();
+            const total = track.children.length;
+            const lastStart = Math.max(0, total - v);
+            const start = Math.min(lastStart, Math.max(0, p * v));
+            goToIndex(start, smooth);
+          });
+          }
           function updateUI(){
-            const i = currentIndex();
+            const v = visibleCount();
+            const total = track.children.length;
+            const pages = Math.max(1, Math.ceil(total / v));
+            const page = Math.floor(currentIndex() / v);
             const dots = Array.from(dotsBox.children);
-            dots.forEach((d, n) => d.setAttribute('aria-selected', n===i ? 'true':'false'));
-            prevBtn.disabled = (i === 0);
-            nextBtn.disabled = (i === track.children.length-1);
+            dots.forEach((d, n) => d.setAttribute('aria-selected', n===page ? 'true':'false'));
+            prevBtn.disabled = (page === 0);
+            nextBtn.disabled = (page >= pages-1);
           }
 
-          // 초기 카드 구성
+
           buildCards(CURRENT);
           rebuildNav();
 
-          // 네비 버튼
-          prevBtn.addEventListener('click', () => goToIndex(currentIndex()-1));
-          nextBtn.addEventListener('click', () => goToIndex(currentIndex()+1));
+          prevBtn.addEventListener('click', () => {
+            const v = visibleCount();
+            const page = Math.floor(currentIndex()/v) - 1;
+            goToPage(page);
+          });
+          nextBtn.addEventListener('click', () => {
+            const v = visibleCount();
+            const page = Math.floor(currentIndex()/v) + 1;
+            goToPage(page);
+          });
 
-          // 키보드
+
           track.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowRight') { e.preventDefault(); nextBtn.click(); }
             if (e.key === 'ArrowLeft')  { e.preventDefault(); prevBtn.click(); }
@@ -234,10 +266,8 @@
           track.setAttribute('role', 'group');
           track.setAttribute('aria-roledescription', '수평 캐러셀');
 
-          // 스크롤 감지
           let t; track.addEventListener('scroll', ()=>{ clearTimeout(t); t=setTimeout(updateUI,80); }, {passive:true});
 
-          // 드래그 스크롤
           let isDown=false,startX=0,startLeft=0;
           const onDown = (e)=>{ isDown=true; startX=(e.touches?e.touches[0].clientX:e.clientX); startLeft=track.scrollLeft; track.classList.add('dragging'); };
           const onMove = (e)=>{ if(!isDown) return; const x=(e.touches?e.touches[0].clientX:e.clientX); const dx=x-startX; track.scrollLeft=startLeft-dx; };
@@ -250,7 +280,7 @@
           track.addEventListener('touchmove',onMove,{passive:true});
           track.addEventListener('touchend',onUp);
 
-          // --- 검색 & 자동완성 ---
+
           function renderSuggest(list){
             if(!list.length){ suggest.style.display='none'; suggest.innerHTML=''; return; }
             suggest.innerHTML = list.slice(0,8).map(s=>`<button role="option" data-v="${s}" style="display:block;width:100%;text-align:left;padding:10px 12px;background:transparent;border:0;color:#e8eefc;cursor:pointer">${s}</button>`).join('');
@@ -283,4 +313,3 @@
       </script>
 </body>
 </html>
-
