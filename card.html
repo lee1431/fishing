@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>카드 슬라이더</title>
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --fg: #e8eefc;
+      --muted: #9fb0c8;
+      --accent: #7aa2ff;
+      --card: #121826;
+      --ring: rgba(122,162,255,.4);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Apple SD Gothic Neo, Noto Sans KR, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 800px at 20% -10%, #152037, transparent 60%),
+                  radial-gradient(900px 600px at 100% 0%, #0f1627, transparent 60%),
+                  var(--bg);
+      color: var(--fg);
+    }
+    .wrap { max-width: 1100px; margin: 40px auto; padding: 0 16px; }
+    h1 { font-size: clamp(24px, 3.2vw, 36px); margin: 0 0 14px; letter-spacing: -0.02em; }
+    .sub { color: var(--muted); margin-bottom: 22px; }
+
+    .slider {
+      position: relative;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .track {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 85%; /* 모바일 1장 크게 */
+      gap: 16px;
+      overflow-x: auto;
+      padding: 12px 8px 24px; /* 아래 도트 공간 */
+      scroll-snap-type: x mandatory;
+      scroll-padding: 8px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; /* Firefox */
+    }
+    .track::-webkit-scrollbar { display: none; }
+
+    @media (min-width: 640px){
+      .track{ grid-auto-columns: calc(50% - 12px); }
+    }
+    @media (min-width: 1024px){
+      .track{ grid-auto-columns: calc(33.333% - 11px); }
+    }
+
+    .card {
+      scroll-snap-align: start;
+      background: linear-gradient(180deg, rgba(255,255,255,.03), transparent 30%), var(--card);
+      border: 1px solid rgba(255,255,255,.05);
+      border-radius: 18px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.35);
+      overflow: hidden;
+      min-height: 300px;
+      display: flex; flex-direction: column;
+    }
+    .media { aspect-ratio: 16/10; background: #1a2336; position: relative; }
+    .media svg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .6; }
+    .content { padding: 16px; display: grid; gap: 6px; }
+    .title { font-weight: 700; letter-spacing: -0.02em; }
+    .desc { color: var(--muted); font-size: 14px; line-height: 1.45; }
+    .tags { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .tag { font-size: 12px; color: var(--accent); background: rgba(122,162,255,.1); border: 1px solid rgba(122,162,255,.25); padding: 4px 8px; border-radius: 999px; }
+
+    .navBtn{
+      position: absolute; inset-block: 0; margin: auto 0; height: 44px; width: 44px;
+      border-radius: 999px; border: 1px solid rgba(255,255,255,.15);
+      background: rgba(16,22,35,.6);
+      backdrop-filter: blur(6px);
+      display: grid; place-items: center; cursor: pointer; z-index: 5;
+      transition: transform .12s ease, background .2s ease, border-color .2s ease;
+    }
+    .navBtn:hover { background: rgba(18,28,48,.8); border-color: rgba(255,255,255,.25); }
+    .navBtn:active { transform: scale(.96); }
+    .prev { left: -6px; }
+    .next { right: -6px; }
+    .navBtn[disabled]{ opacity: .35; pointer-events: none; }
+
+    .dots { display: flex; gap: 8px; justify-content: center; margin: 6px 0 0; }
+    .dot {
+      width: 9px; height: 9px; border-radius: 999px; border: 1px solid rgba(255,255,255,.35);
+      background: rgba(255,255,255,.1); cursor: pointer; transition: transform .15s; 
+    }
+    .dot[aria-selected="true"] { background: var(--accent); border-color: transparent; transform: scale(1.15); box-shadow: 0 0 0 6px var(--ring); }
+
+    /* Dragging feedback */
+    .dragging { cursor: grabbing; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>카드 슬라이더</h1>
+    <p class="sub">바닐라 HTML/CSS/JS. 드래그·휠·버튼·키보드·도트 이동 지원, 반응형·스크롤 스냅 기반.</p>
+
+    <!-- 검색바 -->
+    <div class="searchbar" style="position:relative;max-width:680px">
+      <input id="q" type="text" placeholder="심볼 검색 (예: BTCUSDT, ETHUSDT)" aria-label="심볼 검색" 
+             style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:#0f1627;color:#e8eefc;outline:none;">
+      <div id="suggest" role="listbox" aria-label="자동완성" 
+           style="position:absolute;inset-inline:0;top:48px;background:#0f1627;border:1px solid rgba(255,255,255,.15);border-radius:12px;max-height:260px;overflow:auto;display:none;z-index:10;box-shadow:0 12px 24px rgba(0,0,0,.35);"></div>
+    </div>
+
+    <section class="slider" role="region" aria-label="카드 슬라이더">
+      <button class="navBtn prev" aria-label="이전">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="navBtn next" aria-label="다음">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
+      <div class="track" id="track"></div>
+
+      <script>
+        // --- 데이터 로딩 & 카드 생성 & 슬라이더 초기화 ---
+        (async function(){
+          const track   = document.getElementById('track');
+          const dotsBox = document.getElementById('dots');
+          const prevBtn = document.querySelector('.prev');
+          const nextBtn = document.querySelector('.next');
+          const qInput  = document.getElementById('q');
+          const suggest = document.getElementById('suggest');
+
+          // 1) tt.json 불러오기 (배열 형태 또는 {items:[...]} 모두 지원)
+          async function loadSymbols(){
+            try{
+              const res = await fetch('./tt.json', { cache:'no-store' });
+              const data = await res.json();
+              const arr = Array.isArray(data) ? data : (Array.isArray(data.items)? data.items:[]);
+              // 문자열/객체 혼합 지원 (객체면 symbol 필드 사용)
+              return arr.map(x => (typeof x === 'string' ? x : (x.symbol || ''))).filter(Boolean);
+            }catch(e){
+              console.error('tt.json 로드 실패', e);
+              return [];
+            }
+          }
+
+          let ALL = await loadSymbols();
+          // 대문자 통일 & 중복 제거
+          ALL = [...new Set(ALL.map(s=>String(s).toUpperCase().trim()).filter(Boolean))];
+          let CURRENT = [...ALL];
+
+          function buildCards(list){
+            track.innerHTML = list.map(sym => `
+              <article class="card">
+                <div class="media" aria-hidden="true" style="display:flex;align-items:center;justify-content:center;background:#0c1323;">
+                  <div style="font-size:28px;font-weight:800;letter-spacing:.5px;opacity:.95">${sym}</div>
+                </div>
+                <div class="content">
+                  <div class="title">${sym} <small style="color:#9fb0c8;">(로고는 추후 캐시)</small></div>
+                  <div class="desc">JSON(tt.json)에서 읽은 심볼 카드. 검색으로 필터링 가능.</div>
+                  <div class="tags"><span class="tag">local</span><span class="tag">json</span></div>
+                </div>
+              </article>
+            `).join('');
+          }
+
+          // 도트/네비 재생성
+          function rebuildNav(){
+            dotsBox.innerHTML = '';
+            const cards = Array.from(track.children);
+            cards.forEach((_, i) => {
+              const b = document.createElement('button');
+              b.className = 'dot';
+              b.type = 'button';
+              b.setAttribute('role', 'tab');
+              b.setAttribute('aria-label', `${i+1}번째 카드로 이동`);
+              b.addEventListener('click', () => goToIndex(i, true));
+              dotsBox.appendChild(b);
+            });
+            updateUI();
+          }
+
+          function cardWidth(){
+            const first = track.children[0];
+            if(!first) return 1;
+            const styles = getComputedStyle(track);
+            const gap = parseFloat(styles.columnGap || styles.gap || 0);
+            return first.getBoundingClientRect().width + gap;
+          }
+          function currentIndex(){
+            const w = cardWidth();
+            const idx = Math.round(track.scrollLeft / w);
+            const max = Math.max(0, track.children.length-1);
+            return Math.max(0, Math.min(max, idx));
+          }
+          function goToIndex(i, smooth=true){
+            const w = cardWidth();
+            track.scrollTo({ left: i * w, behavior: smooth ? 'smooth' : 'auto' });
+          }
+          function updateUI(){
+            const i = currentIndex();
+            const dots = Array.from(dotsBox.children);
+            dots.forEach((d, n) => d.setAttribute('aria-selected', n===i ? 'true':'false'));
+            prevBtn.disabled = (i === 0);
+            nextBtn.disabled = (i === track.children.length-1);
+          }
+
+          // 초기 카드 구성
+          buildCards(CURRENT);
+          rebuildNav();
+
+          // 네비 버튼
+          prevBtn.addEventListener('click', () => goToIndex(currentIndex()-1));
+          nextBtn.addEventListener('click', () => goToIndex(currentIndex()+1));
+
+          // 키보드
+          track.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') { e.preventDefault(); nextBtn.click(); }
+            if (e.key === 'ArrowLeft')  { e.preventDefault(); prevBtn.click(); }
+          });
+          track.setAttribute('tabindex', '0');
+          track.setAttribute('role', 'group');
+          track.setAttribute('aria-roledescription', '수평 캐러셀');
+
+          // 스크롤 감지
+          let t; track.addEventListener('scroll', ()=>{ clearTimeout(t); t=setTimeout(updateUI,80); }, {passive:true});
+
+          // 드래그 스크롤
+          let isDown=false,startX=0,startLeft=0;
+          const onDown = (e)=>{ isDown=true; startX=(e.touches?e.touches[0].clientX:e.clientX); startLeft=track.scrollLeft; track.classList.add('dragging'); };
+          const onMove = (e)=>{ if(!isDown) return; const x=(e.touches?e.touches[0].clientX:e.clientX); const dx=x-startX; track.scrollLeft=startLeft-dx; };
+          const onUp   = ()=>{ if(!isDown) return; isDown=false; track.classList.remove('dragging'); goToIndex(currentIndex()); };
+          track.addEventListener('pointerdown',(e)=>{onDown(e); track.setPointerCapture(e.pointerId);});
+          track.addEventListener('pointermove',onMove);
+          track.addEventListener('pointerup',onUp);
+          track.addEventListener('pointerleave',onUp);
+          track.addEventListener('touchstart',onDown,{passive:true});
+          track.addEventListener('touchmove',onMove,{passive:true});
+          track.addEventListener('touchend',onUp);
+
+          // --- 검색 & 자동완성 ---
+          function renderSuggest(list){
+            if(!list.length){ suggest.style.display='none'; suggest.innerHTML=''; return; }
+            suggest.innerHTML = list.slice(0,8).map(s=>`<button role="option" data-v="${s}" style="display:block;width:100%;text-align:left;padding:10px 12px;background:transparent;border:0;color:#e8eefc;cursor:pointer">${s}</button>`).join('');
+            suggest.style.display='block';
+            suggest.querySelectorAll('button').forEach(btn=>{
+              btn.addEventListener('click',()=>{ qInput.value = btn.dataset.v; applyFilter(); suggest.style.display='none'; });
+            });
+          }
+          function applyFilter(){
+            const q = qInput.value.trim().toUpperCase();
+            const filtered = q ? ALL.filter(s=> s.includes(q)) : ALL;
+            CURRENT = filtered;
+            buildCards(CURRENT);
+            rebuildNav();
+            goToIndex(0);
+            renderSuggest([]);
+          }
+          qInput.addEventListener('input', ()=>{
+            const q = qInput.value.trim().toUpperCase();
+            if(!q){ renderSuggest([]); applyFilter(); return; }
+            const hints = ALL.filter(s=> s.includes(q));
+            renderSuggest(hints);
+          });
+          qInput.addEventListener('keydown', (e)=>{
+            if(e.key==='Enter'){ e.preventDefault(); applyFilter(); }
+            if(e.key==='Escape'){ suggest.style.display='none'; }
+          });
+          document.addEventListener('click', (e)=>{ if(!suggest.contains(e.target) && e.target!==qInput){ suggest.style.display='none'; } });
+        })();
+      </script>
+</body>
+</html>
