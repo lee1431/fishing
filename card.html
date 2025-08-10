@@ -188,10 +188,10 @@
               b.addEventListener('click', () => goToPage(i, true));
               dotsBox.appendChild(b);
             }
-
+            // 한 페이지밖에 없으면 도트 숨김
             dotsBox.style.display = (pages <= 1 ? 'none' : 'flex');
             updateUI();
-          }번째 카드로 이동`);
+          });
               b.addEventListener('click', () => goToIndex(i, true));
               dotsBox.appendChild(b);
             });
@@ -242,10 +242,11 @@
             nextBtn.disabled = (page >= pages-1);
           }
 
-
+          // 초기 카드 구성
           buildCards(CURRENT);
           rebuildNav();
 
+          // 네비 버튼
           prevBtn.addEventListener('click', () => {
             const v = visibleCount();
             const page = Math.floor(currentIndex()/v) - 1;
@@ -257,7 +258,7 @@
             goToPage(page);
           });
 
-
+          // 키보드
           track.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowRight') { e.preventDefault(); nextBtn.click(); }
             if (e.key === 'ArrowLeft')  { e.preventDefault(); prevBtn.click(); }
@@ -266,8 +267,10 @@
           track.setAttribute('role', 'group');
           track.setAttribute('aria-roledescription', '수평 캐러셀');
 
+          // 스크롤 감지
           let t; track.addEventListener('scroll', ()=>{ clearTimeout(t); t=setTimeout(updateUI,80); }, {passive:true});
 
+          // 드래그 스크롤
           let isDown=false,startX=0,startLeft=0;
           const onDown = (e)=>{ isDown=true; startX=(e.touches?e.touches[0].clientX:e.clientX); startLeft=track.scrollLeft; track.classList.add('dragging'); };
           const onMove = (e)=>{ if(!isDown) return; const x=(e.touches?e.touches[0].clientX:e.clientX); const dx=x-startX; track.scrollLeft=startLeft-dx; };
@@ -280,7 +283,7 @@
           track.addEventListener('touchmove',onMove,{passive:true});
           track.addEventListener('touchend',onUp);
 
-
+          // --- 검색 & 자동완성 ---
           function renderSuggest(list){
             if(!list.length){ suggest.style.display='none'; suggest.innerHTML=''; return; }
             suggest.innerHTML = list.slice(0,8).map(s=>`<button role="option" data-v="${s}" style="display:block;width:100%;text-align:left;padding:10px 12px;background:transparent;border:0;color:#e8eefc;cursor:pointer">${s}</button>`).join('');
