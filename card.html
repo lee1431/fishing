@@ -173,13 +173,31 @@
             `).join('');
           }
 
-           // 도트/네비 재생성 (페이지 단위)
-            function rebuildNav(){
+           function rebuildNav(){
               dotsBox.innerHTML = '';
-              const v = visibleCount();
               const total = track.children.length;
-              const pages = Math.max(1, Math.ceil(total / v));
+              const v = visibleCount();
             
+              // 아이템 없으면: 도트 숨기고 버튼 비활성
+              if (total === 0) {
+                dotsBox.style.display = 'none';
+                prevBtn.disabled = true;
+                nextBtn.disabled = true;
+                return;
+              }
+            
+              // 총 페이지 계산
+              const pages = Math.ceil(total / v);
+            
+              // 한 페이지만 있으면 도트 숨기고 버튼 비활성
+              if (pages <= 1) {
+                dotsBox.style.display = 'none';
+                prevBtn.disabled = true;
+                nextBtn.disabled = true;
+                return;
+              }
+            
+              // 여러 페이지: 도트 생성
               for (let i = 0; i < pages; i++) {
                 const b = document.createElement('button');
                 b.className = 'dot';
@@ -189,9 +207,7 @@
                 b.addEventListener('click', () => goToPage(i, true));
                 dotsBox.appendChild(b);
               }
-            
-              // 한 페이지만 있으면 도트 숨김
-              dotsBox.style.display = (pages <= 1 ? 'none' : 'flex');
+              dotsBox.style.display = 'flex';
               updateUI();
             }
 
@@ -205,10 +221,9 @@
           function visibleCount(){
             const first = track.children[0];
             if(!first) return 1;
-            const cw = first.getBoundingClientRect().width;
-            const tw = track.getBoundingClientRect().width;
-            const n = Math.max(1, Math.round(tw / cw));
-            return n;
+            const cw = first.getBoundingClientRect().width || 1;
+            const tw = track.getBoundingClientRect().width || cw;
+            return Math.max(1, Math.round(tw / cw));
           }
           function currentIndex(){
             const w = cardWidth();
@@ -264,7 +279,33 @@
           track.setAttribute('aria-roledescription', '수평 캐러셀');
 
           // 스크롤 감지
-          let t; track.addEventListener('scroll', ()=>{ clearTimeout(t); t=setTimeout(updateUI,80); }, {passive:true});
+          // 스크롤 감지 (UI 갱신 디바운스)
+          let t; 
+          track.addEventListener('scroll', ()=>{ 
+            clearTimeout(t); 
+            t = setTimeout(updateUI, 80); 
+          }, {passive:true});
+          
+          // 마우스 휠로 수평 스크롤
+          track.addEventListener('wheel', (e)=>{
+            if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+              track.scrollLeft += e.deltaY;
+              e.preventDefault();
+            }
+          }, {passive:false});
+          
+          // 창 리사이즈 시 도트/버튼/페이지 재계산 (디바운스)
+          let rt;
+          window.addEventListener('resize', ()=>{
+            clearTimeout(rt);
+            rt = setTimeout(()=>{
+              rebuildNav();
+              // 현재 페이지 시작 위치로 재정렬
+              const v = visibleCount();
+              const page = Math.floor(currentIndex() / v);
+              goToPage(page, false);
+            }, 120);
+          });
 
           // 드래그 스크롤
           let isDown=false,startX=0,startLeft=0;
@@ -312,5 +353,6 @@
       </script>
 </body>
 </html>
+
 
 
