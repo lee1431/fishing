@@ -81,7 +81,54 @@
 </head>
 <body>
   <div class="wrap">
-    <h1 class="coindex-logo">COIN DECK's</h1>
+    <!-- 코인덱 네온 로고 (SVG, 반짝 애니메이션) -->
+    <div style="display:flex;justify-content:center;align-items:center;margin:18px 0;">
+      <svg viewBox="0 0 1200 220" width="100%" style="max-width:720px; height:auto;">
+        <defs>
+          <!-- 네온 그라데이션 -->
+          <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"  stop-color="#00F2FE"/>
+            <stop offset="50%" stop-color="#4FACFE"/>
+            <stop offset="100%" stop-color="#B388FF"/>
+          </linearGradient>
+    
+          <!-- 외곽 글로우 -->
+          <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur1"/>
+            <feMerge>
+              <feMergeNode in="blur1"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+    
+          <!-- 하이라이트 스윕 마스크 -->
+          <linearGradient id="shineGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0"   stop-color="white" stop-opacity="0"/>
+            <stop offset="0.45" stop-color="white" stop-opacity="0"/>
+            <stop offset="0.5" stop-color="white" stop-opacity="0.6"/>
+            <stop offset="0.55" stop-color="white" stop-opacity="0"/>
+            <stop offset="1"   stop-color="white" stop-opacity="0"/>
+          </linearGradient>
+          <mask id="shineMask">
+            <rect x="-20%" y="0" width="140%" height="100%" fill="url(#shineGrad)">
+              <animate attributeName="x" from="-40%" to="100%" dur="2.8s" repeatCount="indefinite"/>
+            </rect>
+          </mask>
+        </defs>
+    
+        <!-- 본문 텍스트 -->
+        <g transform="translate(20,165)" style="font: 900 150px 'Poppins','Noto Sans KR',system-ui,sans-serif; letter-spacing: -1px;">
+          <!-- 바탕(옅은 외곽선) -->
+          <text x="0" y="0" fill="rgba(122,162,255,0.14)" stroke="rgba(122,162,255,0.25)" stroke-width="2">COIN DECK's</text>
+          <!-- 그라데이션 + 글로우 -->
+          <text x="0" y="0" fill="url(#grad)" filter="url(#glow)">COIN DECK's</text>
+          <!-- 하이라이트 스윕 -->
+          <g style="mix-blend-mode:screen" mask="url(#shineMask)">
+            <text x="0" y="0" fill="white" opacity="0.65">COIN DECK's</text>
+          </g>
+        </g>
+      </svg>
+    </div>
     <p class="sub">도트 없는 버전. 드래그·휠·버튼·키보드·검색 필터 지원.</p>
 
     <div class="searchbar">
@@ -264,4 +311,5 @@
 </script>
 </body>
 </html>
+
 
