@@ -174,42 +174,11 @@
           }
 
            function rebuildNav(){
-              dotsBox.innerHTML = '';
-              const total = track.children.length;
-              const v = visibleCount();
-              console.log("vvv= "+v);
-              // 아이템 없으면: 도트 숨기고 버튼 비활성
-              if (total === 0) {
-                dotsBox.style.display = 'none';
-                prevBtn.disabled = true;
-                nextBtn.disabled = true;
-                return;
-              }
-            
-              // 총 페이지 계산
-              const pages = Math.ceil(total / v);
-            
-              // 한 페이지만 있으면 도트 숨기고 버튼 비활성
-              if (pages <= 1) {
-                dotsBox.style.display = 'none';
-                prevBtn.disabled = true;
-                nextBtn.disabled = true;
-                return;
-              }
-            
-              // 여러 페이지: 도트 생성
-              for (let i = 0; i < pages; i++) {
-                const b = document.createElement('button');
-                b.className = 'dot';
-                b.type = 'button';
-                b.setAttribute('role', 'tab');
-                b.setAttribute('aria-label', `${i+1}번째 페이지로 이동`);
-                b.addEventListener('click', () => goToPage(i, true));
-                dotsBox.appendChild(b);
-              }
-              dotsBox.style.display = 'flex';
-              updateUI();
-            }
+            // 도트 네비게이션 안 쓰기 → 그냥 버튼 상태만 업데이트
+            prevBtn.disabled = true;
+            nextBtn.disabled = true;
+            return;
+          }
 
           function cardWidth(){
             const first = track.children[0];
@@ -353,6 +322,7 @@
       </script>
 </body>
 </html>
+
 
 
 
