@@ -177,7 +177,7 @@
         <p style="margin:8px 0;color:var(--muted);font-size:14px;line-height:1.5">${i.desc||''}</p>
         <div class="tags">${(i.tags||[]).map(t=>`<span class='tag'>#${t}</span>`).join('')}</div>
         <div class="actions">
-          ${i.url?`<a class="btn primary" href="${i.url}" target="_blank" rel="noopener">다운로드</a>`:''}
+          ${i.url?`<a class="btn primary" data-id="${i.id}" href="${i.url}" target="_blank" rel="noopener">다운로드</a>`:''}
           ${i.live?`<a class="btn" href="${i.live}" target="_blank" rel="noopener">바로 사용</a>`:''}
         </div>
       </div>`;
