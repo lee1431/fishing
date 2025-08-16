@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>인터넷 고물상 — 잡동사니 유틸 보관소</title>
+  <meta name="description" content="쓸모없을 것 같은데 은근 유용한 개인 제작 유틸 모음. 광고를 보고 무료로 다운로드하거나 웹에서 바로 사용해 보세요." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><text y='1em' font-size='96'>🧰</text></svg>">
+
+  <!-- ✅ AdSense: 승인된 사이트라면 아래 스니펫의 client 값을 본인 것으로 바꿔 사용하세요.  -->
+  <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXX" crossorigin="anonymous"></script> -->
+
+  <style>
+    :root{
+      --bg:#0f1115; --panel:#151923; --muted:#aab1c6; --text:#eaf1ff; --brand:#6ee7ff;
+      --card:#0d1017; --accent:#93ff6e; --warn:#ffd36e;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,sans-serif;background:radial-gradient(80% 100% at 20% 0%,#121624 0,#0b0e15 60%,#090b11 100%);color:var(--text)}
+    a{color:var(--brand);text-decoration:none}
+    .wrap{max-width:1120px;margin:0 auto;padding:16px}
+    header{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:16px;border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.06)}
+    header h1{margin:0;font-size: clamp(20px,3vw,32px)}
+    header .badge{font-size:12px;color:#111;background:var(--accent);padding:6px 8px;border-radius:999px}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    .controls input,.controls select{background:#0c0f16;color:var(--text);border:1px solid #1e2535;border-radius:10px;padding:10px 12px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-top:16px}
+    .card{position:relative;border:1px solid #1b2132;border-radius:16px;background:linear-gradient(180deg,#0f1420,#0b0f19);overflow:hidden}
+    .thumb{aspect-ratio:16/9;background:#111 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 225"><defs><linearGradient id="g" x1="0" x2="1"><stop stop-color="%23111"/><stop offset="1" stop-color="%23161a26"/></linearGradient></defs><rect width="400" height="225" fill="url(%23g)"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%236ee7ff" font-family="monospace" font-size="22">인터넷 고물상</text></svg>') center/cover no-repeat}
+    .body{padding:14px}
+    .title{font-weight:700;margin:0 0 6px}
+    .meta{font-size:12px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap}
+    .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+    .tag{font-size:11px;color:#0b0f14;background:#b6ff6e14;border:1px solid #b6ff6e33;padding:4px 8px;border-radius:999px}
+    .actions{display:flex;gap:8px;margin-top:12px}
+    .btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;padding:10px 12px;border:1px solid #1e2637;background:#0d111a;color:var(--text);cursor:pointer}
+    .btn.primary{background:linear-gradient(180deg,#0b1f2e,#0a1520);border-color:#153049}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .ad{margin:16px 0;padding:10px;border:1px dashed #22314a;border-radius:12px;color:var(--muted);text-align:center}
+    .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#ffffff1a;font-size:12px}
+    .footer{margin:32px 0;color:var(--muted);font-size:13px;text-align:center}
+    .layout{display:grid;grid-template-columns:1fr;gap:24px}
+    @media(min-width:1024px){.layout{grid-template-columns:1fr 300px}}
+    aside{position:sticky;top:12px;height:fit-content;display:flex;flex-direction:column;gap:16px}
+    .panel{border:1px solid #1e2637;border-radius:16px;background:linear-gradient(180deg,#0e1420,#0b1019);padding:12px}
+    .panel h3{margin:6px 8px 10px;font-size:14px;color:var(--muted)}
+    .rank li{display:flex;justify-content:space-between;padding:6px 8px;border-radius:8px}
+    .rank li:nth-child(odd){background:#0b1017}
+    .chiprow{display:flex;flex-wrap:wrap;gap:6px}
+    .chip{padding:6px 10px;background:#0e1522;border:1px solid #1e2a3f;border-radius:999px;font-size:12px;cursor:pointer}
+    .chip.active{background:#11263a;border-color:#26527a}
+    .hero{display:flex;align-items:center;gap:12px}
+    .shake{animation:shake .45s ease-in-out}
+    @keyframes shake{10%{transform:translateX(-1px)}30%{transform:translateX(1px)}50%{transform:translateX(-1px)}70%{transform:translateX(1px)}90%{transform:translateX(-1px)}}
+    .dim{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:16px}
+    .modal{max-width:640px;width:100%;border-radius:18px;border:1px solid #21314a;background:#0b0f16;overflow:hidden}
+    .modal header{border-radius:0;padding:10px 12px}
+    .modal .content{padding:16px}
+    .notice{font-size:12px;color:var(--muted);margin:8px 0}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="hero">
+        <div style="font-size:28px">🧰</div>
+        <div>
+          <h1>인터넷 고물상 <span class="badge">잡동사니 유틸 보관소</span></h1>
+          <div style="color:var(--muted);font-size:13px">광고를 보고 무료로 다운로드하거나, 브라우저에서 바로 써보세요.</div>
+        </div>
+      </div>
+      <div class="controls">
+        <input id="q" placeholder="검색: 키워드 / 태그" />
+        <select id="sort">
+          <option value="new">최신순</option>
+          <option value="dl">다운로드순</option>
+          <option value="hot">인기(임의 점수)</option>
+        </select>
+        <button class="btn" id="randomBtn">오늘의 고물 🎲</button>
+      </div>
+    </header>
+
+    <div class="ad" aria-label="광고 자리">
+      <!-- ✅ 상단 배너 광고 영역 (예: display:block; data-ad-slot=...) -->
+      상단 광고 자리 (AdSense 코드 삽입)
+    </div>
+
+    <div class="layout">
+      <main>
+        <div class="chiprow" id="tagRow"></div>
+        <div class="grid" id="grid"></div>
+
+        <div class="ad" aria-label="인피드 광고">
+          인피드 광고 자리 (목록 사이)
+        </div>
+
+      </main>
+      <aside>
+        <div class="panel">
+          <h3>다운로드 TOP 10</h3>
+          <ol class="rank" id="top10"></ol>
+        </div>
+        <div class="panel">
+          <h3>공지</h3>
+          <div class="notice">• 광고 클릭 유도 금지. 광고와 다운로드 버튼을 명확히 구분합니다.<br/>• 오픈소스/프리웨어는 라이선스를 확인하고 출처를 표시합니다.</div>
+        </div>
+        <div class="panel">
+          <h3>사장님 메시지</h3>
+          <p style="font-size:14px;color:var(--muted);line-height:1.5">쓸모없어 보여도 언젠가 꼭 쓸 순간이 옵니다. 먼지 털고 써보세요 🙂</p>
+        </div>
+        <div class="panel">
+          <h3>사이드 광고</h3>
+          <div class="ad">사이드 광고 자리</div>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="footer">© <span id="year"></span> 인터넷 고물상 • 모든 자료는 제작자/라이선스 고지 준수 • <a href="#" id="rss">RSS</a></footer>
+  </div>
+
+  <!-- 상세 모달 -->
+  <div class="dim" id="dim" role="dialog" aria-modal="true">
+    <div class="modal">
+      <header>
+        <div style="display:flex;align-items:center;gap:8px;justify-content:space-between;width:100%">
+          <strong id="mTitle">제목</strong>
+          <button class="btn" id="mClose" style="flex:0 0 auto">닫기</button>
+        </div>
+      </header>
+      <div class="content">
+        <div class="thumb" id="mThumb" style="border-radius:12px"></div>
+        <p id="mDesc" style="line-height:1.6"></p>
+        <div class="tags" id="mTags"></div>
+
+        <div class="panel" style="margin-top:12px">
+          <h3>다운로드</h3>
+          <div id="gate">
+            <div class="notice">버튼이 <b id="count">5</b>초 후 활성화됩니다. (광고 클릭 유도 아님)</div>
+            <div class="actions">
+              <button class="btn primary" id="dlBtn" disabled>다운로드 준비 중…</button>
+              <button class="btn" id="liveBtn">웹에서 실행</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="ad" aria-label="본문 중간 광고">본문 중간 광고 자리</div>
+
+        <div class="panel" style="margin-top:12px">
+          <h3>업데이트 기록</h3>
+          <ul id="mChangelog" style="font-size:13px;color:var(--muted)"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // ====== 데모 데이터 ======
+  const items = [
+    {
+      id: 'hash-rename',
+      title: '파일 일괄 해시 리네이머',
+      desc: '드래그앤드롭한 파일 이름을 SHA-1/MD5 등 해시로 일괄 변경. 중복 파일 정리에 유용.',
+      tags: ['윈도우','파일','CLI'],
+      thumb: '',
+      downloads: 1284,
+      createdAt: '2025-08-01',
+      score: 72,
+      url: 'https://example.com/dl/hash-rename.zip',
+      live: 'https://example.com/tools/hash-rename',
+      changelog: ['v0.3 — 폴더 재귀 옵션 추가','v0.2 — MD5 지원','v0.1 — 초기 공개']
+    },
+    {
+      id: 'exif-scrubber',
+      title: '이미지 EXIF 초간단 제거기',
+      desc: '사진 속 GPS/카메라 정보 한 번에 제거. 로컬에서 브라우저로 처리, 개인정보 안나감.',
+      tags: ['웹툴','이미지','보안'],
+      thumb: '',
+      downloads: 3421,
+      createdAt: '2025-07-26',
+      score: 91,
+      url: 'https://example.com/dl/exif-scrubber.zip',
+      live: 'https://example.com/tools/exif',
+      changelog: ['v1.1 — 일괄 처리 속도 개선','v1.0 — 공개']
+    },
+    {
+      id: 'yt-audio-cutter',
+      title: '유튜브 오디오 컷 커터 (링크로 자르기)',
+      desc: 'URL 붙여넣고 원하는 구간만 추출. (개인용·합법 범위 내 사용 고지)',
+      tags: ['웹툴','오디오'],
+      thumb: '',
+      downloads: 987,
+      createdAt: '2025-07-15',
+      score: 58,
+      url: 'https://example.com/dl/yt-audio-cutter.zip',
+      live: 'https://example.com/tools/yt-audio',
+      changelog: ['v0.9 — 자막 타임라인 연동','v0.1 — 실험적 공개']
+    },
+    {
+      id: 'json-diff',
+      title: 'JSON 시각 Diff 뷰어',
+      desc: '두 JSON을 붙여넣으면 변경점만 보기 좋게 하이라이트.',
+      tags: ['웹툴','개발','JSON'],
+      thumb: '',
+      downloads: 2102,
+      createdAt: '2025-06-30',
+      score: 77,
+      url: 'https://example.com/dl/json-diff.zip',
+      live: 'https://example.com/tools/json-diff',
+      changelog: ['v1.2 — 라인 넘버 및 폴딩','v1.0 — 공개']
+    }
+  ];
+
+  // ====== 유틸 ======
+  const $ = (s, el=document) => el.querySelector(s);
+  const $$ = (s, el=document) => [...el.querySelectorAll(s)];
+  const fmt = n => n.toLocaleString('ko-KR');
+
+  // ====== 태그 모음 ======
+  const tagSet = new Set(items.flatMap(i=>i.tags));
+  const tagRow = $('#tagRow');
+  const activeTags = new Set();
+  for(const t of [...tagSet].sort()){
+    const b = document.createElement('button');
+    b.className = 'chip';
+    b.textContent = `#${t}`;
+    b.onclick = () => { b.classList.toggle('active');
+      if(activeTags.has(t)) activeTags.delete(t); else activeTags.add(t);
+      render();
+    };
+    tagRow.appendChild(b);
+  }
+
+  // ====== 렌더 ======
+  const grid = $('#grid');
+  const sortSel = $('#sort');
+  const q = $('#q');
+
+  function render(){
+    const key = (q.value||'').trim().toLowerCase();
+    let list = items.filter(i=>{
+      const inTags = activeTags.size===0 || i.tags.some(t=>activeTags.has(t));
+      const inKey = !key || [i.title,i.desc,...i.tags].join(' ').toLowerCase().includes(key);
+      return inTags && inKey;
+    });
+
+    const by = sortSel.value;
+    if(by==='new') list.sort((a,b)=> b.createdAt.localeCompare(a.createdAt));
+    if(by==='dl') list.sort((a,b)=> b.downloads - a.downloads);
+    if(by==='hot') list.sort((a,b)=> b.score - a.score);
+
+    grid.innerHTML = '';
+    list.forEach(i=>grid.appendChild(card(i)));
+  }
+
+  function card(i){
+    const c = document.createElement('article');
+    c.className = 'card';
+    c.innerHTML = `
+      <div class="thumb" aria-hidden="true"></div>
+      <div class="body">
+        <h3 class="title">${i.title}</h3>
+        <div class="meta"><span class="pill">${new Date(i.createdAt).toLocaleDateString('ko-KR')}</span><span class="pill">다운로드 ${fmt(i.downloads)}</span></div>
+        <p style="margin:8px 0;color:var(--muted);font-size:14px;line-height:1.5">${i.desc}</p>
+        <div class="tags">${i.tags.map(t=>`<span class='tag'>#${t}</span>`).join('')}</div>
+        <div class="actions">
+          <button class="btn primary">자세히 보기</button>
+          <a class="btn" href="${i.live}" target="_blank" rel="noopener">바로 사용</a>
+        </div>
+      </div>`;
+    c.querySelector('.btn.primary').onclick = ()=> openModal(i);
+    return c;
+  }
+
+  // ====== 모달 & 다운로드 게이트 (시간지연: 광고 클릭 유도 아님) ======
+  const dim = $('#dim');
+  const mTitle = $('#mTitle');
+  const mDesc = $('#mDesc');
+  const mTags = $('#mTags');
+  const dlBtn = $('#dlBtn');
+  const liveBtn = $('#liveBtn');
+  const count = $('#count');
+  const mChangelog = $('#mChangelog');
+  const mClose = $('#mClose');
+
+  let timer;
+  function openModal(i){
+    mTitle.textContent = i.title;
+    mDesc.textContent = i.desc;
+    mTags.innerHTML = i.tags.map(t=>`<span class='tag'>#${t}</span>`).join('');
+    mChangelog.innerHTML = i.changelog.map(c=>`<li>• ${c}</li>`).join('');
+    liveBtn.onclick = ()=> window.open(i.live, '_blank');
+
+    // Gate: 5초 후 버튼 활성화 (광고 클릭 유도 금지 문구 유지)
+    let sec = 5; count.textContent = sec;
+    dlBtn.disabled = true; dlBtn.textContent = '다운로드 준비 중…';
+    clearInterval(timer);
+    timer = setInterval(()=>{
+      sec--; count.textContent = sec;
+      if(sec<=0){
+        clearInterval(timer);
+        dlBtn.disabled = false;
+        dlBtn.textContent = '다운로드';
+        dlBtn.onclick = ()=>{
+          // 여기에 실제 다운로드 링크 로깅/리다이렉트
+          window.location.href = i.url;
+        };
+      }
+    },1000);
+
+    dim.style.display = 'flex';
+  }
+  mClose.onclick = ()=> dim.style.display = 'none';
+  dim.addEventListener('click',e=>{ if(e.target===dim) dim.style.display='none'; });
+
+  // ====== 사이드: Top10 ======
+  const top10 = $('#top10');
+  function renderTop(){
+    const list = [...items].sort((a,b)=> b.downloads-a.downloads).slice(0,10);
+    top10.innerHTML = list.map((i,idx)=>`<li><span>${idx+1}. ${i.title}</span><span>${fmt(i.downloads)}</span></li>`).join('');
+  }
+
+  // ====== 이벤트 ======
+  q.addEventListener('input', ()=> render());
+  sortSel.addEventListener('change', ()=> render());
+  $('#randomBtn').onclick = ()=>{
+    const idx = Math.floor(Math.random()*items.length);
+    openModal(items[idx]);
+    $('.modal').classList.add('shake');
+    setTimeout(()=>$('.modal').classList.remove('shake'),500);
+  };
+
+  // ====== 초기화 ======
+  $('#year').textContent = new Date().getFullYear();
+  renderTop();
+  render();
+  </script>
+
+  <!-- ✅ (선택) Google Analytics 4: 페이지/다운로드 이벤트 추적 예시
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);} gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXX');
+  </script>
+  -->
+</body>
+</html>
