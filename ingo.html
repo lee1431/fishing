@@ -66,7 +66,7 @@
     .layout{display:grid;grid-template-columns:1fr;gap:24px}
     @media(min-width:1024px){.layout{grid-template-columns:1fr 300px}}
 
-    /* 📱 모바일에서 타이틀/배지 제거하고 검색만 남기기 */
+    /* 모바일: 타이틀/뱃지 숨기고 검색만 남기기 */
     @media(max-width:640px){
       header .hero{display:none}
       header{justify-content:center}
@@ -126,6 +126,7 @@
     <footer class="footer">© <span id="year"></span> 인터넷 고물상</footer>
   </div>
 
+  <script src="./config.js"></script>
   <script>
   // ===== 스키마 참고 =====
   // item: {
@@ -137,22 +138,18 @@
   const $$ = (s, el=document) => [...el.querySelectorAll(s)];
   const fmt = n => (n??0).toLocaleString('ko-KR');
 
-  const state = { items: [], filtered: [] };
-
-  const ITEMS_API = "https://mrdindoin.ddns.net/ingo/items"; // ← 갤S8 API
+  const state = { items: [] };
+  const ITEMS_API = window.INGO_API || "https://mrdindoin.ddns.net/ingo/items";
 
   async function loadItems(){
-    try {
-      const r = await fetch(ITEMS_API, { cache: "no-store" });
+    try{
+      const r = await fetch(ITEMS_API, { cache: 'no-store' });
       if(!r.ok) throw new Error(r.status);
       state.items = await r.json();
-    } catch(e) {
+    }catch(e){
       console.error(e);
-      state.items = []; // 혹은 데모 데이터
+      state.items = [];
     }
-  }
-  
-    state.items = data;
   }
 
   function render(){
@@ -166,13 +163,12 @@
     if(by==='dl') list.sort((a,b)=> (b.downloads||0) - (a.downloads||0));
     if(by==='hot') list.sort((a,b)=> (b.score||0) - (a.score||0));
 
-    // 섹션별 컨테이너 초기화
     const boxes = { models: $('[data-cat="models"]'), utils: $('[data-cat="utils"]'), music: $('[data-cat="music"]'), art: $('[data-cat="art"]') };
     Object.values(boxes).forEach(b=> b.innerHTML='');
 
     for(const i of list){
       const el = card(i);
-      const box = boxes[i.category] || boxes.utils; // 기본 utils
+      const box = boxes[i.category] || boxes.utils;
       box.appendChild(el);
     }
   }
@@ -192,10 +188,15 @@
           ${i.live?`<a class="btn" href="${i.live}" target="_blank" rel="noopener">바로 사용</a>`:''}
         </div>
       </div>`;
+    // 썸네일(cover) 지정
+    if (i.cover) {
+      c.querySelector(".thumb").style.backgroundImage = `url('${i.cover}')`;
+      c.querySelector(".thumb").style.backgroundSize = "cover";
+      c.querySelector(".thumb").style.backgroundPosition = "center";
+    }
     return c;
   }
 
-  // 이벤트
   document.addEventListener('input', e=>{ if(e.target.id==='q') render(); });
   document.addEventListener('change', e=>{ if(e.target.id==='sort') render(); });
   $('#randomBtn')?.addEventListener('click', ()=>{
