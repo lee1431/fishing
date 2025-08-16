@@ -166,6 +166,36 @@
     }
   }
 
+  const API_BASE = (() => {
+    try {
+    const u = new URL(ITEMS_API);
+    return u.origin + (u.pathname.startsWith('/ingo') ? '/ingo' : '');
+    } catch { return ''; }
+  })();
+
+  document.addEventListener('click', (e) => {
+  const a = e.target.closest('a.btn.primary[data-id]');
+  if (!a) return;
+
+  e.preventDefault();
+  const id = a.dataset.id;
+
+  fetch(`${API_BASE}/track/${encodeURIComponent(id)}`, { method: 'POST' })
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      // 화면 숫자 즉시 올리기
+      const it = state.items.find(x => x.id === id);
+      if (it) {
+        it.downloads = data?.downloads ?? ((it.downloads || 0) + 1);
+        render(); // 카드 다시 그림
+      }
+    })
+    .catch(() => {}) // 실패해도 다운로드는 진행
+    .finally(() => {
+      window.open(a.href, '_blank', 'noopener');
+    });
+});
+
   function card(i){
     const c = document.createElement('article');
     c.className = 'card';
