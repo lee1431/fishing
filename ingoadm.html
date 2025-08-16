@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>인고 — JSON 어펜드 에디터</title>
+  <style>
+    :root{
+      --bg:#0c0b0a; --panel:#15120f; --muted:#c4bdb3; --text:#f7f2e8; --brand:#ffcf6e; --ok:#a9e86e; --bad:#ff8a7a;
+      --line:#3a3127; --ink:#2b2620;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    h1{margin:0 0 12px;font-size:22px}
+    .row{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+    @media(max-width:900px){.row{grid-template-columns:1fr}}
+    .card{border:2px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#201b16,#15110e);box-shadow:0 4px 0 #0a0908}
+    .card header{padding:10px 12px;border-bottom:2px solid var(--line);background:#1e1914;border-radius:12px 12px 0 0}
+    .card .body{padding:12px}
+    label{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
+    input, select, textarea{width:100%;background:#0e0d0b;color:var(--text);border:2px solid var(--line);border-radius:8px;padding:10px}
+    textarea{min-height:90px;resize:vertical}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    button{border:2px solid var(--line);border-radius:10px;padding:10px 12px;background:#15110e;color:var(--text);cursor:pointer;box-shadow:0 3px 0 #0a0908}
+    button.primary{background:linear-gradient(180deg,#2a231c,#1a1511)}
+    .muted{color:var(--muted)}
+    .log{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;font-size:12px;background:#0b0a08;color:#dcd6cc;padding:10px;border-radius:8px;border:1px dashed var(--line);max-height:240px;overflow:auto}
+    .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#2b231b;border:1px solid var(--line);font-size:12px;color:#f1e6d3}
+    .ok{color:var(--ok)} .bad{color:var(--bad)}
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid #2b241c;padding:8px;text-align:left;font-size:13px}
+    .right{float:right}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>🧰 인고 — JSON 어펜드 에디터 <span class="pill">admin.html</span></h1>
+    <p class="muted">`ingo-items.json`을 불러와 <b>새 항목을 추가</b>하고, 수정된 JSON을 <b>파일로 저장</b>하거나 <b>서버로 POST</b>할 수 있습니다.</p>
+
+    <div class="row">
+      <div class="card">
+        <header>
+          <strong>1) 항목 입력</strong>
+          <button id="genId" class="right">ID 자동생성</button>
+        </header>
+        <div class="body">
+          <div class="grid2">
+            <div>
+              <label>id (고유)</label>
+              <input id="id" placeholder="예: json-diff" />
+            </div>
+            <div>
+              <label>category</label>
+              <select id="category">
+                <option value="models">models</option>
+                <option value="utils" selected>utils</option>
+                <option value="music">music</option>
+                <option value="art">art</option>
+              </select>
+            </div>
+          </div>
+          <label>title</label>
+          <input id="title" placeholder="예: JSON 시각 Diff 뷰어" />
+          <label>desc</label>
+          <textarea id="desc" placeholder="간단 설명"></textarea>
+
+          <div class="grid2">
+            <div>
+              <label>tags (쉼표로 구분)</label>
+              <input id="tags" placeholder="예: 웹툴, JSON, 개발" />
+            </div>
+            <div>
+              <label>createdAt (YYYY-MM-DD)</label>
+              <input id="createdAt" placeholder="예: 2025-08-16" />
+            </div>
+          </div>
+          <div class="grid2">
+            <div>
+              <label>downloads (숫자)</label>
+              <input id="downloads" type="number" min="0" value="0" />
+            </div>
+            <div>
+              <label>score (숫자)</label>
+              <input id="score" type="number" min="0" value="0" />
+            </div>
+          </div>
+          <div class="grid2">
+            <div>
+              <label>url (다운로드 링크)</label>
+              <input id="url" placeholder="https://..." />
+            </div>
+            <div>
+              <label>live (웹 실행 링크)</label>
+              <input id="live" placeholder="https://..." />
+            </div>
+          </div>
+          <label>cover (썸네일 URL) — 선택</label>
+          <input id="cover" placeholder="https://.../thumb.png" />
+          <label>changelog (줄바꿈으로 구분)</label>
+          <textarea id="changelog" placeholder="v1.0 — 공개&#10;v1.1 — 버그 수정"></textarea>
+
+          <div class="btns">
+            <button id="add" class="primary">목록에 추가하기</button>
+            <button id="reset">입력 초기화</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <header><strong>2) 현재 JSON 상태</strong></header>
+        <div class="body">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">
+            <div>
+              <span class="pill">로드: <span id="loadStatus">대기</span></span>
+            </div>
+            <div class="btns" style="margin:0">
+              <button id="load">ingo-items.json 불러오기</button>
+              <button id="download" class="primary">수정본 저장(.json)</button>
+            </div>
+          </div>
+          <div class="log" id="jsonPreview" aria-label="JSON 미리보기"></div>
+          <p class="muted" style="margin-top:10px">서버 저장을 쓰려면 아래 설정을 채우세요.</p>
+          <label>서버 저장 URL (POST)</label>
+          <input id="saveUrl" placeholder="예: /admin/save-items" />
+          <div class="grid2">
+            <div>
+              <label>인증 토큰 헤더 이름</label>
+              <input id="tokenHeader" placeholder="예: X-Admin-Token" value="X-Admin-Token" />
+            </div>
+            <div>
+              <label>인증 토큰 값</label>
+              <input id="tokenValue" placeholder="서버 비밀 토큰" />
+            </div>
+          </div>
+          <div class="btns">
+            <button id="postServer">서버로 저장(POST)</button>
+          </div>
+          <div class="log" id="log"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <header><strong>3) 목록(간이 테이블)</strong></header>
+      <div class="body">
+        <table id="tbl">
+          <thead><tr><th>id</th><th>title</th><th>category</th><th>createdAt</th><th>actions</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (s,el=document)=> el.querySelector(s);
+    const $$ = (s,el=document)=> [...el.querySelectorAll(s)];
+    const log = (m, cls='')=>{ const l=$('#log'); l.innerHTML += `<div class="${cls}">${m}</div>`; l.scrollTop=l.scrollHeight; };
+
+    let items = [];
+
+    function slugify(s){
+      return (s||'')
+        .toString().trim().toLowerCase()
+        .replace(/[^a-z0-9가-힣-_\s]/g,'')
+        .replace(/\s+/g,'-')
+        .replace(/-+/g,'-')
+        .replace(/^-|-$/g,'');
+    }
+
+    function readForm(){
+      const id = $('#id').value.trim();
+      const title = $('#title').value.trim();
+      const category = $('#category').value;
+      const desc = $('#desc').value.trim();
+      const tags = $('#tags').value.split(',').map(s=>s.trim()).filter(Boolean);
+      const createdAt = $('#createdAt').value.trim();
+      const downloads = +($('#downloads').value||0);
+      const score = +($('#score').value||0);
+      const url = $('#url').value.trim();
+      const live = $('#live').value.trim();
+      const cover = $('#cover').value.trim();
+      const changelog = $('#changelog').value.split('\n').map(s=>s.trim()).filter(Boolean);
+      return {id,title,category,desc,tags,createdAt,downloads,score,url,live,cover,changelog};
+    }
+
+    function validate(it){
+      if(!it.id) return 'id가 필요합니다';
+      if(!it.title) return 'title이 필요합니다';
+      if(!it.category) return 'category가 필요합니다';
+      if(items.some(x=>x.id===it.id)) return '같은 id가 이미 존재합니다';
+      return '';
+    }
+
+    function refreshPreview(){
+      $('#jsonPreview').textContent = JSON.stringify(items, null, 2);
+      const tbody = $('#tbl tbody');
+      tbody.innerHTML = items.map(x=>`
+        <tr>
+          <td>${x.id}</td>
+          <td>${x.title}</td>
+          <td>${x.category}</td>
+          <td>${x.createdAt||''}</td>
+          <td>
+            <button data-act="del" data-id="${x.id}">삭제</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    function addItem(){
+      const it = readForm();
+      const err = validate(it);
+      if(err){ log(`❌ ${err}`,'bad'); return; }
+      items.push(it);
+      refreshPreview();
+      log(`✅ 추가됨: ${it.id}`,'ok');
+    }
+
+    async function loadJson(){
+      const candidates = ['ingo-items.json','/ingo-items.json'];
+      for(const u of candidates){
+        try{ const r = await fetch(u,{cache:'no-store'}); if(r.ok){ items = await r.json(); $('#loadStatus').textContent = `로드 완료 (${u})`; refreshPreview(); return; } }catch(e){}
+      }
+      $('#loadStatus').textContent = '찾지 못함 — 빈 목록 시작';
+      items = []; refreshPreview();
+    }
+
+    function downloadJson(){
+      const blob = new Blob([JSON.stringify(items,null,2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'ingo-items.json';
+      a.click(); URL.revokeObjectURL(a.href);
+      log('💾 파일로 저장 완료','ok');
+    }
+
+    async function postServer(){
+      const url = $('#saveUrl').value.trim();
+      if(!url){ log('서버 저장 URL을 입력하세요','bad'); return; }
+      const hdr = $('#tokenHeader').value.trim()||'X-Admin-Token';
+      const tok = $('#tokenValue').value.trim();
+      try{
+        const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json', [hdr]:tok}, body: JSON.stringify({items})});
+        const txt = await r.text();
+        if(!r.ok) throw new Error(txt||r.status);
+        log(`📡 서버 저장 성공: ${txt}`,'ok');
+      }catch(e){ log(`서버 저장 실패: ${e.message}`,'bad'); }
+    }
+
+    // events
+    $('#genId').onclick = ()=>{ const s = slugify($('#title').value || $('#desc').value); $('#id').value = s || `item-${Date.now()}`; };
+    $('#add').onclick = addItem;
+    $('#reset').onclick = ()=> $$('input,textarea').forEach(el=>{ if(el.id!=='downloads'&&el.id!=='score') el.value=''; });
+    $('#load').onclick = loadJson;
+    $('#download').onclick = downloadJson;
+    $('#postServer').onclick = postServer;
+    $('#tbl').addEventListener('click', e=>{
+      const b = e.target.closest('button[data-act="del"]');
+      if(!b) return;
+      const id = b.getAttribute('data-id');
+      items = items.filter(x=>x.id!==id); refreshPreview(); log(`🗑️ 삭제됨: ${id}`,'bad');
+    });
+
+    // 초기 상태
+    refreshPreview();
+  </script>
+</body>
+</html>
