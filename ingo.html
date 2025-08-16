@@ -51,34 +51,41 @@
     .chip.active{background:#11263a;border-color:#26527a}
     .hero{display:flex;align-items:center;gap:12px}
     .shake{animation:shake .45s ease-in-out}
+	
     @keyframes shake{10%{transform:translateX(-1px)}30%{transform:translateX(1px)}50%{transform:translateX(-1px)}70%{transform:translateX(1px)}90%{transform:translateX(-1px)}}
     .dim{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:16px}
     .modal{max-width:640px;width:100%;border-radius:18px;border:1px solid #21314a;background:#0b0f16;overflow:hidden}
     .modal header{border-radius:0;padding:10px 12px}
     .modal .content{padding:16px}
     .notice{font-size:12px;color:var(--muted);margin:8px 0}
+	@media(max-width:640px){
+		header .hero{display:none}
+		header{justify-content:center}
+		.controls{justify-content:center}
+		.controls select, .controls .btn{display:none}
+	}
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <div class="hero">
-        <div style="font-size:28px">🧰</div>
-        <div>
-          <h1>인터넷 고물상 <span class="badge">잡동사니 유틸 보관소</span></h1>
-          <div style="color:var(--muted);font-size:13px">광고를 보고 무료로 다운로드하거나, 브라우저에서 바로 써보세요.</div>
-        </div>
-      </div>
-      <div class="controls">
-        <input id="q" placeholder="검색: 키워드 / 태그" />
-        <select id="sort">
-          <option value="new">최신순</option>
-          <option value="dl">다운로드순</option>
-          <option value="hot">인기(임의 점수)</option>
-        </select>
-        <button class="btn" id="randomBtn">오늘의 고물 🎲</button>
-      </div>
-    </header>
+		<div class="hero">
+			<div style="font-size:28px">🧰</div>
+			<div>
+			<h1>인터넷 고물상 <span class="badge">잡동사니 유틸 보관소</span></h1>
+			<div style="color:var(--muted);font-size:13px">광고를 보고 무료로 다운로드하거나, 브라우저에서 바로 써보세요.</div>
+			</div>
+		</div>
+		<div class="controls">
+			<input id="q" placeholder="검색: 키워드 / 태그" />
+			<select id="sort">
+				<option value="new">최신순</option>
+				<option value="dl">다운로드순</option>
+				<option value="hot">인기</option>
+			</select>
+			<button class="btn" id="randomBtn">오늘의 고물 🎲</button>
+		</div>
+	</header>
 
     <div class="ad" aria-label="광고 자리">
       <!-- ✅ 상단 배너 광고 영역 (예: display:block; data-ad-slot=...) -->
