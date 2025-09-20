@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>RKF Intro — GL Studio</title>
+<style>
+  :root{--bg:#0f1217;--panel:#1b1f27;--accent:#ff7a00;--text:#e8e8ea;}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Apple SD Gothic Neo,Pretendard,Roboto,Arial}
+  .stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;user-select:none}
+  .logo{width:min(80vw,600px);image-rendering:pixelated;filter:drop-shadow(0 12px 32px rgba(0,0,0,.45))}
+  .title{font-weight:900;letter-spacing:.06em;text-align:center;line-height:1.1}
+  .title .big{display:block;font-size:clamp(28px,8vw,64px)}
+  .title .sub{display:block;font-size:clamp(16px,4.2vw,28px);opacity:.9;margin-top:4px}
+  .hint{opacity:.85;background:rgba(255,122,0,.08);border:1px solid rgba(255,122,0,.3);padding:10px 14px;border-radius:12px;font-weight:700}
+  .copy{position:fixed;left:0;right:0;bottom:8px;text-align:center;font-size:12px;opacity:.75;letter-spacing:.02em}
+  .fade-in{animation:fadeIn .5s both}
+  .fade-out{animation:fadeOut .5s both}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes fadeOut{from{opacity:1}to{opacity:0}}
+  .flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none}
+  .flash.show{animation:flash .2s both}
+  @keyframes flash{0%{opacity:0} 15%{opacity:1} 100%{opacity:0}}
+  .goodluck{position:fixed;inset:0;display:none;align-items:center;justify-content:center;font-weight:900;
+            font-size:clamp(32px,10vw,80px);letter-spacing:.08em;text-shadow:0 0 12px rgba(0,0,0,.4);}
+  .goodluck.show{display:flex;animation:glPop .6s both}
+  @keyframes glPop{0%{transform:scale(.8);opacity:0}60%{transform:scale(1.05);opacity:1}100%{transform:scale(1);opacity:1}}
+  .scan{position:fixed;inset:0;pointer-events:none;opacity:.08;background:
+    repeating-linear-gradient(to bottom, rgba(0,0,0,1) 0px, rgba(0,0,0,1) 1px, transparent 2px, transparent 3px);}
+  .btn{padding:12px 16px;font-weight:800;letter-spacing:.03em;border-radius:10px;border:2px solid #6c4a22;
+        color:#2a1c0a;background:linear-gradient(#caa26a,#a47b3e);box-shadow: inset 0 2px 0 #e7d0a0, 0 2px 0 rgba(0,0,0,.25);cursor:pointer}
+</style>
+</head>
+<body>
+  <div id="screen-intro" class="stage fade-in">
+    <img class="logo" src="data:image/png;base64,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" alt="GL Studio Pixel Logo"/>
+    <div class="title">
+      <span class="big">Great Life</span>
+      <span class="sub">GL Studio · Retro Korean Fishing</span>
+    </div>
+    <button id="btnStart" class="btn">▶ 낚시 시작</button>
+    <div class="hint">시작하면 화면에 "Good Luck!" 이 표시됩니다</div>
+  </div>
+
+  <div id="screen-gl" class="goodluck">Good Luck!</div>
+  <div class="flash" id="flash"></div>
+  <div class="scan"></div>
+  <div class="copy">© 2025 GL Studio — GPT &amp; Lee</div>
+
+<script>
+const intro = document.getElementById('screen-intro');
+const gl = document.getElementById('screen-gl');
+const flash = document.getElementById('flash');
+const btn = document.getElementById('btnStart');
+
+function startGame(){
+  /* flash */
+  flash.classList.add('show');
+  /* fade out intro */
+  intro.classList.add('fade-out');
+  setTimeout(()=>{ intro.style.display='none'; }, 480);
+  /* show Good Luck */
+  setTimeout(()=>{ gl.classList.add('show'); }, 180);
+  /* hide Good Luck after 1.2s (then trigger custom event for integration) */
+  setTimeout(()=>{ gl.classList.remove('show'); document.dispatchEvent(new CustomEvent('rkf:startFishing')); }, 1400);
+}
+
+btn.addEventListener('click', startGame);
+/* also allow tap anywhere on intro */
+intro.addEventListener('click', (e)=>{ if(e.target !== btn) startGame(); });
+</script>
+</body>
+</html>
