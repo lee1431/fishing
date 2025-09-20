@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>레트로 대물 낚시 (웹 프로토타입)</title>
+<style>
+  html,body{height:100%;margin:0;background:#111;font-family:system-ui,Segoe UI,Apple SD Gothic Neo,Pretendard,Roboto,Arial}
+  .wrap{display:flex;flex-direction:column;height:100%}
+  /* 상단 캔버스 */
+  #lake {
+    flex:1;
+    image-rendering: pixelated;       /* 레트로 결 살리기 */
+    image-rendering: crisp-edges;
+    background:#7aa; display:block; width:100%;
+  }
+  /* 하단 메뉴 바 (스샷 느낌의 목재 버튼) */
+  .menu {
+    display:grid;
+    grid-template-columns: repeat(6,1fr);
+    gap:8px; padding:10px; background:#1b1b1b; border-top:1px solid #333;
+  }
+  button {
+    padding:12px 10px; font-weight:700; letter-spacing:0.02em;
+    background:linear-gradient(#caa26a,#a47b3e); color:#2a1c0a;
+    border:2px solid #6c4a22; border-radius:6px; box-shadow: inset 0 2px 0 #e7d0a0, 0 2px 0 rgba(0,0,0,.25);
+    cursor:pointer; user-select:none;
+  }
+  button:active { transform:translateY(1px) }
+  .hud {
+    position:fixed; left:12px; top:10px; color:#eee; font-size:14px; text-shadow:0 1px 0 #000;
+    background:rgba(0,0,0,.35); padding:6px 8px; border-radius:6px; line-height:1.25;
+  }
+  .toast {
+    position:fixed; right:12px; top:10px; background:rgba(0,0,0,.55); color:#fff; padding:8px 10px; border-radius:6px; font-size:14px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <canvas id="lake"></canvas>
+
+  <div class="hud" id="hud"></div>
+  <div class="toast" id="toast" style="display:none"></div>
+
+  <div class="menu">
+    <button id="btnReady">준비/캐스팅</button>
+    <button id="btnTune">조절(드랙)</button>
+    <button id="btnBait">먹이</button>
+    <button id="btnDayNight">낮/밤</button>
+    <button id="btnLog">확인(조과)</button>
+    <button id="btnQuit">종료</button>
+  </div>
+</div>
+
+<script>
+/* ====== 기본 상태 ====== */
+const canvas = document.getElementById('lake');
+const ctx = canvas.getContext('2d');
+const hud = document.getElementById('hud');
+const toast = document.getElementById('toast');
+
+let W=0,H=0, DPR=window.devicePixelRatio||1;
+function resize(){
+  const rect = canvas.getBoundingClientRect();
+  W = Math.floor(rect.width * DPR);
+  H = Math.floor(rect.height * DPR);
+  canvas.width = W; canvas.height = H;
+}
+addEventListener('resize', resize, {passive:true}); resize();
+
+/* 월드/게임 상태 */
+const state = {
+  day:true,                                // 낮/밤
+  wind:0.6,                                // 파도 세기
+  drag:0.45,                               // 드랙(조절)
+  lineLen:0,                               // 라인 길이
+  cast:false,                              // 캐스팅 상태
+  bite:false,                              // 입질 중
+  hookset:false,                           // 훅셋 성공
+  tension:0,                               // 라인 장력(손맛)
+  baitIndex:0,
+  baits:[
+    {name:'지렁이', biteRate:1.0, size:[0.8,1.2]},
+    {name:'떡밥',   biteRate:1.2, size:[0.7,1.1]},
+    {name:'옥수수', biteRate:0.9, size:[0.9,1.4]},
+    {name:'새우',   biteRate:0.7, size:[1.0,1.8]},
+  ],
+  bobber:{x:0,y:0,vx:0,vy:0, restY:0},
+  lastBiteAt:0,
+  rng:Math.random
+};
+
+const species = [
+  {name:'붕어', base:1.0, rare:0.70},
+  {name:'잉어', base:1.5, rare:0.18},
+  {name:'가물치', base:2.0, rare:0.08},
+  {name:'향어', base:1.7, rare:0.04},
+];
+
+function showToast(msg, ms=1000){
+  toast.textContent = msg; toast.style.display='block';
+  clearTimeout(showToast._t); showToast._t = setTimeout(()=>toast.style.display='none', ms);
+}
+
+/* ====== UI 바인딩 ====== */
+document.getElementById('btnReady').onclick = () => {
+  if (!state.cast) castLine(); else reel();
+};
+document.getElementById('btnTune').onclick = () => {
+  state.drag = +(Math.min(0.9, Math.max(0.1, state.drag + (state.drag<0.9?0.1:-0.8)))).toFixed(2);
+  showToast(`드랙: ${Math.round(state.drag*100)}%`);
+};
+document.getElementById('btnBait').onclick = () => {
+  state.baitIndex = (state.baitIndex+1)%state.baits.length;
+  showToast(`먹이: ${state.baits[state.baitIndex].name}`);
+};
+document.getElementById('btnDayNight').onclick = () => {
+  state.day = !state.day;
+  showToast(state.day?'☀️ 낮 모드':'🌙 밤 모드');
+};
+document.getElementById('btnLog').onclick = () => {
+  const log = JSON.parse(localStorage.getItem('catchLog')||'[]');
+  if(!log.length){ alert('조과 없음'); return; }
+  const txt = log.map(r=>`${r.time}  ${r.sp}  ${r.len.toFixed(1)}cm`).join('\n');
+  alert('[조과 기록]\n' + txt);
+};
+document.getElementById('btnQuit').onclick = () => {
+  if(confirm('게임을 종료할까요? (조과 로그는 유지됨)')){
+    resetAll();
+  }
+};
+
+canvas.addEventListener('click', e=>{
+  // 찌 근처 클릭 시 훅셋
+  if(state.bite && !state.hookset){
+    const r = canvas.getBoundingClientRect();
+    const x = (e.clientX - r.left) * DPR;
+    const y = (e.clientY - r.top) * DPR;
+    const dx = x - state.bobber.x, dy = y - state.bobber.y;
+    if(dx*dx+dy*dy < (30*DPR)**2) {
+      state.hookset = true;
+      showToast('훅셋!');
+    }
+  }
+});
+
+/* ====== 캐스팅/릴링/입질 ====== */
+function castLine(){
+  state.cast = true;
+  state.hookset = false; state.bite=false; state.tension=0;
+  const x = W*0.62 + (state.rng()-0.5)*W*0.15;
+  const y = H*0.55 + (state.rng()-0.5)*H*0.02;
+  state.bobber.x = x; state.bobber.y = y;
+  state.bobber.vx = 0; state.bobber.vy = 0;
+  state.bobber.restY = y - 6*DPR;
+  state.lineLen = Math.hypot(x - W*0.1, y - H*0.75);
+  showToast('캐스팅!');
+  scheduleBite();
+}
+
+function reel(){
+  if(!state.cast) return;
+  // 랜딩 단계
+  if(state.hookset){
+    state.tension += (0.6 - state.drag) * 0.6;      // 드랙이 낮으면 장력 상승
+    state.tension = Math.max(0, Math.min(1, state.tension));
+    // 일정 횟수 릴링 시 성공
+    if(state.tension > 0.85){ loseFish('장력 과다! 라인이 터졌다'); return; }
+    if(state.tension < 0.15){ loseFish('장력 부족! 바늘이 빠졌다'); return; }
+    // 게이지 축적
+    if(!reel._p) reel._p = 0;
+    reel._p += 0.18 + (Math.random()*0.08);
+    if(reel._p >= 1){
+      catchFish();
+      reel._p = 0;
+    }
+  } else {
+    // 입질 전 릴링은 찌만 조금 끌림
+    state.bobber.x -= 8*DPR;
+  }
+}
+
+/* 입질 스케줄링 */
+function scheduleBite(){
+  // 낮/밤, 먹이에 따라 가중
+  const bait = state.baits[state.baitIndex];
+  const base = bait.biteRate * (state.day?1.0:1.25);
+  // 2~6초 사이
+  const t = 2000 + (6000-2000)*(1/base);
+  state.lastBiteAt = performance.now() + t*(0.6 + Math.random()*0.8);
+}
+
+function maybeBite(now){
+  if(state.bite || state.hookset || !state.cast) return;
+  if(now >= state.lastBiteAt){
+    state.bite = true;
+    showToast('툭… (입질)');
+  }
+}
+
+function loseFish(reason){
+  showToast(reason, 1400);
+  state.cast=false; state.bite=false; state.hookset=false; state.tension=0;
+}
+
+/* 조과 기록 */
+function catchFish(){
+  const bait = state.baits[state.baitIndex];
+  // 어종 결정 (밤/먹이 가중치로 희귀도 약간 상향)
+  const r = Math.random();
+  let sp = species[0];
+  let acc=0;
+  for(const s of species){
+    const w = s.rare * (state.day?1.0:1.25) * (bait.name==='새우'?1.35:1.0);
+    acc += w;
+    if(r <= acc){ sp = s; break; }
+  }
+  // 길이(cm)
+  const len = 20 + 10*sp.base * (Math.random()*bait.size[1] + bait.size[0]);
+  const rec = {time:new Date().toLocaleString(), sp:sp.name, len};
+  const log = JSON.parse(localStorage.getItem('catchLog')||'[]'); log.unshift(rec);
+  localStorage.setItem('catchLog', JSON.stringify(log.slice(0,50)));
+  showToast(`${sp.name} ${len.toFixed(1)}cm 랜딩!`, 1500);
+  state.cast=false; state.bite=false; state.hookset=false; state.tension=0;
+}
+
+/* ====== 렌더링 ====== */
+function drawBG(){
+  // 하늘
+  const sky = ctx.createLinearGradient(0,0,0,H*0.5);
+  sky.addColorStop(0, state.day?'#bfe2ff':'#05111f');
+  sky.addColorStop(1, state.day?'#e5f6ff':'#0b1c33');
+  ctx.fillStyle = sky; ctx.fillRect(0,0,W,H*0.5);
+
+  // 수면
+  const water = ctx.createLinearGradient(0,H*0.5,0,H);
+  water.addColorStop(0, state.day?'#8fb7c9':'#17364a');
+  water.addColorStop(1, state.day?'#6ca0b2':'#0f2a3b');
+  ctx.fillStyle = water; ctx.fillRect(0,H*0.5,W,H*0.5);
+
+  // 좌측 원경 산/섬 실루엣(픽셀풍)
+  ctx.fillStyle = state.day?'#6f886f':'#2f3a36';
+  ctx.fillRect(0,H*0.52,W*0.55,8*DPR);
+  ctx.fillStyle = state.day?'#5b7b5b':'#26332e';
+  ctx.fillRect(W*0.55,H*0.52,W*0.45,10*DPR);
+
+  // 수초
+  ctx.fillStyle = state.day?'#2d6b3a':'#164427';
+  for(let i=0;i<40;i++){
+    const x = W*0.55 + i*W*0.01;
+    const h = 10*DPR + Math.sin(i*0.7)*4*DPR;
+    ctx.fillRect(x,H*0.5 - h, 2*DPR, h);
+  }
+}
+
+function drawLineAndBobber(dt){
+  const b = state.bobber;
+  // 파도/부력
+  const t = performance.now()/1000;
+  const wave = Math.sin(t*2 + b.x*0.002) * 0.6*DPR * state.wind;
+  b.vy += (b.restY - b.y)*0.02 + wave*0.05;
+  b.vy *= 0.92; b.y += b.vy;
+
+  // 입질 모션
+  if(state.bite && !state.hookset){
+    b.y += Math.sin(t*22)*1.2*DPR + 0.8*DPR;
+  }
+  if(state.hookset){
+    // 싸움: 좌우 급변
+    b.x += (Math.sin(t*8)*2 + (Math.random()-0.5)*2)*DPR*(1.2-state.drag);
+    // 장력 변화
+    state.tension = Math.max(0, Math.min(1, state.tension + (Math.random()-0.5)*0.06 + (0.5-state.drag)*0.02));
+  }
+
+  // 라인
+  ctx.strokeStyle = '#e8e0cf'; ctx.lineWidth = 2*DPR;
+  ctx.beginPath();
+  const rodX = W*0.1, rodY = H*0.75;
+  const midX = (rodX + b.x)/2, midY = (rodY + b.y)/2 - 20*DPR;
+  ctx.moveTo(rodX, rodY);
+  ctx.quadraticCurveTo(midX, midY, b.x, b.y);
+  ctx.stroke();
+
+  // 찌
+  ctx.save();
+  ctx.translate(b.x, b.y);
+  ctx.fillStyle = '#ff3535';
+  ctx.fillRect(-2*DPR, -16*DPR, 4*DPR, 16*DPR);
+  ctx.fillStyle = '#222';
+  ctx.fillRect(-2*DPR, -3*DPR, 4*DPR, 3*DPR);
+  ctx.restore();
+
+  // 손맛 게이지
+  if(state.hookset){
+    const gw = 160*DPR, gh = 12*DPR;
+    ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(W- gw - 20*DPR, 20*DPR, gw, gh);
+    const v = state.tension; // 0~1
+    ctx.fillStyle = v<0.7 ? '#9fe870' : v<0.85 ? '#ffd166' : '#ef476f';
+    ctx.fillRect(W- gw - 20*DPR, 20*DPR, gw*v, gh);
+  }
+}
+
+function drawRod(){
+  // 간단한 낚싯대 실루엣
+  ctx.strokeStyle = '#1a1814'; ctx.lineWidth = 4*DPR;
+  ctx.beginPath(); ctx.moveTo(W*0.06,H*0.86); ctx.lineTo(W*0.12,H*0.72); ctx.stroke();
+}
+
+/* ====== 루프 ====== */
+let last=performance.now();
+function loop(now){
+  const dt = Math.min(33, now-last); last=now;
+  ctx.clearRect(0,0,W,H);
+  drawBG(); drawRod();
+
+  if(state.cast){ drawLineAndBobber(dt); }
+  maybeBite(now);
+
+  // HUD
+  hud.innerHTML = [
+    `모드: ${state.day?'낮':'밤'}`,
+    `먹이: ${state.baits[state.baitIndex].name}`,
+    `드랙: ${Math.round(state.drag*100)}%`,
+    state.cast ? (state.hookset? '랜딩 중🎯' : (state.bite?'입질! 클릭해 훅셋 🐟':'대기 중…')) : '대기',
+  ].join('<br>');
+
+  requestAnimationFrame(loop);
+}
+loop(performance.now());
+
+function resetAll(){
+  state.cast=false; state.bite=false; state.hookset=false;
+  state.tension=0; state.lineLen=0;
+}
+
+/* 첫 진입: 찌 위치를 자연스럽게 중앙 근처로 */
+state.bobber.x = W*0.6; state.bobber.y = H*0.55; state.bobber.restY = state.bobber.y - 6*DPR;
+</script>
+</body>
+</html>
