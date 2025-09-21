@@ -1,92 +1,235 @@
-<!DOCTYPE html>
-<html lang="en">
+<!--
+WebGL Water over Real Photo (Three.js + custom shader)
+- Replace ./point.jpg with your spot photo (16:9 recommended)
+- Optional: replace ./float.png with your bobbing float PNG (transparent background)
+- Click to spawn ripples; tweak sliders to tune water
+-->
+<!doctype html>
+<html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>Loop Flow Spiral View</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>실사 포인트 + WebGL 물결</title>
   <style>
-    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
-    canvas { display: block; }
+    html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
+    #app { position: fixed; inset: 0; }
+    .ui { position: fixed; left: 12px; bottom: 12px; padding: 10px 12px; backdrop-filter: blur(8px); background: rgba(20,20,20,.35); border: 1px solid rgba(255,255,255,.15); border-radius: 12px; color: #fff; font: 12px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+    .ui label { display: grid; grid-template-columns: 90px 1fr 44px; align-items: center; gap: 8px; margin: 6px 0; }
+    .ui input[type=range] { width: 180px; }
+    .badge { position: fixed; right: 12px; bottom: 12px; color: #bbb; font: 12px/1 system-ui; opacity: .85; }
+    #float { position: fixed; width: clamp(24px, 3.5vw, 48px); pointer-events: none; transform: translate(-50%, -100%); filter: drop-shadow(0 2px 4px rgba(0,0,0,.6)); }
   </style>
 </head>
 <body>
-  <script src="https://unpkg.com/three@0.134.0/build/three.min.js"></script>
-  <script src="https://unpkg.com/three@0.134.0/examples/js/loaders/FontLoader.js"></script>
-  <script src="https://unpkg.com/three@0.134.0/examples/js/geometries/TextGeometry.js"></script>
-  <script>
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+  <div id="app"></div>
+  <img id="float" src="./float.png" alt="float" />
+  <div class="ui">
+    <label>Waves <input id="uAmp" type="range" min="0" max="1.5" step="0.01" value="0.55"><span id="ampV">0.55</span></label>
+    <label>Chop <input id="uChop" type="range" min="0" max="2.0" step="0.01" value="0.9"><span id="chopV">0.90</span></label>
+    <label>Speed <input id="uSpeed" type="range" min="0" max="2.0" step="0.01" value="0.6"><span id="speedV">0.60</span></label>
+    <label>Ripple <input id="uRipple" type="range" min="0" max="2.0" step="0.01" value="0.8"><span id="rippleV">0.80</span></label>
+  </div>
+  <div class="badge">Click: Ripples • Drag: Orbit</div>
 
-    const light = new THREE.PointLight(0xffffcc, 1, 100);
-    light.position.set(0, 10, 25);
-    scene.add(light);
+  <!-- Three.js -->
+  <script src="https://unpkg.com/three@0.161.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.161.0/examples/js/controls/OrbitControls.js"></script>
 
-    const spiral = new THREE.Group();
-    const turns = 10;
-    const pointsPerTurn = 40;
-    const spacing = 0.5;
-    const radiusStep = 0.2;
+  <!-- Vertex Shader -->
+  <script id="vsh" type="x-shader/x-vertex">
+  varying vec2 vUv;
+  varying vec3 vWorldPos;
+  uniform float uTime;
+  uniform float uAmp;    // wave amplitude
+  uniform float uChop;   // choppiness
+  uniform float uSpeed;  // wave speed
 
-    const events = [
-      "1929: Great Depression",
-      "1939: WWII Begins",
-      "1945: WWII Ends",
-      "1969: Moon Landing",
-      "1989: Berlin Wall Falls",
-      "2001: 9/11",
-      "2008: Financial Crisis",
-      "2020: COVID-19",
-      "2023: AI Boom"
-    ];
+  // 2D hash + noise
+  float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
+  float noise(in vec2 p){
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    float a = hash(i);
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
+    vec2 u = f*f*(3.0-2.0*f);
+    return mix(a, b, u.x) + (c - a)*u.y*(1.0 - u.x) + (d - b)*u.x*u.y;
+  }
 
-    const fontLoader = new THREE.FontLoader();
-    fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (font) {
-      for (let i = 0; i < turns * pointsPerTurn; i++) {
-        const angle = i * (2 * Math.PI / pointsPerTurn);
-        const radius = 1 + i * radiusStep / pointsPerTurn;
-        const x = radius * Math.cos(angle);
-        const y = radius * Math.sin(angle);
-        const z = i * spacing * 0.1;
+  void main(){
+    vUv = uv;
 
-        const geometry = new THREE.SphereGeometry(0.05, 8, 8);
-        const material = new THREE.MeshStandardMaterial({ color: 0xffd700 });
-        const sphere = new THREE.Mesh(geometry, material);
-        sphere.position.set(x, y, z);
-        spiral.add(sphere);
+    // base position
+    vec3 pos = position;
 
-        if (i % 40 === 0 && events[i / 40]) {
-          const textGeometry = new THREE.TextGeometry(events[i / 40], {
-            font: font,
-            size: 0.1,
-            height: 0.01
-          });
-          const textMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
-          const textMesh = new THREE.Mesh(textGeometry, textMaterial);
-          textMesh.position.set(x + 0.2, y + 0.2, z);
-          spiral.add(textMesh);
-        }
-      }
-    });
-
-    scene.add(spiral);
-    camera.position.z = 10;
-    camera.position.y = 2;
-
-    function animate() {
-      requestAnimationFrame(animate);
-      spiral.rotation.z += 0.002;
-      spiral.rotation.x += 0.001;
-      renderer.render(scene, camera);
+    // multi-octave choppy waves
+    float t = uTime * uSpeed;
+    float amp = uAmp;
+    float freq = 1.0;
+    float ch = uChop;
+    for(int i=0;i<5;i++){
+      vec2 dir = normalize(vec2(cos(float(i)*2.39996), sin(float(i)*2.39996)));
+      float n = noise(uv*freq + dir * t);
+      float w = (n*2.0-1.0);
+      // vertical displacement
+      pos.z += w * amp / float(i+1);
+      // horizontal choppiness (Gerstner-like)
+      pos.x += dir.x * w * amp * ch / float(i+1) * 0.2;
+      pos.y += dir.y * w * amp * ch / float(i+1) * 0.2;
+      freq *= 2.0; // next octave
     }
-    animate();
 
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+    vec4 wp = modelMatrix * vec4(pos, 1.0);
+    vWorldPos = wp.xyz;
+    gl_Position = projectionMatrix * viewMatrix * wp;
+  }
+  </script>
+
+  <!-- Fragment Shader -->
+  <script id="fsh" type="x-shader/x-fragment">
+  precision highp float;
+  varying vec2 vUv;
+  varying vec3 vWorldPos;
+  uniform sampler2D uPhoto;    // background spot photo
+  uniform vec2 uResolution;
+  uniform float uTime;
+  uniform float uRipple;
+
+  // simple normal from height (finite diff on uv)
+  float height(vec2 uv){
+    // pseudo height from photo luminance (for subtle refraction variation)
+    vec3 c = texture2D(uPhoto, uv).rgb;
+    return dot(c, vec3(0.2126,0.7152,0.0722)) * 0.03;
+  }
+
+  void main(){
+    // Screen-space uv (cover)
+    vec2 uv = vUv;
+
+    // derive normal-ish from photo (cheap) + time ripple
+    float t = uTime*0.35;
+    float h = height(uv + vec2(sin(t+uv.y*7.0), cos(t+uv.x*7.0))*0.002*uRipple);
+    vec2 grad = vec2(height(uv+vec2(0.001,0.0)) - h, height(uv+vec2(0.0,0.001)) - h);
+    vec2 flow = grad * 12.0; // magnify gradient for refraction
+
+    // additional dynamic ripples (moving sine fields)
+    flow += vec2(
+      sin(uv.y*40.0 + t*3.5),
+      cos(uv.x*40.0 - t*3.1)
+    ) * 0.002 * uRipple;
+
+    // refract the background photo
+    vec2 refrUv = uv + flow;
+    vec3 col = texture2D(uPhoto, refrUv).rgb;
+
+    // cheap Fresnel-ish highlight
+    float f = pow(1.0 - abs(dot(normalize(vec3(0.0,0.0,1.0)), normalize(vec3(flow,1.0)))), 2.0);
+    vec3 highlight = vec3(0.8,0.9,1.0) * f * 0.15;
+
+    gl_FragColor = vec4(col + highlight, 1.0);
+  }
+  </script>
+
+  <script>
+  (()=>{
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+    const app = document.getElementById('app');
+    const floatEl = document.getElementById('float');
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    camera.position.set(0, -1.2, 0.95);
+    camera.lookAt(0,0,0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(DPR);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    app.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = 0.05;
+    controls.minDistance = 0.35; controls.maxDistance = 3.0;
+    controls.enablePan = false;
+
+    const loader = new THREE.TextureLoader();
+    const photoTex = loader.load('./point.jpg', () => { photoTex.encoding = THREE.sRGBEncoding; photoTex.colorSpace = THREE.SRGBColorSpace || THREE.sRGBEncoding; photoTex.wrapS = photoTex.wrapT = THREE.MirroredRepeatWrapping; });
+
+    const uniforms = {
+      uTime: { value: 0 },
+      uAmp: { value: 0.55 },
+      uChop: { value: 0.9 },
+      uSpeed: { value: 0.6 },
+      uRipple: { value: 0.8 },
+      uPhoto: { value: photoTex },
+      uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+    };
+
+    const geo = new THREE.PlaneGeometry(2, 2, 256, 256);
+    const vsh = document.getElementById('vsh').textContent;
+    const fsh = document.getElementById('fsh').textContent;
+    const mat = new THREE.ShaderMaterial({
+      uniforms, vertexShader: vsh, fragmentShader: fsh,
+      transparent: true
     });
+    const mesh = new THREE.Mesh(geo, mat);
+    scene.add(mesh);
+
+    // UI bindings
+    const bind = (id, key, fmt=(v)=>(+v).toFixed(2)) => {
+      const el = document.getElementById(id);
+      const label = document.getElementById(id.replace('u','').toLowerCase()+ 'V') || el.nextElementSibling;
+      el.addEventListener('input', ()=>{ uniforms[key].value = parseFloat(el.value); if(label) label.textContent = fmt(el.value); });
+      return el;
+    };
+    bind('uAmp','uAmp'); bind('uChop','uChop'); bind('uSpeed','uSpeed'); bind('uRipple','uRipple');
+
+    // Click to add local ripple via brief parameter spike + float bobbing
+    let clickPulse = 0;
+    renderer.domElement.addEventListener('pointerdown', (e)=>{
+      clickPulse = 1.0;
+      // position the float sprite near the click (screen to normalized)
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
+      floatEl.style.left = `${e.clientX}px`;
+      floatEl.style.top = `${e.clientY}px`;
+      floatEl.animate([
+        { transform: 'translate(-50%, -100%)' },
+        { transform: 'translate(-50%, -110%)' },
+        { transform: 'translate(-50%, -100%)' }
+      ], { duration: 600, easing: 'ease-in-out' });
+    });
+
+    // Resize
+    function resize(){
+      const w = window.innerWidth, h = window.innerHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h; camera.updateProjectionMatrix();
+      uniforms.uResolution.value.set(w, h);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Animate
+    const clock = new THREE.Clock();
+    function tick(){
+      const dt = clock.getDelta();
+      uniforms.uTime.value += dt;
+
+      // click ripple decays
+      if(clickPulse > 0){
+        uniforms.uRipple.value = Math.min(2.0, uniforms.uRipple.value + clickPulse*0.4);
+        clickPulse *= 0.88;
+      } else {
+        // gentle return to UI slider value (handled by input); no-op
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+      requestAnimationFrame(tick);
+    }
+    tick();
+  })();
   </script>
 </body>
 </html>
