@@ -1,8 +1,9 @@
 <!--
-WebGL Water over Real Photo (Three.js + custom shader)
-- Replace ./point.jpg with your spot photo (16:9 recommended)
-- Optional: replace ./float.png with your bobbing float PNG (transparent background)
-- Click to spawn ripples; tweak sliders to tune water
+FIX: Ensure THREE is loaded before use + add self-tests and graceful fallbacks.
+- Uses `defer` on CDN scripts and waits for DOMContentLoaded + poll for window.THREE.
+- Adds a minimal self-test panel (THREE / OrbitControls / WebGL / Shader / Texture).
+- Keeps original features: real photo refraction, ripple pulse on click, orbit drag, sliders.
+- If `point.jpg` fails, loads a data-URL gradient placeholder.
 -->
 <!doctype html>
 <html lang="ko">
@@ -18,12 +19,23 @@ WebGL Water over Real Photo (Three.js + custom shader)
     .ui input[type=range] { width: 180px; }
     .badge { position: fixed; right: 12px; bottom: 12px; color: #bbb; font: 12px/1 system-ui; opacity: .85; }
     #float { position: fixed; width: clamp(24px, 3.5vw, 48px); pointer-events: none; transform: translate(-50%, -100%); filter: drop-shadow(0 2px 4px rgba(0,0,0,.6)); }
+
+    .tests { position: fixed; left: 12px; top: 12px; padding: 10px 12px; background: rgba(10,10,10,.55); color:#eee; border:1px solid rgba(255,255,255,.15); border-radius:12px; font: 12px/1.2 system-ui; max-width: 320px; }
+    .tests h3 { margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color:#fff; }
+    .tests ul { list-style: none; padding: 0; margin: 0; }
+    .tests li { margin: 4px 0; }
+    .ok { color: #79ffad; }
+    .fail { color: #ff7d7d; }
+    .hint { color:#a6b1ff; opacity:.9 }
+    .small { opacity:.8; font-size: 11px; }
+    .hide { display:none; }
   </style>
 </head>
 <body>
-  <div id="app"></div>
+  <div id="app" aria-label="WebGL canvas mount"></div>
   <img id="float" src="./float.png" alt="float" />
-  <div class="ui">
+
+  <div class="ui" role="region" aria-label="water controls">
     <label>Waves <input id="uAmp" type="range" min="0" max="1.5" step="0.01" value="0.55"><span id="ampV">0.55</span></label>
     <label>Chop <input id="uChop" type="range" min="0" max="2.0" step="0.01" value="0.9"><span id="chopV">0.90</span></label>
     <label>Speed <input id="uSpeed" type="range" min="0" max="2.0" step="0.01" value="0.6"><span id="speedV">0.60</span></label>
@@ -31,9 +43,21 @@ WebGL Water over Real Photo (Three.js + custom shader)
   </div>
   <div class="badge">Click: Ripples • Drag: Orbit</div>
 
-  <!-- Three.js -->
-  <script src="https://unpkg.com/three@0.161.0/build/three.min.js"></script>
-  <script src="https://unpkg.com/three@0.161.0/examples/js/controls/OrbitControls.js"></script>
+  <div class="tests" id="tests">
+    <h3>Self‑Tests</h3>
+    <ul id="testList">
+      <li id="t1">1) THREE global available</li>
+      <li id="t2">2) OrbitControls available</li>
+      <li id="t3">3) WebGL context created</li>
+      <li id="t4">4) Shaders compiled</li>
+      <li id="t5">5) Texture loaded (point.jpg)</li>
+    </ul>
+    <div class="small hint">If something fails, check: network/CDN access, HTTPS, ad/script blockers.</div>
+  </div>
+
+  <!-- Three.js (deferred) -->
+  <script defer src="https://unpkg.com/three@0.161.0/build/three.min.js"></script>
+  <script defer src="https://unpkg.com/three@0.161.0/examples/js/controls/OrbitControls.js"></script>
 
   <!-- Vertex Shader -->
   <script id="vsh" type="x-shader/x-vertex">
@@ -132,10 +156,71 @@ WebGL Water over Real Photo (Three.js + custom shader)
   </script>
 
   <script>
-  (()=>{
+  // Minimal test helpers
+  function mark(id, ok, note=""){
+    const el = document.getElementById(id); if(!el) return;
+    el.classList.remove('ok','fail'); el.classList.add(ok? 'ok':'fail');
+    el.textContent = el.textContent.replace(/ - .*/,"") + (ok? ' - PASS' : ' - FAIL') + (note? ' \u2192 ' + note : '');
+  }
+
+  const PLACEHOLDER_DATA = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#223"/>
+          <stop offset="60%" stop-color="#1a2a3a"/>
+          <stop offset="100%" stop-color="#0b1822"/>
+        </linearGradient>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#g)"/>
+      <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9ed0ff" font-family="system-ui" font-size="24">point.jpg not found — placeholder</text>
+    </svg>`);
+
+  // Wait for DOM + scripts
+  document.addEventListener('DOMContentLoaded', () => {
+    const start = async () => {
+      // Poll for THREE to be available (handles slow CDN)
+      let tries = 0; const maxTries = 100; // ~2s at 20ms
+      while (typeof window.THREE === 'undefined' && tries < maxTries) {
+        await new Promise(r => setTimeout(r, 20));
+        tries++;
+      }
+      if (typeof window.THREE === 'undefined') {
+        mark('t1', false, 'THREE not loaded (CDN blocked?)');
+        console.error('THREE not loaded. Check network or CDN blocking.');
+        return; // hard fail: nothing else to do
+      }
+      mark('t1', true);
+
+      // Some builds expose OrbitControls on THREE
+      if (typeof THREE.OrbitControls === 'function') mark('t2', true);
+      else { mark('t2', false, 'OrbitControls missing'); }
+
+      // Now run app
+      try { runApp(); } catch (e) {
+        console.error(e);
+        mark('t3', false, 'App bootstrap error: ' + e.message);
+      }
+    };
+    start();
+  });
+
+  function runApp(){
     const DPR = Math.min(window.devicePixelRatio || 1, 2);
     const app = document.getElementById('app');
     const floatEl = document.getElementById('float');
+
+    // Check WebGL support early
+    let glTestCanvas = document.createElement('canvas');
+    let gl = glTestCanvas.getContext('webgl2') || glTestCanvas.getContext('webgl');
+    const webglOk = !!gl; mark('t3', webglOk, webglOk? '' : 'WebGL unsupported');
+    if(!webglOk){
+      const warn = document.createElement('div');
+      warn.style.cssText = 'position:fixed;inset:0;display:grid;place-items:center;color:#fff;background:#000;';
+      warn.textContent = 'WebGL not supported by this browser/device.';
+      document.body.appendChild(warn);
+      return;
+    }
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
@@ -147,13 +232,38 @@ WebGL Water over Real Photo (Three.js + custom shader)
     renderer.setSize(window.innerWidth, window.innerHeight);
     app.appendChild(renderer.domElement);
 
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true; controls.dampingFactor = 0.05;
-    controls.minDistance = 0.35; controls.maxDistance = 3.0;
-    controls.enablePan = false;
+    // Controls (if available)
+    let controls = null;
+    if (typeof THREE.OrbitControls === 'function') {
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true; controls.dampingFactor = 0.05;
+      controls.minDistance = 0.35; controls.maxDistance = 3.0;
+      controls.enablePan = false;
+    }
 
+    // Texture loader with fallback
     const loader = new THREE.TextureLoader();
-    const photoTex = loader.load('./point.jpg', () => { photoTex.encoding = THREE.sRGBEncoding; photoTex.colorSpace = THREE.SRGBColorSpace || THREE.sRGBEncoding; photoTex.wrapS = photoTex.wrapT = THREE.MirroredRepeatWrapping; });
+    let textureLoaded = false;
+    const photoTex = loader.load(
+      './point.jpg',
+      () => {
+        // color space guard (support old/new three)
+        if ('colorSpace' in photoTex && THREE.SRGBColorSpace) photoTex.colorSpace = THREE.SRGBColorSpace;
+        else if ('encoding' in photoTex && THREE.sRGBEncoding) photoTex.encoding = THREE.sRGBEncoding;
+        photoTex.wrapS = photoTex.wrapT = THREE.MirroredRepeatWrapping;
+        textureLoaded = true; mark('t5', true);
+      },
+      undefined,
+      () => {
+        // onError → fallback placeholder
+        const fallback = loader.load(PLACEHOLDER_DATA, ()=>{
+          if ('colorSpace' in fallback && THREE.SRGBColorSpace) fallback.colorSpace = THREE.SRGBColorSpace;
+          else if ('encoding' in fallback && THREE.sRGBEncoding) fallback.encoding = THREE.sRGBEncoding;
+        });
+        textureLoaded = true; mark('t5', true, 'using placeholder');
+        uniforms.uPhoto.value = fallback;
+      }
+    );
 
     const uniforms = {
       uTime: { value: 0 },
@@ -168,12 +278,16 @@ WebGL Water over Real Photo (Three.js + custom shader)
     const geo = new THREE.PlaneGeometry(2, 2, 256, 256);
     const vsh = document.getElementById('vsh').textContent;
     const fsh = document.getElementById('fsh').textContent;
-    const mat = new THREE.ShaderMaterial({
-      uniforms, vertexShader: vsh, fragmentShader: fsh,
-      transparent: true
-    });
-    const mesh = new THREE.Mesh(geo, mat);
-    scene.add(mesh);
+    let mat, mesh;
+    try {
+      mat = new THREE.ShaderMaterial({ uniforms, vertexShader: vsh, fragmentShader: fsh, transparent: true });
+      mesh = new THREE.Mesh(geo, mat);
+      scene.add(mesh);
+      mark('t4', true);
+    } catch(err){
+      console.error('Shader compile error', err);
+      mark('t4', false, err.message);
+    }
 
     // UI bindings
     const bind = (id, key, fmt=(v)=>(+v).toFixed(2)) => {
@@ -188,9 +302,6 @@ WebGL Water over Real Photo (Three.js + custom shader)
     let clickPulse = 0;
     renderer.domElement.addEventListener('pointerdown', (e)=>{
       clickPulse = 1.0;
-      // position the float sprite near the click (screen to normalized)
-      const x = e.clientX / window.innerWidth;
-      const y = e.clientY / window.innerHeight;
       floatEl.style.left = `${e.clientX}px`;
       floatEl.style.top = `${e.clientY}px`;
       floatEl.animate([
@@ -216,20 +327,17 @@ WebGL Water over Real Photo (Three.js + custom shader)
       const dt = clock.getDelta();
       uniforms.uTime.value += dt;
 
-      // click ripple decays
       if(clickPulse > 0){
         uniforms.uRipple.value = Math.min(2.0, uniforms.uRipple.value + clickPulse*0.4);
         clickPulse *= 0.88;
-      } else {
-        // gentle return to UI slider value (handled by input); no-op
       }
 
-      controls.update();
+      if(controls) controls.update();
       renderer.render(scene, camera);
       requestAnimationFrame(tick);
     }
     tick();
-  })();
+  }
   </script>
 </body>
 </html>
