@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>RKF 채비 에디터 · Pride Edition</title>
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#121821; --ink:#dfe7f2; --muted:#8ca0b3; --accent:#66d9ff; --ok:#76e39e; --warn:#ffc857; --bad:#ff6b6b;
+    --grid:#1a2430; --edge:#1f2b3a;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,Segoe UI,Roboto,Apple SD Gothic Neo,Apple Color Emoji,sans-serif}
+  header{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--edge);background:linear-gradient(180deg,#0c121a,#0a0e14)}
+  header h1{font-size:16px;margin:0;letter-spacing:.3px}
+  header .subtitle{color:var(--muted)}
+  header .right{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  button,.chip,select{background:var(--panel);border:1px solid var(--edge);color:var(--ink);padding:8px 10px;border-radius:8px;cursor:pointer}
+  button:hover,.chip:hover,select:hover{border-color:#2b3a50}
+  .chip{font-size:12px}
+  main{display:grid;grid-template-columns:280px 1fr 320px;gap:12px;padding:12px;height:calc(100% - 56px)}
+  .panel{background:var(--panel);border:1px solid var(--edge);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+  .panel h2{font-size:13px;margin:0;padding:10px 12px;border-bottom:1px solid var(--edge);color:var(--muted);letter-spacing:.4px}
+  .list{padding:10px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;overflow:auto}
+  .card{border:1px solid var(--edge);border-radius:10px;padding:8px;background:#0e141c;display:flex;flex-direction:column;gap:6px;cursor:grab}
+  .card strong{font-size:12px}
+  .card small{color:var(--muted)}
+  .workspace{display:grid;grid-template-rows:240px 1fr;gap:10px;padding:10px}
+  .canvas-wrap{position:relative;border:1px dashed var(--grid);border-radius:10px;background:
+     linear-gradient(180deg,#0b1119 60%,#081018 60%),
+     repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(255,255,255,.03) 28px,rgba(255,255,255,.03) 29px);
+  }
+  canvas{display:block;width:100%;height:100%}
+  .slots{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+  .slot{border:1px dashed var(--grid);border-radius:8px;min-height:60px;padding:8px;background:#0d131c;display:flex;flex-direction:column;gap:6px}
+  .slot header{all:unset;display:flex;justify-content:space-between;align-items:center}
+  .slot header b{font-size:12px;color:var(--muted)}
+  .slot .pill{padding:6px 8px;border:1px solid var(--edge);border-radius:7px;background:#0c1219;display:flex;justify-content:space-between;gap:6px;align-items:center}
+  .slot .pill code{color:var(--accent);font-size:12px}
+  .slot.dragover{outline:2px dashed var(--accent)}
+  .meters{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .meter{background:#0d131c;border:1px solid var(--edge);border-radius:8px;padding:8px}
+  .meter b{font-size:12px;color:var(--muted)}
+  .bar{height:10px;background:#0a0f15;border-radius:999px;overflow:hidden;margin-top:6px;border:1px solid var(--edge)}
+  .bar>i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--bad),var(--warn),var(--ok));transition:width .25s}
+  .right-side{padding:10px;display:grid;grid-template-rows:auto auto 1fr;gap:10px}
+  .group{border:1px solid var(--edge);border-radius:10px;padding:8px;background:#0d131c}
+  .group h3{margin:0 0 6px 0;font-size:13px;color:var(--muted)}
+  .table{display:grid;grid-template-columns:120px 1fr;gap:6px;align-items:center}
+  .muted{color:var(--muted)}
+  .kbd{font:12px/1.2 ui-monospace,Menlo,monospace;background:#0b1016;border:1px solid var(--edge);padding:2px 6px;border-radius:6px}
+  .log{overflow:auto;background:#0b1016;border-radius:8px;border:1px solid var(--edge);padding:8px;font:12px/1.5 ui-monospace,Menlo,monospace}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .pill-btn{padding:6px 8px;border:1px solid var(--edge);border-radius:999px;cursor:pointer;background:#0c1219}
+  footer{position:fixed;right:12px;bottom:12px;background:#0c1219;border:1px solid var(--edge);border-radius:10px;padding:8px 10px;color:var(--muted)}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0c1219;border:1px solid var(--edge);padding:10px 12px;border-radius:10px;display:none}
+  .toast.show{display:block}
+</style>
+</head>
+<body>
+<header>
+  <h1>RKF 채비 에디터</h1>
+  <div class="subtitle">Retro Korean Fishing · Pride Edition</div>
+  <div class="right">
+    <button id="btnExport">Export JSON</button>
+    <button id="btnImport">Import JSON</button>
+    <button id="btnPreset">Demo Preset</button>
+    <select id="mode">
+      <option value="arcade">Arcade (가이드)</option>
+      <option value="strict">Strict (리얼)</option>
+    </select>
+    <span class="chip">⎈ 단축키: <span class="kbd">Space</span> 미리보기 · <span class="kbd">S</span> 챔질</span>
+  </div>
+</header>
+
+<main>
+  <!-- 왼쪽: 부품 팔레트 -->
+  <section class="panel">
+    <h2>부품 팔레트 (Drag & Drop)</h2>
+    <div id="palette" class="list" aria-label="palette"></div>
+  </section>
+
+  <!-- 가운데: 작업영역 -->
+  <section class="panel workspace">
+    <div class="canvas-wrap">
+      <canvas id="lake" width="900" height="240" aria-label="float preview"></canvas>
+    </div>
+    <div>
+      <div class="meters" style="margin-bottom:10px">
+        <div class="meter"><b>부력 밸런스</b><div class="bar"><i id="barBalance"></i></div><div class="muted" id="lblBalance"></div></div>
+        <div class="meter"><b>민감도</b><div class="bar"><i id="barSense"></i></div><div class="muted" id="lblSense"></div></div>
+        <div class="meter"><b>안정성</b><div class="bar"><i id="barStab"></i></div><div class="muted" id="lblStab"></div></div>
+      </div>
+      <div class="slots" id="slots"></div>
+    </div>
+  </section>
+
+  <!-- 오른쪽: 환경·입질·로그 -->
+  <aside class="panel right-side">
+    <div class="group">
+      <h3>환경 설정</h3>
+      <div class="table">
+        <div class="muted">수역</div>
+        <select id="envSelect"></select>
+        <div class="muted">바람</div>
+        <input id="wind" type="range" min="0" max="1" step="0.01" />
+        <div class="muted">유속</div>
+        <input id="current" type="range" min="0" max="1" step="0.01" />
+        <div class="muted">활성도 보정</div>
+        <input id="activity" type="range" min="-0.3" max="0.3" step="0.01" />
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div class="pill-btn" id="btnPreview">입질 미리보기</div>
+        <div class="pill-btn" id="btnStrike">챔질(S)</div>
+        <div class="pill-btn" id="btnRandomBite">랜덤 패턴</div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>입질 시그니처</h3>
+      <div class="row" id="sigRow"></div>
+    </div>
+
+    <div class="group" style="display:flex;flex-direction:column;min-height:0">
+      <h3>콘솔</h3>
+      <div id="log" class="log"></div>
+    </div>
+  </aside>
+</main>
+
+<footer>Tip: 부품을 슬롯에 드롭하면 즉시 계산 & 캔버스에 찌 동작 반영됩니다.</footer>
+<div id="toast" class="toast"></div>
+
+<script>
+/* -----------------------------
+   데이터 사전 (간단 JSON)
+------------------------------*/
+const Dict = {
+  hooks:{
+    hk_iy_06:{id:"hk_iy_06",name:"이열바늘 6호",weight_g:0.12,sharpness:0.85,type:"쌍바늘"},
+    hk_iy_05:{id:"hk_iy_05",name:"이열바늘 5호",weight_g:0.10,sharpness:0.9,type:"쌍바늘"},
+    hk_single_07:{id:"hk_single_07",name:"단바늘 7호",weight_g:0.08,sharpness:0.8,type:"단바늘"},
+  },
+  lines:{
+    ln_12:{id:"ln_12",material:"나일론",stretch:0.18,lb:1.2},
+    ln_16:{id:"ln_16",material:"카본",stretch:0.12,lb:1.6},
+  },
+  floats:{
+    fl_slim_12:{id:"fl_slim_12",name:"슬림 1.2g",buoyancy_g:1.2,sensitivity:0.85,stability:0.7,body:"슬림"},
+    fl_fat_16:{id:"fl_fat_16",name:"볼록 1.6g",buoyancy_g:1.6,sensitivity:0.6,stability:0.9,body:"볼록"},
+  },
+  sinkers:{
+    sk_sg_05:{id:"sk_sg_05",name:"봉돌 0.5g",weight_g:0.5,position:"유동"},
+    sk_fix_08:{id:"sk_fix_08",name:"봉돌 0.8g",weight_g:0.8,position:"고정"},
+  },
+  swivels:{
+    sw_std:{id:"sw_std",name:"표준 도래",friction:0.05},
+    sw_low:{id:"sw_low",name:"저마찰 도래",friction:0.02},
+  },
+  baits:{
+    bt_dough_sweet:{id:"bt_dough_sweet",name:"떡밥(단맛)",density:1.05,viscosity:0.7,dissolve_s:180},
+    bt_worm:{id:"bt_worm",name:"지렁이",density:1.03,viscosity:0.3,dissolve_s:999},
+  },
+  envs:[
+    {id:"lake_default",name:"잔잔한 저수지",wind:0.1,current:0.05,activity:0.1},
+    {id:"windy",name:"바람 부는 날",wind:0.6,current:0.2,activity:-0.05},
+    {id:"clear_cold",name:"맑고 차가움",wind:0.2,current:0.06,activity:-0.15},
+  ],
+  signatures:[
+    {id:"nibble_updown",name:"쫀득-깜빡",pattern:"+2,-2,+3,H500,-1",difficulty:0.5},
+    {id:"lift_and_hold",name:"들고-멈춤",pattern:"+6,H800",difficulty:0.3},
+    {id:"slam_down",name:"찍어-내림",pattern:"-10",difficulty:0.7},
+  ]
+};
+
+// 슬롯 정의
+const Slots = [
+  {key:"line", label:"라인"},
+  {key:"float",label:"찌"},
+  {key:"sinker",label:"봉돌"},
+  {key:"swivel",label:"도래"},
+  {key:"hooks",label:"바늘(1~2)"},
+  {key:"bait", label:"미끼"}
+];
+
+let Rig = { line:null,float:null,sinker:null,swivel:null,hooks:[],bait:null, depth_cm:140, leader_cm:15, tags:["정석"] };
+let Mode = "arcade";
+let CurrentSig = Dict.signatures[0].id;
+let Env = {...Dict.envs[0]};
+
+// UI helpers
+const $ = sel => document.querySelector(sel);
+const log = (msg) => { const el=$("#log"); el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}<br>`+el.innerHTML; };
+const toast = (msg)=>{const t=$("#toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1200);};
+
+// 팔레트 생성
+function makePalette(){
+  const Pal = $("#palette"); Pal.innerHTML="";
+  const groups = [
+    ["hooks",Dict.hooks],["lines",Dict.lines],["floats",Dict.floats],
+    ["sinkers",Dict.sinkers],["swivels",Dict.swivels],["baits",Dict.baits]
+  ];
+  for(const [type,bag] of groups){
+    for(const id in bag){
+      const d = bag[id];
+      const card = document.createElement("div");
+      card.className="card"; card.draggable=true;
+      card.dataset.type=type; card.dataset.id=id;
+      card.innerHTML = `<strong>${d.name||d.id}</strong><small>${type}</small><small class="muted">${id}</small>`;
+      card.addEventListener("dragstart",e=>{
+        e.dataTransfer.setData("text/plain", JSON.stringify({type,id}));
+      });
+      Pal.appendChild(card);
+    }
+  }
+}
+
+// 슬롯 렌더링
+function makeSlots(){
+  const root=$("#slots"); root.innerHTML="";
+  for(const s of Slots){
+    const el=document.createElement("div");
+    el.className="slot"; el.dataset.key=s.key;
+    el.innerHTML = `
+      <header><b>${s.label}</b><span class="muted">${s.key}</span></header>
+      <div class="holder"></div>
+    `;
+    // 드롭 영역
+    el.addEventListener("dragover",e=>{e.preventDefault(); el.classList.add("dragover");});
+    el.addEventListener("dragleave",()=>el.classList.remove("dragover"));
+    el.addEventListener("drop",e=>{
+      e.preventDefault(); el.classList.remove("dragover");
+      try{
+        const {type,id} = JSON.parse(e.dataTransfer.getData("text/plain"));
+        assignToSlot(s.key,type,id);
+      }catch(_){}
+    });
+    root.appendChild(el);
+  }
+  refreshSlots();
+}
+
+function assignToSlot(slotKey,type,id){
+  // 타입-슬롯 간 매핑 검증
+  const map = { line:"lines", float:"floats", sinker:"sinkers", swivel:"swivels", hooks:"hooks", bait:"baits" };
+  if(!map[slotKey]) return toast("알 수 없는 슬롯");
+  if(map[slotKey]!==type) return toast(`이 슬롯에는 ${type} 대신 ${map[slotKey]} 종류가 필요합니다`);
+  if(slotKey==="hooks"){
+    if(Rig.hooks.length>=2) Rig.hooks.shift();
+    Rig.hooks.push(id);
+  }else{
+    Rig[slotKey]=id;
+  }
+  refreshSlots(); calcAndPaint(); log(`슬롯 '${slotKey}'에 ${id} 장착`);
+}
+
+function removeFromSlot(slotKey, idx=null){
+  if(slotKey==="hooks"){
+    if(idx==null) Rig.hooks=[]; else Rig.hooks.splice(idx,1);
+  }else{
+    Rig[slotKey]=null;
+  }
+  refreshSlots(); calcAndPaint();
+}
+
+function refreshSlots(){
+  for(const slot of $("#slots").children){
+    const key = slot.dataset.key;
+    const hold = slot.querySelector(".holder");
+    hold.innerHTML = "";
+    if(key==="hooks"){
+      if((Rig.hooks||[]).length===0){
+        hold.innerHTML=`<div class="muted">바늘을 드롭하세요 (최대 2)</div>`;
+      }else{
+        Rig.hooks.forEach((id,i)=>{
+          const d=Dict.hooks[id];
+          const pill=document.createElement("div");
+          pill.className="pill";
+          pill.innerHTML=`<span>${d.name}</span><code>${id}</code>`;
+          pill.title="클릭하면 제거"; pill.style.cursor="pointer";
+          pill.onclick=()=>removeFromSlot("hooks",i);
+          hold.appendChild(pill);
+        });
+      }
+    }else{
+      const id = Rig[key];
+      if(!id){
+        hold.innerHTML=`<div class="muted">부품을 드롭하세요</div>`;
+      }else{
+        const d = Dict[key+"s"] ? Dict[key+"s"][id] : Dict[key][id];
+        const pill=document.createElement("div");
+        pill.className="pill";
+        pill.innerHTML=`<span>${(d && (d.name||d.id))||id}</span><code>${id}</code>`;
+        pill.title="클릭하면 제거"; pill.style.cursor="pointer";
+        pill.onclick=()=>removeFromSlot(key);
+        hold.appendChild(pill);
+      }
+    }
+  }
+}
+
+/* -----------------------------
+   룰 엔진 (간소 물리)
+------------------------------*/
+function compileRig(rig){
+  const F = Dict.floats[rig.float]||{buoyancy_g:0,sensitivity:0,stability:0};
+  const S = Dict.sinkers[rig.sinker]||{weight_g:0};
+  const L = Dict.lines[rig.line]||{stretch:0.2};
+  const Hs = (rig.hooks||[]).map(id=>Dict.hooks[id]).filter(Boolean);
+  const B = Dict.baits[rig.bait];
+
+  const hookWeight = Hs.reduce((a,h)=>a+(h.weight_g||0),0);
+  const baitLoad = B ? (B.density||1.0)*0.1 : 0; // 단순 추정 하중
+  const effectiveLoad = (S.weight_g||0) + hookWeight + baitLoad;
+  const buoyancy = (F.buoyancy_g||0);
+  const balance = buoyancy - effectiveLoad; // +면 뜸, -면 가라앉음
+
+  // 0..1 정규화 (대충 보기 좋게)
+  const balanceScore = Math.max(0, Math.min(1, (balance + 0.5)/1.5));
+  const sens = (F.sensitivity||0) * (1 - ((S.weight_g||0)/2.0)) * (1 - (L.stretch||0.2));
+  const sensitivityScore = Math.max(0, Math.min(1, sens));
+  const stabilityScore = Math.max(0, Math.min(1, (F.stability||0) * (1 - Env.wind*0.5) * (1 - Env.current*0.5)));
+
+  // 훅셋 확률 (참고치)
+  const sharp = Hs.length? (Hs.reduce((a,h)=>a+(h.sharpness||0),0)/Hs.length) : 0.7;
+  const hookSetProb = Math.max(0, Math.min(1, sensitivityScore*0.7 + sharp*0.3));
+
+  return {balance,balanceScore,sensitivityScore,stabilityScore,hookSetProb, parts:{F,S,L,Hs,B}};
+}
+
+function updateMeters(stats){
+  $("#barBalance").style.width = (stats.balanceScore*100)+"%";
+  $("#barSense").style.width   = (stats.sensitivityScore*100)+"%";
+  $("#barStab").style.width    = (stats.stabilityScore*100)+"%";
+  $("#lblBalance").textContent = `잔부력 ${stats.balance.toFixed(2)} g (이상적: 약 0~+0.2g)`;
+  $("#lblSense").textContent   = `민감도 ${(stats.sensitivityScore*100|0)}%`;
+  $("#lblStab").textContent    = `안정성 ${(stats.stabilityScore*100|0)}% (바람/유속 반영)`;
+}
+
+/* -----------------------------
+   캔버스: 찌 애니메이션 & 입질 패턴
+------------------------------*/
+const lake = $("#lake"); const ctx = lake.getContext("2d",{alpha:false});
+let anim = { y: 120, vy:0, t:0, playing:false, queue:[], holdUntil:0 };
+
+function drawLake(){
+  // 배경 수면 라인
+  ctx.clearRect(0,0,lake.width,lake.height);
+  // 수면 (상단 60%)
+  ctx.fillStyle = "#0b1119";
+  ctx.fillRect(0,0,lake.width, Math.floor(lake.height*0.6));
+  // 수중
+  ctx.fillStyle = "#081018";
+  ctx.fillRect(0,Math.floor(lake.height*0.6),lake.width,lake.height);
+
+  // 그리드 물결
+  const h = lake.height;
+  ctx.fillStyle = "rgba(255,255,255,0.03)";
+  for(let y=0;y<Math.floor(h*0.6);y+=28){ ctx.fillRect(0,y,lake.width,1); }
+
+  // 찌(간단 막대)
+  const x = lake.width*0.5;
+  const y = anim.y;
+  // 바람/유속 노이즈
+  const noise = (Math.sin(anim.t*0.015)*Env.wind*6) + (Math.cos(anim.t*0.02)*Env.current*4);
+  const tipX = x + noise;
+  // 막대
+  ctx.strokeStyle = "#e2f0ff"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(tipX, y-40); ctx.lineTo(tipX, y+40); ctx.stroke();
+  // 팁
+  ctx.strokeStyle = "#ff5c5c"; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(tipX, y-42); ctx.lineTo(tipX, y-30); ctx.stroke();
+}
+
+function step(){
+  anim.t += 1;
+  // 기본 부력 위치(정규화) = 밸런스에 따라 수면 위/아래
+  const stats = compileRig(Rig);
+  // 목표 y: 수면 중앙(=120) 기준으로 balance가 +면 위로 조금 솟음, -면 가라앉음
+  const target = 120 - stats.balance*18;
+  anim.y += (target - anim.y)*0.08; // 스프링
+
+  // 입질 큐 처리
+  if(anim.queue.length>0){
+    // hold 중?
+    if(anim.holdUntil>anim.t){
+      // 유지
+    }else{
+      const cmd = anim.queue.shift();
+      if(cmd.type==="delta"){
+        anim.y += cmd.value; // 즉시 변위
+      }else if(cmd.type==="hold"){
+        anim.holdUntil = anim.t + cmd.ms/16; // 60fps 가정치 근사
+      }
+    }
+  }else{
+    anim.playing=false;
+  }
+
+  drawLake();
+  requestAnimationFrame(step);
+}
+
+function parsePattern(str){
+  // 예: "+2,-2,+3,H500,-1"
+  return str.split(",").map(tok=>{
+    tok = tok.trim();
+    if(/^H\d+$/i.test(tok)) return {type:"hold",ms:parseInt(tok.slice(1),10)};
+    const n = parseFloat(tok);
+    if(!isNaN(n)) return {type:"delta",value:n};
+    if(tok.startsWith("+")||tok.startsWith("-")) return {type:"delta",value:parseFloat(tok)};
+    return null;
+  }).filter(Boolean);
+}
+
+function playSignature(id){
+  const sig = Dict.signatures.find(s=>s.id===id)||Dict.signatures[0];
+  anim.queue = parsePattern(sig.pattern);
+  anim.playing=true; log(`입질 패턴 실행: ${sig.name}`);
+}
+
+/* -----------------------------
+   환경 UI
+------------------------------*/
+function buildEnvUI(){
+  const sel = $("#envSelect");
+  sel.innerHTML = Dict.envs.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
+  sel.value = Env.id;
+  sel.onchange = ()=>{
+    const found = Dict.envs.find(x=>x.id===sel.value);
+    if(found){ Env = {...found}; syncEnvSliders(); log(`환경 변경: ${Env.name}`); }
+  };
+  $("#wind").value = Env.wind;
+  $("#current").value = Env.current;
+  $("#activity").value = Env.activity;
+  $("#wind").oninput = e=>{ Env.wind = parseFloat(e.target.value); };
+  $("#current").oninput = e=>{ Env.current = parseFloat(e.target.value); };
+  $("#activity").oninput = e=>{ Env.activity = parseFloat(e.target.value); };
+}
+function syncEnvSliders(){
+  $("#wind").value = Env.wind;
+  $("#current").value = Env.current;
+  $("#activity").value = Env.activity;
+  $("#envSelect").value = Env.id;
+}
+
+/* -----------------------------
+   시그니처 목록 / 랜덤
+------------------------------*/
+function buildSigRow(){
+  const row=$("#sigRow"); row.innerHTML="";
+  Dict.signatures.forEach(sig=>{
+    const btn=document.createElement("div");
+    btn.className="pill-btn"; btn.textContent=sig.name;
+    btn.onclick=()=>{ CurrentSig=sig.id; playSignature(sig.id); };
+    row.appendChild(btn);
+  });
+}
+function randomSignature(){
+  const pick = Dict.signatures[(Math.random()*Dict.signatures.length)|0];
+  CurrentSig = pick.id; playSignature(pick.id);
+}
+
+/* -----------------------------
+   Export/Import & Preset
+------------------------------*/
+function exportJSON(){
+  const data = {rig:Rig, mode:Mode, env:Env};
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "rkf_rig.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("JSON 내보내기 완료");
+}
+function importJSON(){
+  const inp = document.createElement("input");
+  inp.type="file"; inp.accept="application/json";
+  inp.onchange = ()=>{
+    const f = inp.files[0]; if(!f) return;
+    const fr = new FileReader();
+    fr.onload = ()=>{
+      try{
+        const j = JSON.parse(fr.result);
+        Rig = j.rig||Rig; Mode = j.mode||Mode; Env = j.env||Env;
+        $("#mode").value = Mode; syncEnvSliders(); refreshSlots(); calcAndPaint();
+        toast("불러오기 완료");
+      }catch(err){ toast("JSON 파싱 실패"); }
+    };
+    fr.readAsText(f);
+  };
+  inp.click();
+}
+function demoPreset(){
+  Rig = { line:"ln_12", float:"fl_slim_12", sinker:"sk_sg_05", swivel:"sw_std", hooks:["hk_iy_06"], bait:"bt_dough_sweet", depth_cm:140, leader_cm:15, tags:["정석","민감"] };
+  refreshSlots(); calcAndPaint();
+  toast("데모 채비 로드");
+}
+
+/* -----------------------------
+   판정/챔질
+------------------------------*/
+let lastStrikeOk=false;
+function strike(){
+  const stats = compileRig(Rig);
+  // 모드별 보정
+  const timing = Mode==="arcade" ? 0.85 : 0.55; // 사용자가 잘 눌렀다고 가정한 가중치
+  const prob = Math.max(0, Math.min(1, stats.hookSetProb*0.7 + timing*0.3));
+  const ok = Math.random() < prob;
+  lastStrikeOk = ok;
+  if(ok){ toast("훅셋 성공! 🎣"); log(`챔질 성공 (p=${prob.toFixed(2)})`); }
+  else{ toast("훅셋 실패"); log(`챔질 실패 (p=${prob.toFixed(2)})`); }
+}
+
+/* -----------------------------
+   메인 바인딩
+------------------------------*/
+function calcAndPaint(){
+  const stats = compileRig(Rig);
+  updateMeters(stats);
+  // 잔부력에 맞춰 기본 위치 약간 조정
+  drawLake();
+}
+
+function bindTop(){
+  $("#btnExport").onclick=exportJSON;
+  $("#btnImport").onclick=importJSON;
+  $("#btnPreset").onclick=demoPreset;
+  $("#mode").onchange=e=>{ Mode=e.target.value; toast(`모드: ${Mode}`); };
+}
+function bindRight(){
+  $("#btnPreview").onclick=()=>playSignature(CurrentSig);
+  $("#btnStrike").onclick=strike;
+  $("#btnRandomBite").onclick=randomSignature;
+}
+function bindKeys(){
+  window.addEventListener("keydown",e=>{
+    if(e.code==="Space"){ e.preventDefault(); playSignature(CurrentSig); }
+    if(e.key==="s"||e.key==="S"){ strike(); }
+    if(e.key==="1"){ $("#mode").value="arcade"; Mode="arcade"; toast("Arcade"); }
+    if(e.key==="2"){ $("#mode").value="strict"; Mode="strict"; toast("Strict"); }
+  });
+}
+
+/* -----------------------------
+   init
+------------------------------*/
+function init(){
+  makePalette(); makeSlots(); buildEnvUI(); buildSigRow(); bindTop(); bindRight(); bindKeys();
+  calcAndPaint(); requestAnimationFrame(step);
+  log("에디터 준비 완료. 팔레트에서 슬롯으로 드래그해 조립하세요.");
+}
+init();
+</script>
+</body>
+</html>
