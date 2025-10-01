@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>🔥 불타는 소꿉놀이 · DOT MODE</title>
+<style>
+  /* ----- 기본 레트로 룩 ----- */
+  :root {
+    /* 4색 팔레트 느낌 */
+    --bg:#0d0d0d; --fg:#e5f4d3; --a:#9ae66e; --b:#4fb477; --accent:#ffdd33;
+  }
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family: "Chicago","Monaco","Courier New",monospace;
+    letter-spacing:.5px;
+  }
+  .wrap{max-width:720px;margin:0 auto;padding:12px 16px;position:relative}
+
+  /* 상단 바 */
+  header{display:block;border:2px solid var(--a);padding:8px;margin:8px 0;background:#000}
+  h1{margin:0;font-size:20px}
+  .blink{animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* 버튼 & 링크 */
+  a,button{color:var(--bg);background:var(--a);border:2px solid var(--b);padding:6px 10px;
+    text-decoration:none;display:inline-block;cursor:pointer}
+  a:hover,button:hover{filter:brightness(1.1)}
+  .ghost{background:transparent;color:var(--a)}
+  .badge{display:inline-block;border:1px solid var(--a);color:var(--a);padding:2px 6px;margin-right:6px}
+
+  /* 박스 */
+  .panel{border:2px solid var(--a);padding:10px;margin:10px 0;background:#000}
+
+  /* 스캔라인(끄고 켤 수 있게) */
+  .scanlines:before{
+    content:""; pointer-events:none; position:fixed; inset:0; z-index:999;
+    background: repeating-linear-gradient(
+      to bottom, rgba(255,255,255,.06), rgba(255,255,255,.06) 1px,
+      rgba(0,0,0,0) 1px, rgba(0,0,0,0) 3px
+    );
+    mix-blend-mode: overlay;
+  }
+
+  /* 픽셀 이미지 매끈해짐 방지 (구형 사파리는 완벽 지원 X → 캔버스 방식으로 보완) */
+  .pixelated {
+    image-rendering: pixelated;         /* 최신 */
+    image-rendering: -moz-crisp-edges;  /* FF */
+    image-rendering: crisp-edges;       /* 표준 */
+    -ms-interpolation-mode: nearest-neighbor; /* IE */
+  }
+
+  /* D-Pad */
+  .pad {display:inline-grid;grid-template-columns:40px 40px 40px;grid-template-rows:40px 40px 40px;gap:6px}
+  .pad button{width:40px;height:40px;text-align:center;padding:0;font-weight:bold}
+
+  /* 마퀴(추억용) */
+  marquee{border:1px dashed var(--a); padding:6px; color:var(--accent); background:#111}
+</style>
+
+<body class="scanlines">
+<div class="wrap">
+  <header>
+    <div class="badge">DOT 1.0</div>
+    <div class="badge">ES5 ONLY</div>
+    <div class="badge">iPhone 4 OK</div>
+    <h1>🔥 불타는 소꿉놀이 <span class="blink">_</span></h1>
+  </header>
+
+  <marquee behavior="scroll" direction="left" scrollamount="4">
+    ⌛ 도트 세상에 오신 것을 환영합니다. 좌우로 움직여보세요! ⌛
+  </marquee>
+
+  <div class="panel">
+    <h2 style="margin:0 0 8px">픽셀 캔버스 데모</h2>
+    <canvas id="screen" width="128" height="128" style="border:2px solid var(--a);background:#001a0c;"></canvas>
+    <div style="margin-top:8px">
+      <div class="pad">
+        <span></span><button id="up">▲</button><span></span>
+        <button id="left">◀</button><button id="toggle">■</button><button id="right">▶</button>
+        <span></span><button id="down">▼</button><span></span>
+      </div>
+      <button class="ghost" id="scan">SCANLINES ON/OFF</button>
+    </div>
+    <p style="margin:8px 0 0;font-size:12px;opacity:.8">
+      * 도트 선명도는 <b>캔버스의 최근접 보간</b>으로 보장합니다(구형 iOS 사파리 호환).
+    </p>
+  </div>
+
+  <div class="panel">
+    <h2 style="margin:0 0 8px">다운로드 존</h2>
+    <p style="margin:0 0 8px">서버가 <code>Content-Disposition: attachment</code> 헤더를 넣도록 설정해두면,
+      아래 링크는 아이폰4에서도 저장/열기가 떠요.</p>
+    <a href="/sample.zip">sample.zip</a>
+    <a class="ghost" href="#" id="tip">TIP 보기</a>
+    <div id="tipBox" style="display:none;margin-top:8px;font-size:12px;opacity:.9">
+      Nginx 예시<br>
+      <code>location ~* \.(zip|pdf|png)$ { types { } default_type application/octet-stream; add_header Content-Disposition "attachment"; }</code>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 style="margin:0 0 8px">게스트북 (로컬 저장)</h2>
+    <form onsubmit="return addMsg();">
+      <input id="nick" maxlength="12" placeholder="닉네임">
+      <input id="msg" maxlength="60" placeholder="한마디">
+      <button type="submit">기록</button>
+      <button type="button" class="ghost" id="clear">지우기</button>
+    </form>
+    <ul id="list" style="list-style:none;padding-left:0;margin:8px 0"></ul>
+  </div>
+</div>
+
+<script>
+/* =========================
+   1) 도트 캔버스 (ES5 전용)
+   ========================= */
+(function(){
+  var cv = document.getElementById('screen');
+  var ctx = cv.getContext('2d');
+
+  // 화면 확대(Nearest Neighbor) — CSS 확대 시 iOS7가 흐려질 수 있어,
+  // JS로 확대 버퍼를 그려 넣는 방식을 사용.
+  var SCALE = 4; // 내부 픽셀 1 → 화면 4배
+  var W = 32, H = 32; // 내부 그리드
+  var buf = document.createElement('canvas');
+  buf.width = W; buf.height = H;
+  var bctx = buf.getContext('2d');
+
+  // 보간 끄기
+  ctx.imageSmoothingEnabled = false;
+  bctx.imageSmoothingEnabled = false;
+
+  // 간단 스프라이트(하트) 8x8
+  var heart = [
+    "01100110",
+    "11111111",
+    "11111111",
+    "11111111",
+    "01111110",
+    "00111100",
+    "00011000",
+    "00000000"
+  ];
+  // 팔레트
+  var colBg = "#001a0c", col1 = "#9ae66e", col2 = "#4fb477";
+
+  var px = 12, py = 12; // 위치
+  var showBox = true;
+
+  function clear(g){ g.fillStyle = colBg; g.fillRect(0,0,W,H); }
+
+  function drawSprite(g, sx, sy){
+    var x,y;
+    for (y=0;y<heart.length;y++){
+      for (x=0;x<heart[y].length;x++){
+        if (heart[y].charAt(x)==='1'){
+          g.fillStyle = (x+y)%2===0 ? col1 : col2;
+          g.fillRect(sx+x, sy+y, 1, 1);
+        }
+      }
+    }
+  }
+  function draw(){
+    clear(bctx);
+    if (showBox) {
+      // 테두리 상자
+      bctx.strokeStyle = col2;
+      bctx.strokeRect(1,1,W-2,H-2);
+    }
+    drawSprite(bctx, px, py);
+
+    // 버퍼→실화면에 최근접 확대
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ctx.drawImage(buf, 0, 0, W, H, 0, 0, W*SCALE, H*SCALE);
+  }
+  draw();
+
+  // 컨트롤러
+  function clamp(v,min,max){ return v<min?min:(v>max?max:v); }
+  function move(dx,dy){
+    px = clamp(px+dx, 0, W-8);
+    py = clamp(py+dy, 0, H-8);
+    draw();
+  }
+  document.getElementById('up').onclick    = function(){ move(0,-1); };
+  document.getElementById('down').onclick  = function(){ move(0, 1); };
+  document.getElementById('left').onclick  = function(){ move(-1,0); };
+  document.getElementById('right').onclick = function(){ move( 1,0); };
+  document.getElementById('toggle').onclick= function(){ showBox=!showBox; draw(); };
+
+  // 스캔라인 토글
+  document.getElementById('scan').onclick = function(){
+    var b = document.body;
+    if ((' '+b.className+' ').indexOf(' scanlines ')>-1){
+      b.className = b.className.replace('scanlines','').replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'');
+    } else {
+      b.className += ' scanlines';
+    }
+  };
+})();
+
+/* =========================
+   2) 간이 게스트북(로컬스토리지)
+   ========================= */
+(function(){
+  var key='dot_guest_v1';
+  var $list = document.getElementById('list');
+  function load(){
+    try{var s=localStorage.getItem(key); return s?JSON.parse(s):[];}catch(e){return [];}
+  }
+  function save(arr){
+    try{localStorage.setItem(key, JSON.stringify(arr));}catch(e){}
+  }
+  function render(arr){
+    $list.innerHTML='';
+    for (var i=0;i<arr.length;i++){
+      var li=document.createElement('li');
+      li.style.border='1px solid #4fb477';
+      li.style.padding='4px 6px'; li.style.margin='6px 0'; li.style.background='#000';
+      li.appendChild(document.createTextNode('['+arr[i].t+'] '+arr[i].n+': '+arr[i].m));
+      $list.appendChild(li);
+    }
+  }
+  window.addMsg=function(){
+    var n=document.getElementById('nick').value||'anon';
+    var m=document.getElementById('msg').value||'';
+    if(!m){return false;}
+    var arr=load();
+    arr.unshift({n:n,m:m,t:(new Date()).toLocaleString()});
+    arr=arr.slice(0,50); save(arr); render(arr);
+    document.getElementById('msg').value='';
+    return false;
+  };
+  document.getElementById('clear').onclick=function(){ save([]); render([]); };
+  render(load());
+})();
+
+/* =========================
+   3) 팁 토글
+   ========================= */
+(function(){
+  var tip=document.getElementById('tip'), box=document.getElementById('tipBox');
+  tip.onclick=function(e){ e.preventDefault ? e.preventDefault() : (e.returnValue=false);
+    box.style.display = box.style.display==='none' ? 'block' : 'none';
+  };
+})();
+</script>
+</body>
+</html>
