@@ -1,0 +1,45 @@
+[
+  { "type": "empty" },
+  {
+    "type": "text",
+    "title": "사고역학 — 불타는 모터의 시대",
+    "body": "생각은 힘이다. 그러나 닿을 곳 없는 힘은, 결국 자신을 태운다. 이 책은 한 사람의 시선으로 목격한 장면들을 통해, 생각의 에너지와 삶의 저항이 맞물리는 순간을 기록한다.",
+    "align": "center"
+  },
+  {
+    "type": "text",
+    "title": "① 탈선의 목격",
+    "body": "나는 미니카를 달리게 했다. 리듬은 안정적이었고, 생각은 그 리듬에 기대어 천천히 흘렀다. 그러나 작은 ‘틱’ 소리 하나가 모든 질서를 바꾸었다. 궤도를 벗어난 차, 그리고 제자리를 잃은 힘."
+  },
+  {
+    "type": "image",
+    "src": "https://your-image-url/derailed.jpg",
+    "caption": "탈선한 궤도, 뒤집힌 질서.",
+    "imageFit": "cover"
+  },
+  {
+    "type": "spreadImage",
+    "src": "https://your-image-url/burning-motor.jpg",
+    "caption": "혼자 돌다 타버린 모터.",
+    "imageFit": "cover"
+  },
+  {
+    "type": "image",
+    "src": "https://your-image-url/glow-face.jpg",
+    "caption": "잔열에 비친 나의 눈.",
+    "imageFit": "cover"
+  },
+  {
+    "type": "text",
+    "title": "② 잔열의 얼굴",
+    "body": "불빛이 내 얼굴을 스쳤다. 나는 원인이 아니었고, 해결자도 아니었다. 단지 목격자였다. 생각은 내 안에서 돌지 않았다. 그저 눈동자에 머물렀다.",
+    "align": "right"
+  },
+  { "type": "empty" },
+  {
+    "type": "text",
+    "title": "③ 공진의 예고",
+    "body": "옛 세상은 기어로 돌았다. 새 세상은 파동으로 이어진다. 마찰은 열을 만들고, 공진은 빛을 만든다. 나의 생각은 이윽고, 누군가의 생각과 울릴 것이다.",
+    "align": "center"
+  }
+]
