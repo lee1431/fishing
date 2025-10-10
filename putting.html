@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>STANCE GOLF — 퍼팅 챌린지</title>
+<style>
+  :root{
+    --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --accent:#16a34a; --bg:#f6f8fb;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px;display:grid;gap:14px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .brand{font-weight:900;letter-spacing:.2px}
+  .pill{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);padding:8px 12px;border-radius:999px}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 8px 28px #0f172a12}
+  .panel header{padding:10px 14px;border-bottom:1px solid var(--line);background:#f9fafb}
+  .grid{display:grid;grid-template-columns:1fr;gap:14px}
+  @media(min-width:900px){.grid{grid-template-columns:2fr 1fr}}
+  canvas{width:100%;height:auto;display:block;background:linear-gradient(#bfe3a6,#7dcf6a)}
+  .hud{display:grid;gap:10px;padding:12px}
+  .stat{display:flex;justify-content:space-between;background:#fbfeff;border:1px dashed var(--line);padding:10px;border-radius:12px}
+  .btns{display:flex;gap:8px;flex-wrap:wrap}
+  button{padding:10px 14px;border:0;border-radius:12px;background:var(--accent);color:white;font-weight:700;cursor:pointer}
+  .ghost{background:#eef7f0;color:#065f46}
+  .tip{font-size:12px;color:var(--muted)}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:#111827;color:#fff;padding:10px 12px;border-radius:10px;opacity:0;transition:opacity .2s}
+  .toast.show{opacity:1}
+  .help{padding:12px;font-size:14px;color:var(--muted)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="pill"><span class="brand">STANCE GOLF</span><span class="tip">퍼팅 챌린지</span></div>
+      <div class="tip">드래그하여 방향·파워 설정 → 놓아 샷!</div>
+    </header>
+
+    <div class="grid">
+      <section class="panel">
+        <header>
+          <strong>그린</strong>
+          <span class="tip">Seed=<span id="seedOut">—</span> · 경사 <span id="slopeOut">0</span>°</span>
+        </header>
+        <canvas id="game" width="900" height="520"></canvas>
+        <div class="help">💡 팁: 화면을 드래그하면 가이드 화살표가 나타납니다. 모바일/PC 모두 지원.</div>
+      </section>
+
+      <aside class="panel">
+        <header><strong>스코어 & 설정</strong></header>
+        <div class="hud">
+          <div class="stat"><span>Hole</span><b id="holeNum">1 / 3</b></div>
+          <div class="stat"><span>Par</span><b id="parOut">2</b></div>
+          <div class="stat"><span>Strokes</span><b id="strokesOut">0</b></div>
+          <div class="stat"><span>Best</span><b id="bestOut">—</b></div>
+          <div class="btns">
+            <button id="reset">리셋</button>
+            <button class="ghost" id="next">다음 홀</button>
+            <button class="ghost" id="shuffle">코스 셔플</button>
+          </div>
+          <div class="stat"><span>난이도</span>
+            <select id="difficulty" style="padding:8px;border:1px solid var(--line);border-radius:10px">
+              <option value="easy">Easy</option>
+              <option value="normal" selected>Normal</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+          <div class="tip">난이도는 마찰, 경사, 홀크기, 러프 강도를 조정합니다.</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">Nice!</div>
+
+<script>
+(function(){
+  const cvs = document.getElementById('game');
+  const ctx = cvs.getContext('2d');
+  const strokeEl = document.getElementById('strokesOut');
+  const parEl = document.getElementById('parOut');
+  const holeEl = document.getElementById('holeNum');
+  const bestEl = document.getElementById('bestOut');
+  const seedOut = document.getElementById('seedOut');
+  const slopeOut = document.getElementById('slopeOut');
+
+  const toast = (t)=>{ const el=document.getElementById('toast'); el.textContent=t; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),1200)}
+
+  // RNG with seed
+  let seed = Date.now() % 100000;
+  const urlSeed = new URLSearchParams(location.search).get('seed');
+  if (urlSeed) seed = parseInt(urlSeed)||seed;
+  seedOut.textContent = seed;
+  const rand = ()=> (seed = (seed*1664525+1013904223)%4294967296)/4294967296;
+
+  // Game state
+  let config = { friction:0.015, holeR:12, slope:0, rough:0.3 };
+  let hole=1, holes=3, strokes=0, best=null; 
+
+  function applyDifficulty(v){
+    if(v==='easy') config={ friction:0.02, holeR:14, slope: (rand()*2-1)*1.5, rough:0.2 };
+    else if(v==='hard') config={ friction:0.01, holeR:10, slope: (rand()*2-1)*5, rough:0.45 };
+    else config={ friction:0.015, holeR:12, slope: (rand()*2-1)*3, rough:0.32 };
+    slopeOut.textContent = config.slope.toFixed(1);
+  }
+  applyDifficulty(document.getElementById('difficulty').value);
+
+  // Course
+  const W=cvs.width, H=cvs.height; 
+  let ball, cup, walls, roughs;
+
+  function newCourse(){
+    // cup
+    cup = { x: W*0.75 + (rand()-0.5)*200, y: H*0.3 + (rand())*H*0.4, r: config.holeR };
+    // ball start
+    ball = { x: W*0.15, y: H*0.5, vx:0, vy:0, r:7, rolling:false };
+    // simple walls (bunkers as rectangles to avoid)
+    walls = [];
+    const n = 2 + Math.floor(rand()*3);
+    for(let i=0;i<n;i++){
+      const x = W*0.25 + rand()*W*0.6;
+      const y = H*0.15 + rand()*H*0.7;
+      const w = 50 + rand()*120;
+      const h = 30 + rand()*100;
+      walls.push({x,y,w,h});
+    }
+    // rough zones
+    roughs = [];
+    for(let i=0;i<2;i++){
+      const x = W*0.2 + rand()*W*0.65;
+      const y = H*0.15 + rand()*H*0.7;
+      const r = 40 + rand()*80;
+      roughs.push({x,y,r});
+    }
+    strokes=0; updateHUD();
+  }
+
+  function updateHUD(){
+    strokeEl.textContent = strokes;
+    parEl.textContent = 2 + Math.max(0, Math.floor((config.slope*config.slope)/6));
+    holeEl.textContent = `${hole} / ${holes}`;
+    bestEl.textContent = (best==null? '—' : best);
+  }
+
+  // Input (drag to aim)
+  let dragging=false, start={x:0,y:0}, cur={x:0,y:0};
+  const getPos = e => {
+    const r=cvs.getBoundingClientRect();
+    const pt = e.touches? e.touches[0]: e;
+    return { x:(pt.clientX-r.left)*(cvs.width/r.width), y:(pt.clientY-r.top)*(cvs.height/r.height)}
+  }
+  const down=e=>{ if(ball.rolling) return; dragging=true; start=getPos(e); cur=start; e.preventDefault(); }
+  const move=e=>{ if(!dragging) return; cur=getPos(e); }
+  const up=e=>{ if(!dragging) return; dragging=false; const v={x: start.x-cur.x, y: start.y-cur.y}; const power = Math.hypot(v.x,v.y); if(power<3) return; // tiny ignore
+    // normalize power
+    const k = 0.05; ball.vx = v.x*k; ball.vy=v.y*k; ball.rolling=true; strokes++; updateHUD(); }
+  cvs.addEventListener('mousedown',down); window.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
+  cvs.addEventListener('touchstart',down,{passive:false}); window.addEventListener('touchmove',move,{passive:false}); window.addEventListener('touchend',up);
+
+  function draw(){
+    // background green
+    const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#bfe3a6'); g.addColorStop(1,'#7dcf6a'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    // slope arrows
+    ctx.save(); ctx.translate(W-120, 24); ctx.fillStyle='rgba(0,0,0,.15)'; ctx.fillRect(-8,-8,116,28); ctx.restore();
+
+    // roughs
+    roughs.forEach(o=>{ ctx.fillStyle='rgba(96,56,8,0.15)'; ctx.beginPath(); ctx.arc(o.x,o.y,o.r,0,Math.PI*2); ctx.fill(); })
+
+    // walls
+    walls.forEach(w=>{ ctx.fillStyle='rgba(0,0,0,0.22)'; ctx.fillRect(w.x,w.y,w.w,w.h) })
+
+    // cup shadow & cup
+    ctx.beginPath(); ctx.arc(cup.x+2,cup.y+2,cup.r+2,0,Math.PI*2); ctx.fillStyle='rgba(0,0,0,0.2)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(cup.x,cup.y,cup.r,0,Math.PI*2); ctx.fillStyle='#222'; ctx.fill();
+
+    // flag
+    ctx.save(); ctx.translate(cup.x,cup.y-cup.r-28); ctx.strokeStyle='#222'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,28); ctx.lineTo(0,0); ctx.stroke();
+    ctx.fillStyle='#ef4444'; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(22,6); ctx.lineTo(0,12); ctx.closePath(); ctx.fill(); ctx.restore();
+
+    // ball
+    ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.shadowBlur=10; ctx.shadowColor='rgba(0,0,0,.2)'; ctx.fill(); ctx.shadowBlur=0;
+
+    // aim guide
+    if(dragging){ ctx.strokeStyle='rgba(0,0,0,.5)'; ctx.setLineDash([6,6]); ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(start.x,start.y); ctx.lineTo(cur.x,cur.y); ctx.stroke(); ctx.setLineDash([]); }
+  }
+
+  function physics(){
+    if(!ball.rolling) return;
+    // slope acceleration (downhill towards +x based on slope angle)
+    const slopeRad = config.slope * Math.PI/180;
+    ball.vx += Math.sin(slopeRad)*0.02; // gentle push
+    ball.vy += 0; // single-axis slope for simplicity
+
+    // friction
+    const sp = Math.hypot(ball.vx,ball.vy); if(sp>0){ const f = Math.max(0, sp - config.friction); const s=f/(sp||1); ball.vx*=s; ball.vy*=s; }
+
+    // move
+    ball.x += ball.vx; ball.y += ball.vy;
+
+    // rough slow-down
+    roughs.forEach(o=>{ const d=Math.hypot(ball.x-o.x,ball.y-o.y); if(d<o.r+ball.r){ ball.vx*= (1-config.rough); ball.vy*=(1-config.rough); }});
+
+    // walls collision (simple AABB reflect)
+    walls.forEach(w=>{
+      if(ball.x+ball.r>w.x && ball.x-ball.r<w.x+w.w && ball.y+ball.r>w.y && ball.y-ball.r<w.y+w.h){
+        // determine shallow axis
+        const dx = Math.min(ball.x+ball.r-w.x, (w.x+w.w)-(ball.x-ball.r));
+        const dy = Math.min(ball.y+ball.r-w.y, (w.y+w.h)-(ball.y-ball.r));
+        if(dx<dy){ // horizontal push
+          if(ball.x<w.x+w.w/2) ball.x=w.x-ball.r; else ball.x=w.x+w.w+ball.r;
+          ball.vx*=-0.55;
+        } else {
+          if(ball.y<w.y+w.h/2) ball.y=w.y-ball.r; else ball.y=w.y+w.h+ball.r;
+          ball.vy*=-0.55;
+        }
+      }
+    })
+
+    // bounds
+    if(ball.x<ball.r){ ball.x=ball.r; ball.vx*=-0.6 }
+    if(ball.x>W-ball.r){ ball.x=W-ball.r; ball.vx*=-0.6 }
+    if(ball.y<ball.r){ ball.y=ball.r; ball.vy*=-0.6 }
+    if(ball.y>H-ball.r){ ball.y=H-ball.r; ball.vy*=-0.6 }
+
+    // cup capture
+    const d = Math.hypot(ball.x-cup.x, ball.y-cup.y);
+    if(d < cup.r){
+      // require low speed to fall in
+      if(Math.hypot(ball.vx,ball.vy) < 0.6){
+        ball.rolling=false; ball.vx=ball.vy=0; ball.x=cup.x; ball.y=cup.y;
+        toast('홀인!');
+        best = Math.min(best??Infinity, strokes);
+        updateHUD();
+      }
+    }
+
+    // stop threshold
+    if(Math.hypot(ball.vx,ball.vy)<0.02){ ball.vx=ball.vy=0; ball.rolling=false; }
+  }
+
+  function tick(){ physics(); draw(); requestAnimationFrame(tick); }
+
+  // Controls
+  document.getElementById('reset').onclick = ()=>{ newCourse(); };
+  document.getElementById('shuffle').onclick = ()=>{ seed = (Date.now()%100000); seedOut.textContent=seed; applyDifficulty(document.getElementById('difficulty').value); newCourse(); };
+  document.getElementById('next').onclick = ()=>{ if(hole<holes){ hole++; newCourse(); } else { hole=1; best=null; newCourse(); } updateHUD(); };
+  document.getElementById('difficulty').onchange = (e)=>{ applyDifficulty(e.target.value); newCourse(); };
+
+  // init
+  newCourse();
+  tick();
+})();
+</script>
+</body>
+</html>
