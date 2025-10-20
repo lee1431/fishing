@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Emoji Market — Static</title>
+  <style>
+    :root{--ink:#1f2937;--bg:#ffffff;--muted:#6b7280;--line:#e5e7eb}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Apple SD Gothic Neo","Noto Sans KR","Nanum Gothic",sans-serif}
+    .container{max-width:1080px;margin:0 auto;padding:20px}
+    .nav{position:sticky;top:0;background:#fffcc;border-bottom:1px solid var(--line);backdrop-filter:saturate(150%) blur(6px)}
+    .nav .inner{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 20px}
+    .hero h1{font-size:28px;margin:14px 0 6px}
+    .muted{color:var(--muted)}
+    .search{display:flex;gap:8px;margin:14px 0}
+    .search input,.select,.btn{border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+    .grid{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
+    @media (min-width:980px){.grid{grid-template-columns:repeat(12,1fr)}}
+    .card{aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:16px;background:#fff}
+    .card .em{font-size:28px}
+    .card .actions{opacity:0;transition:opacity .15s ease;margin-top:6px;display:flex;gap:6px}
+    .card:hover .actions{opacity:1}
+    .chip{border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px;background:#fff}
+    .chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 16px}
+    .toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#111;color:#fff;padding:8px 12px;border-radius:10px}
+    dialog{border:none;border-radius:14px;max-width:min(520px,92vw)}
+    dialog::backdrop{background:rgba(0,0,0,.4)}
+    pre{white-space:pre-wrap;word-break:break-all;background:#f9fafb;border:1px solid var(--line);border-radius:12px;padding:10px}
+    a.btn{display:inline-block;text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <div class="inner container">
+      <div class="logo" style="font-weight:700">🧩 Emoji Market</div>
+      <div class="right">
+        <select id="pack" class="select"></select>
+        <a href="#docs" class="btn">Docs</a>
+      </div>
+    </div>
+  </div>
+
+  <header class="container hero">
+    <h1>이게 이모지 마트</h1>
+    <p class="muted">검색하고 클릭하면 복사. URL이나 :shortcode:로 임베드.</p>
+    <div class="search">
+      <input id="q" placeholder=":shortcode:, 이름, 태그, 코드포인트" style="flex:1" />
+      <button id="clear" class="btn">Clear</button>
+    </div>
+    <div id="chips" class="chips"></div>
+  </header>
+
+  <main class="container">
+    <div class="muted" id="count"></div>
+    <div id="grid" class="grid"></div>
+  </main>
+
+  <section id="docs" class="container" style="margin:40px auto 80px">
+    <h3>Docs</h3>
+    <p class="muted">CDN 규칙 예시 — 실제 배포 시 경로만 바꿔주세요.</p>
+    <pre><code>&lt;script src="https://cdn.example.com/emans-emoji/kit.js" defer&gt;&lt;/script&gt;
+&lt;span data-emoji="openmoji:1F41F"&gt;&lt;/span&gt;</code></pre>
+  </section>
+
+  <dialog id="drawer">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div style="font-weight:700">Details</div>
+      <button id="closeDrawer" class="btn">닫기</button>
+    </div>
+    <div id="detail" style="margin-top:8px"></div>
+  </dialog>
+
+  <div id="toast" class="toast" style="display:none"></div>
+
+<script>
+// --- Demo packs (same schema as React MVP) ---
+const PACKS = [
+  {
+    id: "fluent-flat-demo",
+    name: "Fluent Demo (Flat)",
+    version: "0.1.0",
+    license: { name: "MIT (demo)", url: "https://github.com/microsoft/fluentui-emoji" },
+    style: "native",
+    baseCdn: "https://cdn.example.com/emans-emoji/fluent-flat/0.1.0/",
+    emojis: [
+      { u: "1F41F", ch: "🐟", name: "Fish", aliases: [":fish:"], tags: ["animal","fishing","water"] },
+      { u: "1F420", ch: "🐠", name: "Tropical Fish", aliases: [":tropical_fish:"], tags: ["animal","ocean"] },
+      { u: "1F41A", ch: "🐚", name: "Spiral Shell", aliases: [":shell:"], tags: ["sea","beach"] },
+      { u: "1F525", ch: "🔥", name: "Fire", aliases: [":fire:"], tags: ["object","hot"] },
+      { u: "1F381", ch: "🎁", name: "Gift", aliases: [":gift:"], tags: ["object","box","present"] },
+      { u: "1F33F", ch: "🌿", name: "Herb", aliases: [":herb:"], tags: ["nature","leaf"] },
+      { u: "1F3A5", ch: "🎥", name: "Movie Camera", aliases: [":movie_camera:"], tags: ["media","video","stream"] },
+      { u: "1F3A7", ch: "🎧", name: "Headphone", aliases: [":headphones:"], tags: ["media","music"] },
+      { u: "1F4A7", ch: "💧", name: "Droplet", aliases: [":droplet:"], tags: ["water","nature"] },
+      { u: "1F41C", ch: "🐜", name: "Ant", aliases: [":ant:"], tags: ["animal","bug"] },
+      { u: "1F680", ch: "🚀", name: "Rocket", aliases: [":rocket:"], tags: ["brand","launch","startup"] },
+      { u: "1F44D", ch: "👍", name: "Thumbs Up", aliases: [":thumbsup:"], tags: ["gestures","ok","good"] },
+    ],
+  },
+  {
+    id: "openmoji-demo",
+    name: "OpenMoji Demo",
+    version: "0.1.0",
+    license: { name: "CC BY-SA 4.0 (demo)", url: "https://openmoji.org" },
+    style: "native",
+    baseCdn: "https://cdn.example.com/emans-emoji/openmoji/0.1.0/",
+    emojis: [
+      { u: "1F41D", ch: "🐝", name: "Honeybee", aliases: [":bee:"], tags: ["animal","insect","honey"] },
+      { u: "1F33B", ch: "🌻", name: "Sunflower", aliases: [":sunflower:"], tags: ["nature","flower"] },
+      { u: "1F308", ch: "🌈", name: "Rainbow", aliases: [":rainbow:"], tags: ["nature","color","happy"] },
+      { u: "1F41E", ch: "🐞", name: "Lady Beetle", aliases: [":lady_beetle:"], tags: ["animal","bug"] },
+      { u: "1F31F", ch: "🌟", name: "Glowing Star", aliases: [":star2:"], tags: ["shape","star","award"] },
+      { u: "1F422", ch: "🐢", name: "Turtle", aliases: [":turtle:"], tags: ["animal","slow"] },
+    ],
+  },
+	{
+	  id: "fullcarbonsuit",
+	  name: "Full Carbon Suit",
+	  version: "1.0.0",
+	  license: { name: "Custom by llsshh", url: "https://llsshh.com" },
+	  style: "svg",
+	  baseCdn: "https://llsshh.com/emans-emoji/fullcarbonsuit/1.0.0/svg/",
+	  emojis: [
+		{ u: "FCS", ch: "🤖", name: "Full Carbon Suit", aliases: [":fullcarbonsuit:"], tags: ["carbon","suit","armor","emans"] }
+	  ]
+	}
+];
+
+const $ = (sel)=>document.querySelector(sel);
+const grid = $('#grid');
+const packSel = $('#pack');
+const q = $('#q');
+const chips = $('#chips');
+const count = $('#count');
+const drawer = $('#drawer');
+const detail = $('#detail');
+const toast = $('#toast');
+
+function toUnicodeHyphen(ch){return [...ch].map(c=>c.codePointAt(0).toString(16).toUpperCase()).join('-');}
+function buildCdnUrl(pack,item,fmt='svg'){return `${pack.baseCdn}${item.u || toUnicodeHyphen(item.ch||'')}.${fmt}`}
+
+let state = { packId: PACKS[0].id, tag:'', q:'' };
+
+function setToast(msg){ toast.textContent=msg; toast.style.display='block'; setTimeout(()=>toast.style.display='none',1200); }
+async function copy(text){ try{ await navigator.clipboard.writeText(text); setToast('복사됨'); }catch{ alert('복사 실패'); } }
+
+function renderPacks(){ packSel.innerHTML = PACKS.map(p=>`<option value="${p.id}">${p.name} v${p.version}</option>`).join(''); packSel.value = state.packId; }
+function activePack(){ return PACKS.find(p=>p.id===state.packId) || PACKS[0]; }
+
+function renderChips(){
+  const p = activePack(); const map=new Map();
+  p.emojis.forEach(e=>e.tags.forEach(t=>map.set(t,(map.get(t)||0)+1)));
+  const tags=[...map.entries()].sort((a,b)=>b[1]-a[1]).map(([k])=>k).slice(0,14);
+  chips.innerHTML = [`<button class="chip" data-t="">All</button>`].concat(tags.map(t=>`<button class="chip" data-t="${t}">${t}</button>`)).join('');
+  chips.querySelectorAll('button').forEach(b=>b.onclick=()=>{state.tag=b.dataset.t; renderGrid();});
+}
+
+function filterResults(p){
+  const needle = (state.q||'').trim().toLowerCase();
+  return p.emojis.filter(e=>{
+    const hit = !needle || e.name.toLowerCase().includes(needle) || e.aliases.some(a=>a.toLowerCase().includes(needle)) || e.tags.some(t=>t.includes(needle)) || e.u.toLowerCase().includes(needle);
+    const tagOk = !state.tag || e.tags.includes(state.tag);
+    return hit && tagOk;
+  });
+}
+
+function renderGrid(){
+  const p = activePack();
+  const results = filterResults(p);
+  count.textContent = `${results.length} icons`;
+  grid.innerHTML = results.map(e=>`
+    <div class="card">
+      <button class="em" title="${e.name}" data-copy="${e.ch || e.aliases[0] || e.u}">${e.ch || '⬜️'}</button>
+      <div class="actions">
+        <button class="btn sm" data-copy="${e.aliases[0] || e.u}">:shortcode:</button>
+        <button class="btn sm" data-copy="${buildCdnUrl(p,e,'svg')}">SVG</button>
+        <button class="btn sm" data-copy="${buildCdnUrl(p,e,'png')}">PNG</button>
+        <button class="btn sm" data-open='${e.u}'>More</button>
+      </div>
+    </div>`).join('');
+
+  grid.querySelectorAll('[data-copy]').forEach(el=> el.onclick=()=>copy(el.dataset.copy));
+  grid.querySelectorAll('[data-open]').forEach(el=> el.onclick=()=>openDetail(p, el.dataset.open));
+}
+
+function openDetail(pack, unicode){
+  const item = pack.emojis.find(e=>e.u===unicode);
+  const svg = buildCdnUrl(pack,item,'svg');
+  const png = buildCdnUrl(pack,item,'png');
+  const kit = `<span data-emoji="${pack.id}:${item.u}"></span>`;
+  detail.innerHTML = `
+    <div style="font-size:48px">${item.ch || '⬜️'}</div>
+    <div style="font-weight:700">${item.name}</div>
+    <div class="muted">${item.aliases.join(' ')}</div>
+    <div class="chips" style="margin-top:6px">${item.tags.map(t=>`<span class="chip">${t}</span>`).join('')}</div>
+    <div style="display:grid;gap:10px;margin-top:8px">
+      <div>
+        <div class="muted">Embed (Kit)</div>
+        <pre>${kit}</pre>
+        <button class="btn" id="copyKit">Copy</button>
+      </div>
+      <div>
+        <div class="muted">Direct URLs</div>
+        <pre>${svg}\n${png}</pre>
+        <div class="chips"><a class="btn" href="${svg}" target="_blank">SVG</a><a class="btn" href="${png}" target="_blank">PNG</a></div>
+      </div>
+      <div class="muted">Pack: ${pack.name} v${pack.version} — <a href="${pack.license.url}" target="_blank">${pack.license.name}</a></div>
+    </div>`;
+  $('#copyKit').onclick=()=>copy(kit);
+  drawer.showModal();
+}
+
+$('#closeDrawer').onclick=()=>drawer.close();
+$('#clear').onclick=()=>{state.q=''; state.tag=''; q.value=''; renderChips(); renderGrid();};
+packSel.onchange = ()=>{ state.packId = packSel.value; renderChips(); renderGrid(); };
+q.oninput = ()=>{ state.q=q.value; renderGrid(); };
+
+// init
+renderPacks();
+renderChips();
+renderGrid();
+</script>
+</body>
+</html>
