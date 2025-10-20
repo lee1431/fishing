@@ -1,0 +1,20 @@
+{
+  "id": "fullcarbonsuit",
+  "name": "Full Carbon Suit",
+  "version": "1.0.0",
+  "license": {
+    "name": "Custom by llsshh",
+    "url": "https://llsshh.com"
+  },
+  "style": "svg",
+  "baseCdn": "https://llsshh.com/emans-emoji/fullcarbonsuit/1.0.0/svg/",
+  "emojis": [
+    {
+      "u": "FCS",
+      "ch": "🤖",
+      "name": "Full Carbon Suit",
+      "aliases": [":fullcarbonsuit:"],
+      "tags": ["carbon", "suit", "armor", "emans"]
+    }
+  ]
+}
