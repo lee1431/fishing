@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Cloud Gallery</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:#000;
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",sans-serif;
+    height:100vh;
+    width:100vw;
+    overflow:hidden;
+    position:relative;
+  }
+
+  /* 이미지를 화면에 맞게 정중앙에 꽉 차게 보여주는 레이어 2장 (크로스 페이드) */
+  .slideLayer{
+    position:absolute;
+    inset:0;
+    background:#000 center center / contain no-repeat;
+    opacity:0;
+    transition:opacity 2s ease;
+  }
+  .slideLayer.show{
+    opacity:1;
+  }
+
+  /* 하단 오른쪽 작은 로고/카피/브랜드 */
+  .watermark{
+    position:absolute;
+    right:1.5rem;
+    bottom:1rem;
+    font-size:.8rem;
+    line-height:1.2;
+    color:#ffffffcc;
+    text-align:right;
+    font-weight:500;
+    text-shadow:0 2px 4px rgba(0,0,0,.8);
+  }
+  .watermark .brand{
+    font-size:.7rem;
+    color:#ffffff88;
+    font-weight:400;
+  }
+
+  /* (옵션) 상단 좌측에 현재 슬라이드 이름/시간 */
+  .infoBox{
+    position:absolute;
+    left:1.5rem;
+    top:1rem;
+    color:#ffffffdd;
+    text-shadow:0 2px 4px rgba(0,0,0,.8);
+    font-size:1rem;
+    font-weight:500;
+    max-width:60vw;
+  }
+  .infoBox small{
+    display:block;
+    font-size:.7rem;
+    font-weight:400;
+    color:#ffffff99;
+    margin-top:.3rem;
+    line-height:1.3;
+  }
+
+  /* 마우스/터치로 UI를 깨우면(디버그용) 화면 하단에 작은 컨트롤 */
+  .controls{
+    position:absolute;
+    left:50%;
+    bottom:1rem;
+    transform:translateX(-50%);
+    background:#00000066;
+    border:1px solid #ffffff22;
+    border-radius:12px;
+    padding:.5rem .75rem;
+    display:flex;
+    gap:.75rem;
+    align-items:center;
+    font-size:.8rem;
+    line-height:1;
+    color:#fff;
+    backdrop-filter:blur(8px);
+  }
+  .btn{
+    cursor:pointer;
+    user-select:none;
+    padding:.4rem .6rem;
+    border-radius:8px;
+    background:#ffffff22;
+    border:1px solid #ffffff33;
+  }
+  .btn:active{
+    background:#ffffff44;
+  }
+
+  @media (orientation:portrait){
+    /* 세로 화면일 때도 보기 좋게 contain 유지하니까 사실 추가 조정 없어도 됨.
+       필요하면 infoBox/watermark 폰트만 살짝 줄일 수 있음 */
+    .infoBox{font-size:.9rem;}
+    .watermark{font-size:.7rem;}
+  }
+</style>
+</head>
+<body>
+
+<div class="slideLayer" id="layerA"></div>
+<div class="slideLayer" id="layerB"></div>
+
+<div class="infoBox" id="infoBox">
+  <div id="titleText">오늘의 하늘</div>
+  <small id="subText">부드러운 바람, 맑은 공기</small>
+</div>
+
+<div class="watermark">
+  cloud gallery
+  <div class="brand">by STANCE SOLUTION</div>
+</div>
+
+<div class="controls" id="controls" style="display:none;">
+  <div class="btn" id="prevBtn">◀ 이전</div>
+  <div class="btn" id="nextBtn">다음 ▶</div>
+  <div class="btn" id="pauseBtn">일시정지</div>
+</div>
+
+<script>
+
+let slides = [];
+let currentIndex = 0;
+let playing = true;
+let autoTimer = null;
+const DISPLAY_TIME = 10000;
+
+const layerA = document.getElementById("layerA");
+const layerB = document.getElementById("layerB");
+const titleText = document.getElementById("titleText");
+const subText = document.getElementById("subText");
+const controls = document.getElementById("controls");
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
+const pauseBtn = document.getElementById("pauseBtn");
+
+let showingA = true;
+
+// JSON 불러오기
+async function loadSlides() {
+  const res = await fetch("https://mrdindoin.ddns.net/uploadimg/image/tunnel/slides.json");
+  const data = await res.json();
+  slides = data.slides || [];
+  showSlide(currentIndex, true);
+  startAuto();
+  wakeControls();
+}
+
+// 슬라이드 표시 함수
+function showSlide(idx, instant = false) {
+  if (!slides.length) return;
+  const slide = slides[idx % slides.length];
+  const backLayer = showingA ? layerB : layerA;
+  const frontLayer = showingA ? layerA : layerB;
+
+  backLayer.style.backgroundImage = `url('${slide.file}')`;
+  titleText.textContent = slide.title;
+  subText.textContent = slide.desc;
+
+  if (instant) {
+    frontLayer.classList.remove("show");
+    backLayer.classList.add("show");
+  } else {
+    frontLayer.classList.remove("show");
+    backLayer.classList.add("show");
+  }
+
+  showingA = !showingA;
+}
+
+function startAuto() {
+  stopAuto();
+  autoTimer = setInterval(nextSlide, DISPLAY_TIME);
+}
+
+function stopAuto() {
+  if (autoTimer) clearInterval(autoTimer);
+}
+
+function nextSlide() {
+  currentIndex = (currentIndex + 1) % slides.length;
+  showSlide(currentIndex);
+}
+
+function prevSlide() {
+  currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+  showSlide(currentIndex);
+}
+
+prevBtn.addEventListener("click", () => {
+  prevSlide();
+  if (playing) startAuto();
+});
+
+nextBtn.addEventListener("click", () => {
+  nextSlide();
+  if (playing) startAuto();
+});
+
+pauseBtn.addEventListener("click", () => {
+  playing = !playing;
+  if (playing) {
+    pauseBtn.textContent = "일시정지";
+    startAuto();
+  } else {
+    pauseBtn.textContent = "▶ 재생";
+    stopAuto();
+  }
+});
+
+let uiHideTimer = null;
+function wakeControls() {
+  controls.style.display = "flex";
+  if (uiHideTimer) clearTimeout(uiHideTimer);
+  uiHideTimer = setTimeout(() => (controls.style.display = "none"), 4000);
+}
+
+document.addEventListener("mousemove", wakeControls);
+document.addEventListener("touchstart", wakeControls, { passive: true });
+
+// 초기 로드
+loadSlides();
+</script>
+
+</body>
+</html>
