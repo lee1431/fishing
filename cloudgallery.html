@@ -146,7 +146,7 @@ let showingA = true;
 
 // JSON 불러오기
 async function loadSlides() {
-  const res = await fetch("https://mrdindoin.ddns.net/uploadimg/image/tunnel/slides.json");
+  const res = await fetch("https://mrdindoin.ddns.net/ingo/slides.json");
   const data = await res.json();
   slides = data.slides || [];
   showSlide(currentIndex, true);
