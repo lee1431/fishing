@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>스탕스 카드 이벤트</title>
+<style>
+  body{
+    font-family:system-ui,sans-serif;
+    padding:24px;
+    background:linear-gradient(#cfeefd,#eaf7ff);
+  }
+  h1{margin-bottom:6px;}
+  .hint{
+    max-width:720px;margin:10px auto;color:#345;font-size:14px;line-height:1.4;
+  }
+  .board{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    max-width:720px;
+    margin:20px auto;
+  }
+  .card{
+    width:100%;padding-top:75%;
+    position:relative;perspective:1000px;
+    cursor:pointer;
+  }
+  .inner{
+    position:absolute;inset:0;
+    transition:transform .6s;
+    transform-style:preserve-3d;
+  }
+  .card.flipped .inner{transform:rotateY(180deg);}
+  .face{
+    position:absolute;inset:0;
+    backface-visibility:hidden;
+    border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;user-select:none;
+  }
+  .front{
+    background:#1e90ff;color:#fff;border:2px solid #1e90ff;font-weight:600;
+  }
+  .back{
+    background:#fff;color:#1e90ff;border:2px dashed #1e90ff;
+    transform:rotateY(180deg);font-weight:700;
+  }
+  #popup{
+    display:none;position:fixed;left:50%;top:50%;
+    transform:translate(-50%,-50%);
+    background:#fff;padding:18px;border-radius:8px;
+    box-shadow:0 8px 30px rgba(0,0,0,.14);
+    width:280px;max-width:90%;
+  }
+  #popup h3{margin-top:0;margin-bottom:8px;font-size:16px;}
+  #popup input{padding:8px;width:100%;box-sizing:border-box;font-size:15px;}
+  #popup .row-btns{display:flex;gap:8px;margin-top:10px;}
+  #popup button{flex:1;padding:8px;font-size:15px;border-radius:6px;border:0;font-weight:600;}
+  #popup button.submit{background:#1e90ff;color:#fff;}
+  #popup button.cancel{background:#ccc;color:#000;}
+  #msg{color:#c33;margin-top:8px;font-size:14px;min-height:1.4em;}
+</style>
+</head>
+<body>
+  <h1>스탕스 카드 이벤트</h1>
+  <div class="hint">
+    카드를 뒤집어 보세요 🎣<br/>
+    당첨 카드면 응모 창이 뜹니다.<br/>
+    네이버 메일(@naver.com)만 참여 가능해요.<br/>
+    오늘 밤 라이브에서 추첨하고 결과를 공지합니다.
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div id="popup">
+    <h3>응모하기 (네이버 메일만)</h3>
+    <input id="email" type="email" placeholder="example@naver.com" />
+    <div class="row-btns">
+      <button class="submit" id="submitBtn">응모</button>
+      <button class="cancel" id="cancelBtn">취소</button>
+    </div>
+    <div id="msg"></div>
+  </div>
+
+<script>
+const BOARD = document.getElementById('board');
+const POPUP = document.getElementById('popup');
+const EMAIL = document.getElementById('email');
+const SUB = document.getElementById('submitBtn');
+const CAN = document.getElementById('cancelBtn');
+const MSG = document.getElementById('msg');
+
+const ROWS = 3, COLS = 3, TOTAL = ROWS * COLS;
+let hasSubmitted = false;
+let winningIndex = Math.floor(Math.random() * TOTAL);
+
+function makeCard(i){
+  const c = document.createElement('div');
+  c.className = 'card';
+  c.dataset.idx = i;
+  const inner = document.createElement('div'); inner.className = 'inner';
+  const front = document.createElement('div'); front.className = 'face front'; front.textContent = '🎴 뒤집기';
+  const back = document.createElement('div'); back.className = 'face back'; back.textContent = '?';
+  inner.appendChild(front); inner.appendChild(back); c.appendChild(inner);
+
+  c.addEventListener('click', ()=>{
+    if (c.classList.contains('flipped') || hasSubmitted) return;
+    c.classList.add('flipped');
+    setTimeout(()=>{
+      if (parseInt(c.dataset.idx,10) === winningIndex) {
+        back.textContent = '당첨!';
+        openPopup();
+      } else {
+        back.textContent = '꽝 😅';
+        setTimeout(()=>{ back.textContent='?'; c.classList.remove('flipped'); },1200);
+      }
+    },600);
+  });
+  return c;
+}
+for(let i=0;i<TOTAL;i++) BOARD.appendChild(makeCard(i));
+
+function openPopup(){
+  POPUP.style.display='block';
+  EMAIL.value='';
+  MSG.textContent='';
+  EMAIL.focus();
+}
+CAN.addEventListener('click',()=>{POPUP.style.display='none';});
+
+const naverRe=/^[A-Za-z0-9._%+\-]+@naver\.com$/i;
+SUB.addEventListener('click', async ()=>{
+  if (hasSubmitted) return;
+  const email=(EMAIL.value||'').trim();
+  if(!naverRe.test(email)){MSG.textContent='네이버 메일(@naver.com)만 가능';return;}
+  MSG.textContent='전송 중...';
+  try{
+    // ✅ GET 방식으로 갤8 nginx의 /event/ 엔드포인트 호출
+    const url=`https://mrdindoin.ddns.net/event/?email=${encodeURIComponent(email)}`;
+    const res=await fetch(url,{method:'GET',cache:'no-store'});
+    if(res.ok){
+      MSG.style.color='green';
+      MSG.textContent='응모 완료! 오늘 밤 추첨을 기대하세요 🎉';
+      hasSubmitted=true;
+      setTimeout(()=>POPUP.style.display='none',1500);
+    }else{
+      MSG.textContent='서버 응답 오류';
+    }
+  }catch(e){
+    MSG.textContent='네트워크 오류';
+  }
+});
+</script>
+</body>
+</html>
