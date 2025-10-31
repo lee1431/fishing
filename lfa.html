@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LocalFlow Admin</title>
+  <style>
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",sans-serif;
+      background:#f8fafb; color:#222; max-width:700px; margin:40px auto; padding:0 20px;}
+    h1{font-size:24px;margin-bottom:20px;}
+    form{display:grid; gap:16px;}
+    label{font-weight:600;}
+    input,textarea{width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:8px;font-size:15px;}
+    textarea{resize:vertical;min-height:100px;}
+    button{padding:12px 18px;background:#61D6C2;color:#073832;font-weight:700;
+      border:none;border-radius:8px;cursor:pointer;}
+    button:active{transform:translateY(1px);}
+    .preview{margin-top:20px;border:1px solid #ddd;padding:16px;border-radius:10px;background:#fff;}
+    .muted{color:#666;font-size:13px;}
+  </style>
+</head>
+<body>
+  <h1>📢 LocalFlow 공지 등록</h1>
+  <form id="noticeForm">
+    <div>
+      <label>제목</label>
+      <input type="text" name="title" required placeholder="예: 11월 2주차 공지" />
+    </div>
+    <div>
+      <label>내용</label>
+      <textarea name="body" required placeholder="공지 내용을 입력하세요."></textarea>
+    </div>
+    <div>
+      <label>작성일</label>
+      <input type="date" name="date" required />
+    </div>
+    <div>
+      <label>이미지 URL</label>
+      <input type="url" name="image" placeholder="예: https://mrdindoin.ddns.net/data/img/sample.jpg" />
+      <div class="muted">※ 이미지를 올려놓은 경우 해당 URL 입력만 하면 됩니다.</div>
+    </div>
+    <button type="submit">등록하기</button>
+  </form>
+
+  <div class="preview" id="previewBox" style="display:none;">
+    <strong>미리보기</strong>
+    <div id="previewContent"></div>
+  </div>
+
+  <script>
+    const FORM = document.getElementById('noticeForm');
+    const PREVIEW = document.getElementById('previewBox');
+    const PCONTENT = document.getElementById('previewContent');
+
+    FORM.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const formData = new FormData(FORM);
+      const item = Object.fromEntries(formData.entries());
+      item.date = new Date(item.date).toISOString();
+
+      // 미리보기
+      PREVIEW.style.display = 'block';
+      PCONTENT.innerHTML = `
+        <h3>${item.title}</h3>
+        <p>${item.body.replace(/\n/g,'<br>')}</p>
+        <p><small>${item.date}</small></p>
+        ${item.image ? `<img src="${item.image}" style="width:100%;border-radius:8px;margin-top:8px;">` : ""}
+      `;
+
+      try {
+        const res = await fetch('https://mrdindoin.ddns.net/lfa/add_notice', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(item)
+        });
+        if(res.ok){
+          alert('✅ 등록 완료!');
+          FORM.reset();
+        } else {
+          alert('서버 응답 오류: ' + res.status);
+        }
+      } catch(err){
+        alert('전송 실패: ' + err);
+      }
+    });
+  </script>
+</body>
+</html>
