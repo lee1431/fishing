@@ -68,6 +68,7 @@
       -webkit-text-fill-color: transparent;
       text-shadow: 0 0 14px rgba(255,200,0,0.22), 0 0 34px rgba(255,160,0,0.15);
       letter-spacing: 1px;
+    }
     
   </style>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9382191250873184"
@@ -128,15 +129,18 @@ function log(msg){ const t=new Date().toLocaleString(); logBox.textContent = `[$
 function toast(msg,ms=1600){ toastEl.textContent=msg; toastEl.style.display='block'; setTimeout(()=>toastEl.style.display='none',ms); }
 function getLocal(k,def=null){ try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(def));}catch(e){return def;} }
 function setLocal(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+function isValidNaverEmail(v) {
+if (!v) return false;
+v = v.trim().toLowerCase();
+// 간단/안전한 검증: 로컬파트 최소 1자 + @naver.com
+if (!v.endsWith('@naver.com')) return false;
+const local = v.slice(0, -('@naver.com'.length));
+return local.length > 0 && !/\s/.test(local);
+}
 
 // ===== Email (선택) =====
 const emailInput = $('#email');
-  
-$('#saveEmail').addEventListener('click',()=>{
-  const v=(emailInput.value||'').trim();
-  if(!v || !v.includes('@')){ toast('이메일을 정확히 입력하세요'); return; }
-  setLocal('flip_email', v); toast('이메일 저장');
-});
+
 (function initEmail(){ const v=getLocal('flip_email',''); if(v) emailInput.value=v; })();
 
 // ===== 상태 보드 =====
@@ -145,11 +149,13 @@ const invInfo = $('#invInfo');
 let lastStatus = {active:false, inventory:0, total:0, ratio:0};
 
 async function fetchStatus(){
- try{
-    const res = await fetch(API.status + '?t=' + Date.now(), {cache:'no-store'});
+ try{    
+    const res = await fetch(API.status + '?t=' + Date.now(), { cache:'no-store' });
     const d = await res.json();
     const count = (d.remaining ?? d.inventory ?? 0);
     document.getElementById('remainingCount').textContent = count;
+    const numEl = document.getElementById('remainingCount');
+    if (numEl) numEl.textContent = count;
     lastStatus = {
       active: !!d.active,
       inventory: Number(d.inventory||0),
@@ -169,8 +175,10 @@ function renderStatus(){
   invInfo.textContent = (lastStatus.total>0) ? `가능 수량 ${lastStatus.inventory}` : '';
 }
 
-setInterval(fetchStatus, 2000);
-fetchStatus();
+document.addEventListener('DOMContentLoaded', ()=>{
+  fetchStatus();
+  setInterval(fetchStatus, 2000);
+});
 
 // ===== 3x3 그리드 =====
 const grid = $('#grid');
@@ -232,14 +240,7 @@ function makeTile(idx){
       log('LOSE cell '+idx);
     }
 
-    function isValidNaverEmail(v) {
-      if (!v) return false;
-      v = v.trim().toLowerCase();
-      // 간단/안전한 검증: 로컬파트 최소 1자 + @naver.com
-      if (!v.endsWith('@naver.com')) return false;
-      const local = v.slice(0, -('@naver.com'.length));
-      return local.length > 0 && !/\s/.test(local);
-    }
+
 
     const board = document.getElementById('grid');
     board.classList.add('shuffle');
