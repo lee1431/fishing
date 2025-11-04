@@ -137,17 +137,6 @@ function setLocal(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
 
 // ===== Email (선택) =====
 const emailInput = $('#email');
-
-  function refreshFlipEnabled(){
-  const ok = isValidNaverEmail(emailInput.value);
-  document.querySelectorAll('.btn').forEach(b => b.disabled = !ok);
-  // 시각 피드백(선택): 입력창 테두리 색
-  emailInput.style.borderColor = ok ? '#3b82f6' : '#ef4444';
-}
-
-emailInput.addEventListener('input', refreshFlipEnabled);
-emailInput.addEventListener('change', refreshFlipEnabled);
-setTimeout(refreshFlipEnabled);  // 초기 1회
   
 $('#saveEmail').addEventListener('click',()=>{
   const v=(emailInput.value||'').trim();
@@ -196,6 +185,18 @@ const grid = $('#grid');
 let busy = false; // 한 번에 한 칸만
 
 function makeTile(idx){
+  
+  function refreshFlipEnabled(){
+    const ok = isValidNaverEmail(emailInput.value);
+    document.querySelectorAll('.btn').forEach(b => b.disabled = !ok);
+    // 시각 피드백(선택): 입력창 테두리 색
+    emailInput.style.borderColor = ok ? '#3b82f6' : '#ef4444';
+  }
+
+emailInput.addEventListener('input', refreshFlipEnabled);
+emailInput.addEventListener('change', refreshFlipEnabled);
+setTimeout(refreshFlipEnabled);  // 초기 1회
+  
   const tile = document.createElement('div');
   tile.className = 'tile';
   tile.innerHTML = `
