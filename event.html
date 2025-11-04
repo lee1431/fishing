@@ -177,7 +177,7 @@ function renderStatus(){
 
 document.addEventListener('DOMContentLoaded', ()=>{
   fetchStatus();
-  setInterval(fetchStatus, 4000);
+  setInterval(fetchStatus, 2000);
 });
 
 // ===== 3x3 그리드 =====
@@ -245,13 +245,6 @@ function makeTile(idx){
     const board = document.getElementById('grid');
     board.classList.add('shuffle');
     setTimeout(()=> board.classList.remove('shuffle'), 900);
-    
-    const nodes = Array.from(board.children);
-    for(let i = nodes.length - 1; i > 0; i--){
-      const j = Math.floor(Math.random() * (i + 1));
-      if(i === j) continue;
-      board.insertBefore(nodes[j], nodes[i]);
-    }
 
     // 상태 리프레시
     fetchStatus();
