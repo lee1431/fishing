@@ -266,17 +266,6 @@ function makeTile(idx){
   return tile;
 }
 
- function refreshFlipEnabled(){
-  const ok = isValidNaverEmail(emailInput.value);
-  document.querySelectorAll('.btn').forEach(b=> b.disabled = !ok);
-}
-emailInput.addEventListener('input', refreshFlipEnabled);
-setTimeout(refreshFlipEnabled);
-if (!isValidNaverEmail(emailInput.value)) {
-  toast('네이버 메일(@naver.com)만 입력 가능합니다.');
-  emailInput.focus();
-  return;
-}
 
 function buildGrid(){
   grid.innerHTML='';
