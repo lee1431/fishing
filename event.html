@@ -207,6 +207,11 @@ function makeTile(idx){
   const btn = tile.querySelector('.btn');
 
   btn.addEventListener('click', async ()=>{
+    if (!isValidNaverEmail(emailInput.value)) {
+      toast('네이버 메일(@naver.com)만 입력 가능합니다.');
+      emailInput.focus();
+      return;
+    }
     if(busy) return; busy = true;
     // 비활성화: 한 번에 한 칸
     grid.querySelectorAll('.btn').forEach(b=>b.disabled=true);
@@ -220,7 +225,7 @@ function makeTile(idx){
 
     // 서버에 결과 요청
     const payload = {
-      email: (emailInput.value||'').trim() || null,
+      email: (emailInput.value||'').trim(),
       cell: idx,
       t: Date.now(),
     };
