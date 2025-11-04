@@ -154,6 +154,8 @@ async function fetchStatus(){
     const res = await fetch(API.status, {cache:'no-store'});
     if(!res.ok) throw new Error('status '+res.status);
     const d = await res.json();
+    const count = d.remaining ?? d.inventory ?? 0;
+    document.getElementById('remainingCount').textContent = count;
     lastStatus = {
       active: !!d.active,
       inventory: Number(d.inventory||0),
