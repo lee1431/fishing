@@ -49,6 +49,26 @@
 
     footer{color:#8fb5ff; font-size:13px}
     a{color:#9cc7ff}
+
+    .grid.shuffle { animation: shuffleBoard .9s ease both; }
+      @keyframes shuffleBoard {
+        0%   { transform: translateY(0) rotate(0); opacity:1; }
+        30%  { transform: translateY(-8px) rotate(-1.5deg); opacity:.95; }
+        60%  { transform: translateY(5px) rotate(1.5deg); opacity:1; }
+        100% { transform: translateY(0) rotate(0); opacity:1; }
+      }
+
+    .goldNum{
+      min-width: 90px;
+      text-align: center;
+      font-weight: 900;
+      font-size: clamp(32px, 7vw, 64px);
+      background: linear-gradient(180deg,#fff5cc 0%, #ffd54b 30%, #ffb300 60%, #ff6f00 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 14px rgba(255,200,0,0.22), 0 0 34px rgba(255,160,0,0.15);
+      letter-spacing: 1px;
+    
   </style>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9382191250873184"
      crossorigin="anonymous"></script>
@@ -56,21 +76,10 @@
 <body>
   <div class="wrap">
     <!-- 상태/이메일 -->
-    <div class="card">
-      <div class="status">
-        <div class="row">
-          <span class="pill" id="liveState">상태: <b>확인 중…</b></span>
-          <span class="pill">베타 v0.1</span>
-        </div>
-        <div class="row">
-          <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
-          <button class="small" id="saveEmail">저장</button>
-        </div>
-      </div>
-      <div class="row" style="margin-top:8px; color:var(--mut); font-size:13px">
-        <span>* 뒤집기는 <b>한 번에 한 칸</b>만 가능합니다. (약 2초)</span>
-        <span id="invInfo" style="margin-left:auto"></span>
-      </div>
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <input type="email" id="email" placeholder="네이버 메일(@naver.com)" autocomplete="email"
+             style="flex:1;min-width:220px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#0a1225;color:#e5edf9" />
+      <div id="remainingCount" class="goldNum">0</div>
     </div>
 
     <!-- 3x3 그리드 -->
@@ -136,11 +145,10 @@ const invInfo = $('#invInfo');
 let lastStatus = {active:false, inventory:0, total:0, ratio:0};
 
 async function fetchStatus(){
-  try{
-    const res = await fetch(API.status, {cache:'no-store'});
-    if(!res.ok) throw new Error('status '+res.status);
+ try{
+    const res = await fetch(API.status + '?t=' + Date.now(), {cache:'no-store'});
     const d = await res.json();
-    const count = d.remaining ?? d.inventory ?? 0;
+    const count = (d.remaining ?? d.inventory ?? 0);
     document.getElementById('remainingCount').textContent = count;
     lastStatus = {
       active: !!d.active,
@@ -149,7 +157,6 @@ async function fetchStatus(){
       ratio: Number(d.ratio||0)
     };
   }catch(e){
-    // 데모 모드: 서버 없을 때 — 비활성 & 재고 0
     lastStatus = {active:false, inventory:0, total:0, ratio:0};
   }
   renderStatus();
@@ -162,7 +169,7 @@ function renderStatus(){
   invInfo.textContent = (lastStatus.total>0) ? `가능 수량 ${lastStatus.inventory}` : '';
 }
 
-setInterval(fetchStatus, 5000);
+setInterval(fetchStatus, 2000);
 fetchStatus();
 
 // ===== 3x3 그리드 =====
@@ -234,6 +241,17 @@ function makeTile(idx){
       return local.length > 0 && !/\s/.test(local);
     }
 
+    const board = document.getElementById('grid');
+    board.classList.add('shuffle');
+    setTimeout(()=> board.classList.remove('shuffle'), 900);
+    
+    const nodes = Array.from(board.children);
+    for(let i = nodes.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      if(i === j) continue;
+      board.insertBefore(nodes[j], nodes[i]);
+    }
+
     // 상태 리프레시
     fetchStatus();
 
@@ -246,6 +264,18 @@ function makeTile(idx){
   });
 
   return tile;
+}
+
+ function refreshFlipEnabled(){
+  const ok = isValidNaverEmail(emailInput.value);
+  document.querySelectorAll('.btn').forEach(b=> b.disabled = !ok);
+}
+emailInput.addEventListener('input', refreshFlipEnabled);
+setTimeout(refreshFlipEnabled);
+if (!isValidNaverEmail(emailInput.value)) {
+  toast('네이버 메일(@naver.com)만 입력 가능합니다.');
+  emailInput.focus();
+  return;
 }
 
 function buildGrid(){
