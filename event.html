@@ -165,14 +165,6 @@ async function fetchStatus(){
   }catch(e){
     lastStatus = {active:false, inventory:0, total:0, ratio:0};
   }
-  renderStatus();
-}
-
-function renderStatus(){
-  const s = lastStatus.active ? '판매중' : '대기중';
-  const color = lastStatus.active ? 'var(--ok)' : 'var(--warn)';
-  liveState.innerHTML = `상태: <b style="color:${color}">${s}</b>`;
-  invInfo.textContent = (lastStatus.total>0) ? `가능 수량 ${lastStatus.inventory}` : '';
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{
