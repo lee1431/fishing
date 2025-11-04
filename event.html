@@ -87,11 +87,65 @@
       }
     }
     
+    /* 당첨 시: 카드 뒷면에 황금 오라 + 프리즘 스윕 */
+    .card .back { position: relative; overflow: hidden; }
+    
+    /* 기본 황금 배경 + 발광 펄스 */
     .goldWin {
-      animation: goldShine 1.4s ease-out;
-      color: #fff8e1 !important;
+      background: linear-gradient(180deg,#fff5cc 0%, #ffd54b 30%, #ffb300 65%, #ff6f00 100%) !important;
+      box-shadow: 0 0 0 rgba(255,190,0,0);
+      color:#fff8e1 !important;
       font-weight: 800;
-      text-shadow: 0 0 8px rgba(255,255,200,0.8);
+      animation: goldPulse 1.4s ease-out both;
+    }
+
+    @keyframes goldPulse {
+      0%   { box-shadow: 0 0 0 rgba(255,190,0,0); transform: scale(1); }
+      45%  { box-shadow: 0 0 38px rgba(255,190,0,.55), 0 0 70px rgba(255,160,0,.28); transform: scale(1.035); }
+      100% { box-shadow: 0 0 10px rgba(255,190,0,.22); transform: scale(1); }
+    }
+    
+    /* 프리즘 광선: conic-gradient로 스윕 */
+    .goldAura::before {
+      content:"";
+      position:absolute;
+      inset:-40%;
+      background:
+        conic-gradient(from 0deg at 50% 50%,
+          rgba(255,255,220,0) 0deg,
+          rgba(255,255,220,.55) 20deg,
+          rgba(255,215,0,.8) 30deg,
+          rgba(255,180,0,.0) 60deg,
+          rgba(255,255,220,0) 360deg);
+      filter: blur(6px);
+      mix-blend-mode: screen;
+      animation: prismSweep 1.2s linear both;
+    }
+    @keyframes prismSweep {
+      from { transform: rotate(0turn) scale(1.05); opacity:.9; }
+      to   { transform: rotate(1turn) scale(1.05); opacity:.0; }
+    }
+    
+    /* 반짝이는 점들 */
+    .goldAura::after {
+      content:"";
+      position:absolute; inset:0;
+      background:
+        radial-gradient(2px 2px at 20% 30%, rgba(255,255,230,.9), rgba(255,255,230,0)),
+        radial-gradient(2px 2px at 65% 40%, rgba(255,240,200,.9), rgba(255,240,200,0)),
+        radial-gradient(2px 2px at 35% 70%, rgba(255,255,240,.9), rgba(255,255,240,0));
+      mix-blend-mode: screen;
+      animation: sparkle 1.2s ease-out both;
+    }
+    @keyframes sparkle {
+      0% { opacity:.0; transform: scale(.9); }
+      40% { opacity:1; transform: scale(1.05); }
+      100% { opacity:.0; transform: scale(1.1); }
+    }
+    
+    /* 모션 최소화 환경 배려 */
+    @media (prefers-reduced-motion: reduce){
+      .goldWin, .goldAura::before, .goldAura::after { animation: none !important; }
     }
     
   </style>
@@ -160,6 +214,15 @@ v = v.trim().toLowerCase();
 if (!v.endsWith('@naver.com')) return false;
 const local = v.slice(0, -('@naver.com'.length));
 return local.length > 0 && !/\s/.test(local);
+}
+
+function playGoldWin(backEl){
+  // 황금 오라 + 프리즘 스윕 시작
+  backEl.classList.add('goldWin','goldAura');
+  // 스윕, 스파클이 끝나면 오라만 제거(배경은 자연스럽게 남게 할 수도)
+  setTimeout(()=> backEl.classList.remove('goldAura'), 1400);
+  // 전체 효과 종료 시 원상복귀 원하면 아래 줄 활성(지금은 유지)
+  // setTimeout(()=> backEl.classList.remove('goldWin'), 1600);
 }
 
 // ===== Email (선택) =====
@@ -258,6 +321,7 @@ function makeTile(idx){
     if(result.win){
       back.innerHTML = '<div style="font-size:28px">🎉 당첨!</div>';
       back.classList.add('goldWin');
+      playGoldWin(back);
       showModal('당첨!', '현장에서 교환하거나, 코드 입력으로 교환하세요.' + (result.code? `\n코드: ${result.code}`:''));
       log('WIN cell '+idx + (result.code? ' code '+result.code : ''));
     } else {
