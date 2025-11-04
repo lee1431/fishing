@@ -54,10 +54,20 @@
      crossorigin="anonymous"></script>
 </head>
 <body>
-  <header>
-    <h1>🃏 3x3 뒤집기 — 즉석 상품 추첨</h1>
-    <p>버튼만 누르면 됩니다. 당첨 여부는 <b>서버 재고</b>로만 결정됩니다.</p>
-  </header>
+  <header style="display:flex;justify-content:center;align-items:center;gap:16px;padding:16px;">
+  <input id="emailInput" type="email" placeholder="이메일 입력" 
+    style="padding:10px 14px;border-radius:10px;border:1px solid #333;
+           background:#111;color:#eee;font-size:16px;"/>
+  <div id="remainingCount" 
+    style="font-size:64px;font-weight:900;
+           background:linear-gradient(180deg,#FFD700,#FFB700,#FFA500);
+           -webkit-background-clip:text;
+           -webkit-text-fill-color:transparent;
+           text-shadow:0 0 10px rgba(255,215,0,0.3);
+           min-width:80px;text-align:center;">
+    0
+  </div>
+</header>
 
   <div class="wrap">
     <!-- 상태/이메일 -->
