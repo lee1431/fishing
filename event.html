@@ -54,21 +54,6 @@
      crossorigin="anonymous"></script>
 </head>
 <body>
-  <header style="display:flex;justify-content:center;align-items:center;gap:16px;padding:16px;">
-  <input id="emailInput" type="email" placeholder="이메일 입력" 
-    style="padding:10px 14px;border-radius:10px;border:1px solid #333;
-           background:#111;color:#eee;font-size:16px;"/>
-  <div id="remainingCount" 
-    style="font-size:64px;font-weight:900;
-           background:linear-gradient(180deg,#FFD700,#FFB700,#FFA500);
-           -webkit-background-clip:text;
-           -webkit-text-fill-color:transparent;
-           text-shadow:0 0 10px rgba(255,215,0,0.3);
-           min-width:80px;text-align:center;">
-    0
-  </div>
-</header>
-
   <div class="wrap">
     <!-- 상태/이메일 -->
     <div class="card">
@@ -185,18 +170,7 @@ const grid = $('#grid');
 let busy = false; // 한 번에 한 칸만
 
 function makeTile(idx){
-  
-  function refreshFlipEnabled(){
-    const ok = isValidNaverEmail(document.getElementById('email').value);
-    document.querySelectorAll('.btn').forEach(b => b.disabled = !ok);
-    // 시각 피드백(선택): 입력창 테두리 색
-    emailInput.style.borderColor = ok ? '#3b82f6' : '#ef4444';
-  }
-
-emailInput.addEventListener('input', refreshFlipEnabled);
-emailInput.addEventListener('change', refreshFlipEnabled);
-setTimeout(refreshFlipEnabled);  // 초기 1회
-  
+ 
   const tile = document.createElement('div');
   tile.className = 'tile';
   tile.innerHTML = `
