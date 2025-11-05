@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Barbarian vs Monsters — Mini Game</title>
+  <style>
+    :root{
+      --bg:#0f1020; --ink:#f3f5f7; --accent:#8b5cf6; --accent2:#22d3ee; --danger:#ef4444; --ok:#22c55e;
+      --panel:#15172b; --muted:#9aa4ac; --gold:#f59e0b;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; background:linear-gradient(180deg,#0b0c1a,#0f1020 40%,#0b0c1a); color:var(--ink);}
+    .wrap{max-width:980px;margin:0 auto;padding:16px 16px 72px}
+    header{display:flex;gap:12px;align-items:center;justify-content:space-between}
+    h1{font-size:20px;margin:8px 0 0;letter-spacing:0.3px}
+    .hud{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .badge{background:var(--panel);border:1px solid #22263e;padding:8px 10px;border-radius:10px;display:flex;align-items:center;gap:8px;box-shadow:0 6px 20px rgb(0 0 0 / .25)}
+    .bar{width:200px;height:12px;background:#2a2e46;border-radius:999px;overflow:hidden}
+    .bar>span{display:block;height:100%;background:linear-gradient(90deg,var(--danger),#f87171)}
+    .score{font-weight:700;color:var(--gold)}
+    /* attack slider */
+    input[type=range]{
+      width:140px; accent-color:var(--accent);
+    }
+    .btn{background:var(--accent);border:none;color:white;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgb(139 92 246 / .5);transition:transform .06s}
+    .btn:hover{transform:translateY(-1px)}
+    .btn.secondary{background:#253053; box-shadow:0 8px 24px rgb(37 48 83 /.4)}
+
+    .panel{background:var(--panel);border:1px solid #22263e; border-radius:14px; padding:12px; box-shadow:0 10px 30px rgb(0 0 0 /.35)}
+    .flex{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+
+    #gameArea{position:relative;}
+    canvas{display:block;background:radial-gradient(1200px 500px at 50% 100%, #151735 0%, #0e0f1f 60%, #0b0c1a 100%); width:100%; height:auto; border-radius:14px; border:1px solid #22263e; box-shadow:0 16px 40px rgb(0 0 0 /.45)}
+
+    .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+    .modal{background:rgba(10,11,22,.8);backdrop-filter:blur(6px); border:1px solid #293055; padding:20px; border-radius:14px; text-align:center; width:min(92%, 520px)}
+    .title{font-size:22px;margin:0 0 6px}
+    .sub{color:var(--muted); margin:0 0 14px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+
+    footer{position:fixed;left:0;right:0;bottom:0;padding:10px 16px;background:linear-gradient(180deg, transparent, rgba(0,0,0,.5));backdrop-filter:blur(4px)}
+    .controls{max-width:980px;margin:0 auto;color:var(--muted);display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    kbd{background:#1c2140;border:1px solid #2b315c;border-bottom-color:#1f2447;border-radius:8px;padding:2px 6px;color:#e5e7eb;font-weight:700}
+    small{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="flex">
+      <h1>🗡️ Barbarian vs Monsters — Mini</h1>
+      <div class="hud">
+        <div class="badge" title="체력">
+          <span>HP</span>
+          <div class="bar"><span id="hpFill" style="width:100%"></span></div>
+        </div>
+        <div class="badge">점수 <span class="score" id="score">0</span></div>
+        <div class="badge">최고 <span class="score" id="best">0</span></div>
+        <div class="badge" title="공격력">
+          <span>ATK</span>
+          <input id="atk" type="range" min="10" max="100" value="26" step="1" />
+          <span id="atkVal" class="score">26</span>
+        </div>
+        <div class="badge" title="광역 스킬(Q)">
+          <span>SKILL</span>
+          <div class="bar"><span id="skillFill" style="width:100%"></span></div>
+          <kbd>Q</kbd>
+        </div>
+        <button class="btn" id="startBtn">Start</button>
+        <button class="btn secondary" id="pauseBtn" disabled>Pause</button>
+      </div>
+    </header>
+
+    <section id="gameArea" class="panel" style="margin-top:12px;">
+      <canvas id="game" width="900" height="520" aria-label="Barbarian canvas game"></canvas>
+      <div class="overlay" id="startOverlay">
+        <div class="modal">
+          <h3 class="title">던전에 들어가시겠습니까?</h3>
+          <p class="sub">← → 이동 · Space 공격 · S 대시(스태미나 소비)</p>
+          <div class="grid">
+            <button class="btn" id="overlayStart">Start</button>
+            <button class="btn secondary" id="howto">조작법</button>
+          </div>
+        </div>
+      </div>
+      <div class="overlay" id="gameOver" style="display:none">
+        <div class="modal">
+          <h3 class="title">게임 오버</h3>
+          <p class="sub"><span id="finalScore">0</span> 점 · 최고 <span id="finalBest">0</span></p>
+          <div class="grid">
+            <button class="btn" id="retry">다시 하기</button>
+            <button class="btn secondary" id="quit">나가기</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <div class="controls">
+      <div>조작: <kbd>←</kbd><kbd>→</kbd> 이동 · <kbd>Space</kbd> 공격 · <kbd>S</kbd> 대시</div>
+      <small>아이디어: 디아블로풍 바바리안 — "느림으로 버티는 힘"</small>
+    </div>
+  </footer>
+
+<script>
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+
+  // UI refs
+  const hpFill = document.getElementById('hpFill');
+  const scoreEl = document.getElementById('score');
+  const bestEl = document.getElementById('best');
+  const startBtn = document.getElementById('startBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const startOverlay = document.getElementById('startOverlay');
+  const overlayStart = document.getElementById('overlayStart');
+  const howto = document.getElementById('howto');
+  const over = document.getElementById('gameOver');
+  const finalScore = document.getElementById('finalScore');
+  const finalBest = document.getElementById('finalBest');
+  const retry = document.getElementById('retry');
+  const quit = document.getElementById('quit');
+  const atk = document.getElementById('atk');
+  const atkVal = document.getElementById('atkVal');
+  const skillFill = document.getElementById('skillFill');
+
+  // Game state
+  const W = canvas.width, H = canvas.height;
+  let rafId = null, running = false, paused = false;
+  let t = 0, dt = 0, last = 0;
+  let score = 0, best = Number(localStorage.getItem('barb-best')||0);
+  let attackBase = 26;
+  let skillCd = 0, skillCdMax = 6; // seconds
+  let aoeFlash = 0;
+  bestEl.textContent = best;
+  if(atk){ attackBase = Number(atk.value)||attackBase; atkVal.textContent = attackBase; }
+
+  const keys = new Set();
+  const rng = (min, max) => Math.random()*(max-min)+min;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  // Barbarian (player)
+  const player = {
+    x: W/2, y: H-70, w: 40, h: 54,
+    vx: 0, speed: 240,
+    hp: 100, hpMax: 100,
+    stamina: 100, stMax: 100,
+    facing: 1,
+    attackCooldown: 0,
+    dashCooldown: 0,
+  };
+
+  // Monsters
+  const mobs = [];
+  function spawnMob(){
+    const side = Math.random() < 0.5 ? -1 : 1;
+    const x = side === -1 ? -30 : W+30;
+    const y = H - 70;
+    const speed = rng(60, 120) * (1 + score/300);
+    const hp = Math.round(rng(20, 40) + score/10);
+    mobs.push({x, y, w: 34, h: 44, vx: side*-speed, hp, hpMax: hp, alive:true});
+  }
+
+  function reset(){
+    score = 0; scoreEl.textContent = '0';
+    player.x = W/2; player.hp = player.hpMax; player.stamina = player.stMax;
+    player.attackCooldown = 0; player.dashCooldown = 0; player.facing = 1;
+    mobs.length = 0;
+    for(let i=0;i<4;i++) spawnMob();
+    hpFill.style.width = '100%';
+  }
+
+  // Input
+  window.addEventListener('keydown', (e)=>{
+    if(['ArrowLeft','ArrowRight',' ','Space','s','S','q','Q'].includes(e.key)) e.preventDefault();
+    // instant-cast for Q
+    if((e.key==='q'||e.key==='Q') && skillCd<=0){ castSkill(); return; }
+    keys.add(e.key);
+  });
+  window.addEventListener('keyup', (e)=>{keys.delete(e.key)});
+
+  function update(dt){
+    // Movement
+    player.vx = 0;
+    if(keys.has('ArrowLeft')) { player.vx = -player.speed; player.facing = -1; }
+    if(keys.has('ArrowRight')){ player.vx =  player.speed; player.facing =  1; }
+
+    // Dash (S)
+    if(keys.has('s')||keys.has('S')){
+      if(player.stamina > 10 && player.dashCooldown<=0){
+        player.vx *= 2.5; player.stamina -= 25; player.dashCooldown = 0.35;
+      }
+    }
+
+    player.x += player.vx * dt;
+    player.x = clamp(player.x, 24, W-24);
+
+    // Attack (Space)
+    if((keys.has(' ')||keys.has('Space')) && player.attackCooldown<=0){
+      swing(); player.attackCooldown = 0.35;
+    }
+
+    // Cooldowns & regen
+    player.attackCooldown -= dt; player.dashCooldown -= dt;
+    player.stamina = clamp(player.stamina + 12*dt, 0, player.stMax);
+    skillCd = Math.max(0, skillCd - dt);
+
+    // update skill HUD
+    if(skillFill){
+      const ratio = (skillCdMax - skillCd)/skillCdMax;
+      skillFill.style.width = `${Math.floor(ratio*100)}%`;
+      skillFill.style.background = skillCd<=0 ? 'linear-gradient(90deg,#22c55e,#86efac)' : 'linear-gradient(90deg,#60a5fa,#3b82f6)';
+    }
+
+    // Mobs AI
+    if(Math.random() < 0.02*(1+score/80)) spawnMob();
+    for(const m of mobs){
+      if(!m.alive) continue;
+      const dir = Math.sign(player.x - m.x);
+      m.vx = dir * Math.min(Math.abs(m.vx)+30*dt, 150 + score/4);
+      m.x += m.vx * dt;
+      if(Math.abs(m.x - player.x) < (m.w+player.w)/2){
+        player.hp -= 18*dt; if(player.hp < 0) player.hp = 0;
+      }
+      if(m.x < -80 || m.x > W+80) m.alive=false;
+    }
+
+    for(let i=mobs.length-1;i>=0;i--){ if(!mobs[i].alive) mobs.splice(i,1); }
+
+    hpFill.style.width = `${(player.hp/player.hpMax)*100}%`;
+
+    if(player.hp <= 0){ endGame(); }
+  }
+  
+
+  function swing(){
+    // One-hit melee: kill nearest targets in front
+    const reach = 64;
+    for(const m of mobs){
+      if(!m.alive) continue;
+      const inFront = Math.sign(m.x - player.x) === player.facing;
+      const dist = Math.abs(m.x - player.x);
+      if(inFront && dist < reach){
+        m.alive = false; score += 10; scoreEl.textContent = score;
+      }
+    }
+  }
+
+  function castSkill(){
+    // AoE wipe — kill all visible mobs, 6s cooldown
+    let kills = 0;
+    for(const m of mobs){ if(m.alive){ m.alive=false; kills++; } }
+    if(kills>0){ score += kills*10; scoreEl.textContent = score; }
+    skillCd = skillCdMax; aoeFlash = 0.6;
+  }
+
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = '#0b0d1f';
+    ctx.fillRect(0, H-60, W, 60);
+
+    ctx.fillStyle = 'rgba(255,255,255,.06)';
+    for(let i=0;i<50;i++){ ctx.fillRect((i*37+t*10)%W, 40+(i*13%180), 2, 2); }
+
+    drawBarbarian();
+    for(const m of mobs){ drawMob(m); }
+
+    // AOE flash
+    if(aoeFlash>0){
+      const grd = ctx.createRadialGradient(W/2,H/2,20,W/2,H/2,Math.max(W,H));
+      grd.addColorStop(0, `rgba(255,255,255,${aoeFlash})`);
+      grd.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = grd; ctx.fillRect(0,0,W,H);
+      aoeFlash = Math.max(0, aoeFlash - 0.02);
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,.12)';
+    ctx.font = '12px ui-sans-serif, system-ui';
+    ctx.fillText('← → 이동 · Space 근접공격(한방) · S 대시 · Q 광역스킬(6s)', 14, 22);
+  }
+
+
+  function drawBarbarian(){
+    const p = player;
+    const baseX = p.x, baseY = p.y;
+    // body
+    ctx.save();
+    ctx.translate(baseX, baseY);
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.beginPath(); ctx.ellipse(0, 40, 24, 8, 0, 0, Math.PI*2); ctx.fill();
+
+    // torso
+    ctx.fillStyle = '#b45309';
+    roundRect(ctx, -18, -20, 36, 38, 8); ctx.fill();
+    // head
+    ctx.fillStyle = '#f1c27d';
+    roundRect(ctx, -10, -40, 20, 18, 6); ctx.fill();
+
+    // arms (simple)
+    ctx.fillStyle = '#f1c27d';
+    roundRect(ctx, p.facing>0?14:-22, -14, 8, 20, 3); ctx.fill();
+
+    // sword (attack hint)
+    ctx.fillStyle = p.attackCooldown>0? '#f59e0b':'#94a3b8';
+    const sx = p.facing>0?22:-30; roundRect(ctx, sx, -10, 22, 6, 3); ctx.fill();
+
+    // belt
+    ctx.fillStyle = '#111827'; roundRect(ctx, -18, 2, 36, 6, 3); ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawMob(m){
+    ctx.save(); ctx.translate(m.x, m.y);
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(0, 36, 20, 6, 0, 0, Math.PI*2); ctx.fill();
+    // body
+    ctx.fillStyle = '#10b981'; roundRect(ctx, -16, -20, 32, 36, 8); ctx.fill();
+    // eyes
+    ctx.fillStyle = '#111827'; ctx.fillRect(-6, -10, 4, 4); ctx.fillRect(2, -10, 4, 4);
+    // hp bar
+    ctx.fillStyle = '#1f2937'; ctx.fillRect(-16, -26, 32, 4);
+    ctx.fillStyle = '#ef4444'; ctx.fillRect(-16, -26, 32 * (m.hp/m.hpMax), 4);
+    ctx.restore();
+  }
+
+  function roundRect(ctx, x, y, w, h, r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+  }
+
+  function loop(now){
+    dt = Math.min(0.033, (now - last)/1000 || 0);
+    last = now; t += dt;
+    if(!paused) update(dt);
+    draw();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function start(){
+    reset();
+    running = true; paused = false; pauseBtn.disabled=false; startOverlay.style.display='none'; over.style.display='none';
+    if(!rafId) rafId = requestAnimationFrame(loop);
+  }
+
+  function endGame(){
+    running = false; paused = true; pauseBtn.disabled=true;
+    best = Math.max(best, score); localStorage.setItem('barb-best', best);
+    finalScore.textContent = score; finalBest.textContent = best; bestEl.textContent = best;
+    over.style.display = 'flex';
+  }
+
+  function togglePause(){
+    if(!running) return;
+    paused = !paused; pauseBtn.textContent = paused? 'Resume' : 'Pause';
+  }
+
+  // Wire buttons
+  startBtn.addEventListener('click', start);
+  overlayStart.addEventListener('click', start);
+  howto.addEventListener('click', ()=> alert('← → 이동, Space 공격, S 대시\n몬스터를 해치워 점수를 획득하세요. HP가 0이 되면 게임 종료!'));
+  pauseBtn.addEventListener('click', togglePause);
+  retry.addEventListener('click', start);
+  quit.addEventListener('click', ()=>{ over.style.display='none'; startOverlay.style.display='flex';});
+  if(atk){ atk.addEventListener('input', ()=>{ attackBase = Number(atk.value); atkVal.textContent = attackBase; }); }
+})();
+</script>
+</body>
+</html>
