@@ -43,6 +43,33 @@
     .controls{max-width:980px;margin:0 auto;color:var(--muted);display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
     kbd{background:#1c2140;border:1px solid #2b315c;border-bottom-color:#1f2447;border-radius:8px;padding:2px 6px;color:#e5e7eb;font-weight:700}
     small{color:var(--muted)}
+	
+	#mobileControls {
+	  position: fixed;
+	  bottom: 10px;
+	  left: 0;
+	  right: 0;
+	  display: flex;
+	  justify-content: space-between;
+	  padding: 0 20px;
+	  z-index: 1000;
+	}
+	#mobileControls button {
+	  width: 60px;
+	  height: 60px;
+	  font-size: 24px;
+	  border-radius: 12px;
+	  border: none;
+	  background: var(--accent);
+	  color: #fff;
+	  box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+	  touch-action: none;
+	}
+	.move, .actions {
+	  display: flex;
+	  gap: 10px;
+	}
+	
   </style>
 </head>
 <body>
@@ -95,6 +122,20 @@
       </div>
     </section>
   </div>
+  
+  
+  <div id="mobileControls">
+	  <div class="move">
+		<button id="btnLeft">←</button>
+		<button id="btnRight">→</button>
+	  </div>
+	  <div class="actions">
+		<button id="btnAtk">⚔️</button>
+		<button id="btnSkill">💥</button>
+		<button id="btnDash">💨</button>
+	  </div>
+	</div>
+	
 
   <footer>
     <div class="controls">
@@ -134,12 +175,31 @@
   let attackBase = 26;
   let skillCd = 0, skillCdMax = 6; // seconds
   let aoeFlash = 0;
+  let healFlash = 0;
+  const items = []; // dropped items (potions)
   bestEl.textContent = best;
   if(atk){ attackBase = Number(atk.value)||attackBase; atkVal.textContent = attackBase; }
 
   const keys = new Set();
   const rng = (min, max) => Math.random()*(max-min)+min;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  
+  
+  	const btnLeft = document.getElementById('btnLeft');
+	const btnRight = document.getElementById('btnRight');
+	const btnAtk = document.getElementById('btnAtk');
+	const btnSkill = document.getElementById('btnSkill');
+	const btnDash = document.getElementById('btnDash');
+
+	btnLeft.addEventListener('touchstart', e => { e.preventDefault(); keys.add('ArrowLeft'); });
+	btnLeft.addEventListener('touchend', e => { e.preventDefault(); keys.delete('ArrowLeft'); });
+	btnRight.addEventListener('touchstart', e => { e.preventDefault(); keys.add('ArrowRight'); });
+	btnRight.addEventListener('touchend', e => { e.preventDefault(); keys.delete('ArrowRight'); });
+
+	btnAtk.addEventListener('touchstart', e => { e.preventDefault(); swing(); });
+	btnSkill.addEventListener('touchstart', e => { e.preventDefault(); if(skillCd<=0) castSkill(); });
+	btnDash.addEventListener('touchstart', e => { e.preventDefault(); if(player.stamina>10) { player.vx*=2.5; player.stamina-=25; } });
+  
 
   // Barbarian (player)
   const player = {
@@ -228,12 +288,25 @@
     }
 
     for(let i=mobs.length-1;i>=0;i--){ if(!mobs[i].alive) mobs.splice(i,1); }
+    // items update (bobbing + pickup)
+    for(let i=items.length-1;i>=0;i--){
+      const it = items[i];
+      it.t += dt;
+      // pickup check
+      const dx = it.x - player.x; const dy = it.y - player.y;
+      if(Math.hypot(dx,dy) < 34){
+        if(it.kind==='hp'){
+          player.hp = clamp(player.hp + it.heal, 0, player.hpMax);
+          healFlash = 0.5;
+        }
+        items.splice(i,1);
+      }
+    }
 
     hpFill.style.width = `${(player.hp/player.hpMax)*100}%`;
 
     if(player.hp <= 0){ endGame(); }
   }
-  
 
   function swing(){
     // One-hit melee: kill nearest targets in front
@@ -244,19 +317,22 @@
       const dist = Math.abs(m.x - player.x);
       if(inFront && dist < reach){
         m.alive = false; score += 10; scoreEl.textContent = score;
+        maybeDrop(m.x, m.y);
       }
     }
   }
+  
 
   function castSkill(){
     // AoE wipe — kill all visible mobs, 6s cooldown
     let kills = 0;
-    for(const m of mobs){ if(m.alive){ m.alive=false; kills++; } }
+    for(const m of mobs){
+      if(m.alive){ m.alive=false; kills++; maybeDrop(m.x, m.y); }
+    }
     if(kills>0){ score += kills*10; scoreEl.textContent = score; }
     skillCd = skillCdMax; aoeFlash = 0.6;
   }
-
-
+  
   function draw(){
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle = '#0b0d1f';
@@ -267,6 +343,8 @@
 
     drawBarbarian();
     for(const m of mobs){ drawMob(m); }
+    // items
+    for(const it of items){ drawItem(it); }
 
     // AOE flash
     if(aoeFlash>0){
@@ -280,8 +358,15 @@
     ctx.fillStyle = 'rgba(255,255,255,.12)';
     ctx.font = '12px ui-sans-serif, system-ui';
     ctx.fillText('← → 이동 · Space 근접공격(한방) · S 대시 · Q 광역스킬(6s)', 14, 22);
+    // heal flash overlay (green)
+    if(healFlash>0){
+      const grd2 = ctx.createRadialGradient(W/2,H/2,10,W/2,H/2,Math.max(W,H));
+      grd2.addColorStop(0, `rgba(34,197,94,${healFlash})`);
+      grd2.addColorStop(1, 'rgba(34,197,94,0)');
+      ctx.fillStyle = grd2; ctx.fillRect(0,0,W,H);
+      healFlash = Math.max(0, healFlash - 0.02);
+    }
   }
-
 
   function drawBarbarian(){
     const p = player;
@@ -328,6 +413,18 @@
     ctx.restore();
   }
 
+  function drawItem(it){
+    ctx.save(); ctx.translate(it.x, it.y - Math.sin(it.t*3)*4);
+    // potion bottle
+    ctx.fillStyle = '#065f46'; roundRect(ctx, -8, -24, 16, 22, 6); ctx.fill();
+    ctx.fillStyle = '#10b981'; roundRect(ctx, -8, -14, 16, 12, 6); ctx.fill();
+    // cork
+    ctx.fillStyle = '#78350f'; roundRect(ctx, -4, -28, 8, 6, 2); ctx.fill();
+    // plus sign
+    ctx.fillStyle = '#d1fae5'; ctx.fillRect(-2, -10, 4, 8); ctx.fillRect(-6, -6, 12, 4);
+    ctx.restore();
+  }
+
   function roundRect(ctx, x, y, w, h, r){
     const rr = Math.min(r, w/2, h/2);
     ctx.beginPath();
@@ -337,6 +434,13 @@
     ctx.arcTo(x, y+h, x, y, rr);
     ctx.arcTo(x, y, x+w, y, rr);
     ctx.closePath();
+  }
+
+  function maybeDrop(x,y){
+    // ~15% 확률로 HP 포션 드랍
+    if(Math.random() < 0.15){
+      items.push({kind:'hp', x, y, heal: 30, t:0});
+    }
   }
 
   function loop(now){
