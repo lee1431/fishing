@@ -108,7 +108,7 @@
       path: './game/icefishing.html',
       desc: '얼음이 갈라지는 맛을 느껴 보세요!!',
       tags: ['구사일생,극한생존'],
-      thumb: './game/img/icefishing.png'
+      thumb: './game/img/if.png'
     },
     {
       title: 'Putting 챌린지',
@@ -136,7 +136,7 @@
     grid.innerHTML = '';
     GAMES.forEach(g => {
       const pills = (g.tags||[]).map(t=>`<span class="pill">${t}</span>`).join('');
-      const thumb = g.thumb ? `<img src="${g.thumb}" alt="${g.title} 썸네일" style="width:100%;height:100%;object-fit:cover;border-radius:10px"/>`
+      const thumb = g.thumb ? `<img src="${g.thumb}" alt="${g.title} 썸네일" style="width:100%;height:120px;object-fit:cover;border-radius:10px"/>`
                              : 'No Thumbnail';
       grid.appendChild(el(`
         <article class="card">
