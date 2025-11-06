@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Dot Dodge — 피하기 게임</title>
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#111827; --ink:#e5f0ff; --muted:#9fb0c7; --accent:#61d6c2; --danger:#ff6b6b; --line:#1f2937;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:radial-gradient(1200px 600px at 50% -20%, #13202f 0%, var(--bg) 55%);
+       color:var(--ink);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Noto Sans KR,sans-serif;}
+  .wrap{display:grid;place-items:center;min-height:100%;padding:16px}
+  .panel{width:min(720px,100%);background:linear-gradient(180deg,#0f1624,#0b111b);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.35);}
+  header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+  header h1{font-size:16px;margin:0;color:var(--ink)}
+  #hud{display:flex;gap:10px;align-items:center}
+  .pill{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#0e1522;color:var(--ink)}
+  .pill .dot{width:8px;height:8px;border-radius:2px;background:var(--accent)}
+  .area{padding:14px}
+  canvas{display:block;width:100%;height:auto;border-radius:12px;image-rendering:pixelated;background:#070b11;}
+  .controls{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px;border-top:1px solid var(--line);background:#0c121e}
+  .btn{appearance:none;-webkit-tap-highlight-color:transparent;border:1px solid var(--line);background:#0f172a;color:var(--ink);border-radius:12px;padding:12px;font-weight:600;cursor:pointer}
+  .btn:active{transform:translateY(1px)}
+  .dpad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,56px);gap:6px;justify-content:center;margin:0 auto}
+  .dpad .btn{border-radius:10px}
+  .row{display:flex;gap:8px;justify-content:center}
+  .hide{display:none}
+  .help{padding:10px 14px;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <header>
+        <h1>🎯 Dot Dodge — 네모 박스 피하기</h1>
+        <div id="hud">
+          <div class="pill"><span class="dot"></span><span id="score">0</span> 점</div>
+          <div class="pill">LV <span id="level">1</span></div>
+          <button id="playBtn" class="btn">시작</button>
+        </div>
+      </header>
+      <div class="area">
+        <canvas id="game" width="360" height="480"></canvas>
+      </div>
+      <div class="controls">
+        <div class="dpad" id="dpad">
+          <span></span><button class="btn" data-dir="up">▲</button><span></span>
+          <button class="btn" data-dir="left">◀</button><span></span><button class="btn" data-dir="right">▶</button>
+          <span></span><button class="btn" data-dir="down">▼</button><span></span>
+        </div>
+        <div class="row">
+          <button id="pauseBtn" class="btn">일시정지</button>
+          <button id="resetBtn" class="btn">재시작</button>
+        </div>
+      </div>
+      <div class="help">키보드: 방향키 ←↑→↓ 로 이동. 모바일: 화살표 버튼. 박스를 피하면 시간이 지날수록 점수가 오르고 난이도가 상승합니다.</div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const scoreEl = document.getElementById('score');
+  const levelEl = document.getElementById('level');
+  const playBtn = document.getElementById('playBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const dpad = document.getElementById('dpad');
+
+  // Pixel scale for crisp rendering
+  function fitCanvas() {
+    const maxW = Math.min(720 - 28, window.innerWidth - 28);
+    const scale = Math.floor(maxW / canvas.width) || 1;
+    canvas.style.width = canvas.width * scale + 'px';
+    canvas.style.height = canvas.height * scale + 'px';
+  }
+  window.addEventListener('resize', fitCanvas);
+  fitCanvas();
+
+  // Game state
+  const state = {
+    running: false,
+    paused: false,
+    over: false,
+    time: 0,
+    score: 0,
+    level: 1,
+    speedScale: 1,
+  };
+
+  // Player (pixel style)
+  const player = {
+    x: canvas.width/2 - 6,
+    y: canvas.height - 40,
+    w: 12,
+    h: 12,
+    speed: 140, // px per second
+    color: '#61d6c2',
+    dx: 0,
+    dy: 0,
+  };
+
+  // Obstacles
+  const boxes = [];
+  let spawnTimer = 0;
+
+  function rand(min, max){ return Math.random() * (max - min) + min; }
+
+  function spawnBox(){
+    const size = Math.floor(rand(10, 22));
+    const x = Math.floor(rand(0, canvas.width - size));
+    const speed = rand(48, 120) * state.speedScale; // downward speed
+    boxes.push({ x, y: -size, w: size, h: size, vy: speed, color: '#ff6b6b' });
+  }
+
+  // Input handling
+  const keys = new Set();
+  window.addEventListener('keydown', (e) => {
+    if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)){
+      e.preventDefault();
+    }
+    keys.add(e.key);
+    if(e.key === ' '){ togglePause(); }
+  });
+  window.addEventListener('keyup', (e) => keys.delete(e.key));
+
+  // D-pad (touch)
+  function setDir(dir, on){
+    const v = on ? 1 : 0;
+    if(dir==='left') player.dx = -v;
+    if(dir==='right') player.dx = v;
+    if(dir==='up') player.dy = -v;
+    if(dir==='down') player.dy = v;
+  }
+  dpad.addEventListener('touchstart', e => {
+    const t = e.target.closest('[data-dir]');
+    if(!t) return; e.preventDefault();
+    setDir(t.dataset.dir, true);
+  }, {passive:false});
+  dpad.addEventListener('touchend', e => {
+    const t = e.target.closest('[data-dir]');
+    if(!t) return; e.preventDefault();
+    setDir(t.dataset.dir, false);
+  }, {passive:false});
+  dpad.addEventListener('touchcancel', () => { player.dx = 0; player.dy = 0; });
+
+  function start(){
+    Object.assign(state, {running:true, paused:false, over:false, time:0, score:0, level:1, speedScale:1});
+    boxes.length = 0;
+    player.x = canvas.width/2 - player.w/2;
+    player.y = canvas.height - 40;
+    last = performance.now();
+    playBtn.textContent = '다시시작';
+    loop();
+  }
+
+  function togglePause(){
+    if(!state.running || state.over) return;
+    state.paused = !state.paused;
+  }
+
+  function gameOver(){
+    state.over = true; state.running = false;
+    draw();
+  }
+
+  playBtn.addEventListener('click', start);
+  pauseBtn.addEventListener('click', togglePause);
+  resetBtn.addEventListener('click', start);
+
+  // Physics helpers
+  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+  function aabb(a,b){ return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; }
+
+  // Loop
+  let last = performance.now();
+  function loop(now){
+    if(!state.running) return;
+    if(state.paused){ requestAnimationFrame(loop); return draw(true); }
+    const dt = Math.min(0.033, (now - last) / 1000) || 0; // cap dt to avoid big jumps
+    last = now || performance.now();
+
+    update(dt);
+    draw();
+    if(!state.over) requestAnimationFrame(loop);
+  }
+
+  function update(dt){
+    state.time += dt;
+    // Score increases with survival time
+    state.score = Math.floor(state.time * 10);
+    scoreEl.textContent = state.score;
+
+    // Level every 15 seconds
+    const newLevel = 1 + Math.floor(state.time / 15);
+    if(newLevel !== state.level){
+      state.level = newLevel; levelEl.textContent = state.level;
+      state.speedScale = 1 + (state.level-1) * 0.18;
+    }
+
+    // Spawn logic (faster with level)
+    spawnTimer -= dt;
+    if(spawnTimer <= 0){
+      spawnBox();
+      spawnTimer = Math.max(0.25, 0.9 - state.level*0.05);
+    }
+
+    // Keyboard axes
+    let ax = 0, ay = 0;
+    if(keys.has('ArrowLeft')) ax -= 1;
+    if(keys.has('ArrowRight')) ax += 1;
+    if(keys.has('ArrowUp')) ay -= 1;
+    if(keys.has('ArrowDown')) ay += 1;
+
+    // Combine with touch axes
+    ax += player.dx; ay += player.dy;
+    if(ax && ay){ const inv = 1/Math.sqrt(2); ax*=inv; ay*=inv; }
+
+    player.x += ax * player.speed * dt;
+    player.y += ay * player.speed * dt;
+
+    // Bounds
+    player.x = clamp(player.x, 0, canvas.width - player.w);
+    player.y = clamp(player.y, 0, canvas.height - player.h);
+
+    // Boxes update
+    for(let i=boxes.length-1;i>=0;i--){
+      const b = boxes[i];
+      b.y += b.vy * dt;
+      if(b.y > canvas.height + 30) boxes.splice(i,1);
+      else if(aabb(player, b)) { gameOver(); break; }
+    }
+  }
+
+  // Rendering (pixel look)
+  function draw(pausedGhost=false){
+    // Clear
+    ctx.fillStyle = '#060a10';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // Star grid background
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = '#9fb0c7';
+    for(let y=0;y<canvas.height;y+=24){
+      for(let x=0;x<canvas.width;x+=24){
+        ctx.fillRect(x, y, 1, 1);
+      }
+    }
+    ctx.globalAlpha = 1;
+
+    // Player
+    pixelRect(player.x, player.y, player.w, player.h, player.color);
+
+    // Boxes
+    boxes.forEach(b => pixelRect(b.x, b.y, b.w, b.h, state.over? '#a33' : b.color));
+
+    // UI overlays
+    if(state.paused && !state.over){
+      banner('PAUSED\n스페이스 또는 일시정지 버튼으로 재개');
+    }
+    if(state.over){
+      banner('GAME OVER\n점수: '+state.score+'\n재시작을 누르세요');
+    }
+  }
+
+  function pixelRect(x,y,w,h,color){
+    // Outline + fill for chunky pixel vibe
+    ctx.fillStyle = '#00000066';
+    ctx.fillRect(Math.round(x)+1, Math.round(y)+1, Math.round(w), Math.round(h));
+    ctx.fillStyle = color;
+    ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+  }
+
+  function banner(text){
+    ctx.save();
+    ctx.fillStyle = '#00000088';
+    ctx.fillRect(20, canvas.height/2-60, canvas.width-40, 120);
+    ctx.strokeStyle = '#1f2937';
+    ctx.strokeRect(20.5, canvas.height/2-60.5, canvas.width-41, 121);
+
+    ctx.fillStyle = '#e5f0ff';
+    ctx.font = 'bold 16px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const lines = String(text).split('\n');
+    lines.forEach((ln,i)=>{
+      ctx.fillText(ln, canvas.width/2, canvas.height/2 - 24 + i*22);
+    });
+    ctx.restore();
+  }
+
+  // Start with idle screen drawn
+  draw();
+})();
+</script>
+</body>
+</html>
