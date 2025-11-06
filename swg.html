@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Stance Arcade — 종합 웹 게임 허브</title>
+  <meta name="description" content="바바리안 게임을 포함한 Stance 미니게임 모음. 한 페이지에서 검색·실행·기록까지!" />
+  <meta name="theme-color" content="#111111" />
+  <style>
+    :root{
+      --bg:#0f1115; --card:#161922; --ink:#e8eef7; --muted:#a8b3c5; --line:#252a38; --accent:#61d6c2;
+      --pill:#1b2030; --danger:#ff6262; --ok:#60d394; --warn:#f2c14e;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#0f1115,#0b0d12);color:var(--ink);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+    a{color:inherit;text-decoration:none}
+    .wrap{max-width:1120px;margin:0 auto;padding:20px}
+    header{display:flex;align-items:center;gap:14px}
+    .logo{display:flex;align-items:center;gap:10px}
+    .badge{padding:.35rem .6rem;border:1px solid var(--line);border-radius:999px;background:var(--pill);color:var(--muted);font-size:12px}
+    .space{flex:1}
+    .search{display:flex;gap:10px;align-items:center}
+    .search input{width:260px;max-width:50vw;padding:10px 12px;border:1px solid var(--line);background:#0e1119;border-radius:10px;color:var(--ink)}
+    .search select{padding:10px;border:1px solid var(--line);background:#0e1119;border-radius:10px;color:var(--ink)}
+    .btn{padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+    .btn[disabled]{opacity:.5;cursor:not-allowed}
+    .hero{margin:18px 0 10px;padding:16px;border:1px solid var(--line);background:linear-gradient(180deg,#121625,#0e121d);border-radius:16px}
+    .hero h1{margin:0 0 6px;font-size:22px}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    @media (max-width:1000px){.grid{grid-template-columns:repeat(3,1fr)}}
+    @media (max-width:720px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:480px){.grid{grid-template-columns:1fr}}
+    .card{position:relative;border:1px solid var(--line);background:var(--card);border-radius:14px;overflow:hidden}
+    .thumb{aspect-ratio:16/9;background:#0b0e16 url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 120 68\"><rect width=\"120\" height=\"68\" fill=\"%23141927\"/><text x=\"50%\" y=\"54%\" dominant-baseline=\"middle\" text-anchor=\"middle\" font-size=\"12\" fill=\"%2361d6c2\">No Thumbnail</text></svg>') center/cover}
+    .card .body{padding:12px}
+    .card h3{margin:0 0 6px;font-size:16px}
+    .small{font-size:12px;color:var(--muted)}
+    .row{display:flex;align-items:center;gap:10px}
+    .tags{display:flex;gap:6px;flex-wrap:wrap}
+    .tag{padding:.28rem .5rem;border:1px solid var(--line);background:var(--pill);border-radius:999px;color:var(--muted);font-size:11px}
+
+    /* Dialog */
+    dialog{border:none;border-radius:16px;padding:0;background:transparent}
+    .modal{width:min(1080px,96vw);max-height:92vh;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card)}
+    .modal header{padding:10px;border-bottom:1px solid var(--line)}
+    .modal header h3{margin:0;font-size:16px}
+    .modal .content{display:grid;grid-template-columns:1fr 320px}
+    @media (max-width:900px){.modal .content{grid-template-columns:1fr}}
+    iframe.game{width:100%;height:min(70vh,720px);border:0;background:#090c14}
+    .pane{border-left:1px solid var(--line)}
+    .pane .section{padding:12px;border-bottom:1px solid var(--line)}
+
+    /* Mobile controls overlay */
+    .controls{position:fixed;inset:auto 0 14px 0;display:flex;justify-content:space-between;pointer-events:none}
+    .stick{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,56px);gap:6px;margin-left:14px}
+    .btnc{width:56px;height:56px;border-radius:14px;background:#0f1320cc;border:1px solid var(--line);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;pointer-events:auto}
+    .btnc:active{transform:scale(.98)}
+    .act{display:flex;gap:10px;margin-right:14px;align-items:flex-end}
+
+    /* Toast */
+    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:#101522;border:1px solid var(--line);padding:10px 12px;border-radius:10px;color:var(--ink);opacity:0;transition:opacity .2s}
+    .toast.show{opacity:1}
+
+    footer{margin:20px 0;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l3.2 5.8 6.3.8-4.5 4.5 1.1 6.2L12 16.8 5.9 19.3 7 13.1 2.5 8.6l6.3-.8L12 2z" stroke="%2361d6c2"/></svg>
+        <strong>Stance Arcade</strong>
+        <span class="badge">beta</span>
+      </div>
+      <div class="space"></div>
+      <div class="search">
+        <input id="q" placeholder="검색: 게임 이름·태그" />
+        <select id="cat">
+          <option value="">전체</option>
+          <option value="action">액션</option>
+          <option value="arcade">아케이드</option>
+          <option value="puzzle">퍼즐</option>
+          <option value="rpg">RPG</option>
+        </select>
+        <button class="btn" id="addBtn">게임 추가</button>
+      </div>
+    </header>
+
+    <div class="hero">
+      <h1>한 페이지에서 즐기는 미니게임 모음</h1>
+      <div class="small">어제 만든 <b>바바리안 게임</b>부터 시작! 카드 클릭 ≫ 즉시 실행 · 모바일 터치 컨트롤 내장 · 플레이 기록 로컬 저장</div>
+    </div>
+
+    <div id="grid" class="grid" aria-live="polite"></div>
+
+    <footer>
+      <div class="small">© 2025 Stance. Built for GitHub Pages · 모든 리소스는 동일 도메인에 두면 모바일 컨트롤이 작동합니다.</div>
+    </footer>
+  </div>
+
+  <!-- Player Dialog -->
+  <dialog id="player">
+    <div class="modal">
+      <header style="gap:10px">
+        <h3 id="playTitle" class="space">게임 로딩...</h3>
+        <button class="btn" id="closeDlg">닫기</button>
+      </header>
+      <div class="content">
+        <iframe id="gameFrame" class="game" title="Game"></iframe>
+        <aside class="pane">
+          <div class="section">
+            <div class="small" id="playDesc"></div>
+          </div>
+          <div class="section">
+            <div class="small">조작키</div>
+            <div id="keyList" style="display:grid;grid-template-columns:auto 1fr;gap:6px;margin-top:6px"></div>
+          </div>
+          <div class="section">
+            <button class="btn" id="openNew">새 창에서 열기</button>
+            <button class="btn" id="reload">다시 시작</button>
+          </div>
+          <div class="section">
+            <div class="small">플레이 기록</div>
+            <div id="history" class="small"></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Mobile on-screen controls (appear only when dialog open) -->
+  <div id="ctrl" class="controls" hidden>
+    <div class="stick">
+      <span></span>
+      <button class="btnc" data-key="ArrowUp">▲</button>
+      <span></span>
+      <button class="btnc" data-key="ArrowLeft">◀</button>
+      <button class="btnc" data-key="ArrowDown">▼</button>
+      <button class="btnc" data-key="ArrowRight">▶</button>
+      <span></span><span></span><span></span>
+    </div>
+    <div class="act">
+      <button class="btnc" data-key="Space" style="width:72px">ATTACK</button>
+      <button class="btnc" data-key="KeyQ" style="width:72px">SKILL</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+  // --- Game catalog (동일 도메인 경로 권장) ---
+  const GAMES = [
+    {
+      id: 'barbarian',
+      title: '바바리안 — 맨주먹 전장',
+      url: './baba4.html', // 어제 만든 파일 경로로 교체 가능
+      thumb: '',
+      tags: ['action','arcade','2D'],
+      desc: '스페이스: 공격 · Q: 광역 스킬(6초 쿨). 모바일은 화면 하단 버튼 사용.',
+      controls: { '이동 ↑': 'ArrowUp', '이동 ←': 'ArrowLeft', '이동 ↓': 'ArrowDown', '이동 →': 'ArrowRight', '공격': 'Space', '스킬': 'KeyQ' }
+    },
+    {
+      id: 'placeholder-puzzle',
+      title: '틀린그림 찾기 (샘플)',
+      url: './spot-the-diff/index.html',
+      tags: ['puzzle'],
+      desc: '두 이미지를 비교해 다른 부분을 찾으세요. 모바일 터치 지원.',
+      controls: { '마우스/터치': 'Click / Tap' }
+    }
+  ];
+
+  // --- Render grid ---
+  const grid = document.getElementById('grid');
+  const q = document.getElementById('q');
+  const cat = document.getElementById('cat');
+  const addBtn = document.getElementById('addBtn');
+
+  function render(list){
+    grid.innerHTML = list.map(g => `
+      <article class="card" data-id="${g.id}">
+        <div class="thumb" style="${g.thumb?`background-image:url('${g.thumb}')`:''}"></div>
+        <div class="body">
+          <h3>${g.title}</h3>
+          <div class="small" style="min-height:38px">${g.desc||''}</div>
+          <div class="row" style="margin-top:8px;justify-content:space-between">
+            <div class="tags">${(g.tags||[]).map(t=>`<span class='tag'>${t}</span>`).join('')}</div>
+            <button class="btn" onclick="openGame('${g.id}')">플레이</button>
+          </div>
+        </div>
+      </article>`).join('');
+  }
+
+  function filter(){
+    const text = (q.value||'').toLowerCase();
+    const c = cat.value;
+    const list = GAMES.filter(g => {
+      const inCat = !c || (g.tags||[]).includes(c);
+      const inText = !text || (g.title+" "+(g.tags||[]).join(' ')+(g.desc||'')).toLowerCase().includes(text);
+      return inCat && inText;
+    });
+    render(list);
+  }
+
+  q.addEventListener('input', filter);
+  cat.addEventListener('change', filter);
+  render(GAMES);
+
+  // --- Player dialog logic ---
+  const dlg = document.getElementById('player');
+  const closeDlg = document.getElementById('closeDlg');
+  const gameFrame = document.getElementById('gameFrame');
+  const keyList = document.getElementById('keyList');
+  const playTitle = document.getElementById('playTitle');
+  const playDesc  = document.getElementById('playDesc');
+  const historyEl = document.getElementById('history');
+  const openNew = document.getElementById('openNew');
+  const reloadBtn = document.getElementById('reload');
+  const ctrl = document.getElementById('ctrl');
+  let currentGame = null, startAt = 0;
+
+  function openGame(id){
+    const g = GAMES.find(x=>x.id===id);
+    if(!g){ toast('게임을 찾을 수 없어요.'); return; }
+    currentGame = g; startAt = Date.now();
+    playTitle.textContent = g.title;
+    playDesc.textContent = g.desc||'';
+    keyList.innerHTML = '';
+    const table = g.controls||{};
+    Object.entries(table).forEach(([name,key])=>{
+      const a=document.createElement('div'); a.textContent=name; keyList.appendChild(a);
+      const b=document.createElement('div'); b.innerHTML = `<code>${key}</code>`; keyList.appendChild(b);
+    });
+    gameFrame.src = g.url;
+    loadHistory(g.id);
+    dlg.showModal();
+    // 모바일이면 컨트롤 표시
+    if (isTouch()) ctrl.hidden = false;
+  }
+  window.openGame = openGame;
+
+  function closePlayer(){
+    dlg.close(); gameFrame.src='about:blank'; ctrl.hidden = true; saveSession();
+  }
+  closeDlg.addEventListener('click', closePlayer);
+  dlg.addEventListener('close', ()=>{ gameFrame.src='about:blank'; ctrl.hidden=true; saveSession(); });
+
+  openNew.addEventListener('click', ()=>{ if(currentGame) window.open(currentGame.url,'_blank'); });
+  reloadBtn.addEventListener('click', ()=>{ gameFrame.contentWindow?.location?.reload(); });
+
+  // --- Mobile on-screen keys → forward to iframe (same-origin 권장) ---
+  function dispatchKey(key,down){
+    try{
+      const ev = new KeyboardEvent(down?'keydown':'keyup', { key, code:key, bubbles:true });
+      gameFrame.contentWindow && gameFrame.contentWindow.dispatchEvent(ev);
+    }catch(e){ /* cross-origin이면 동작 안함 */ }
+  }
+  document.querySelectorAll('.btnc').forEach(btn=>{
+    const key = btn.dataset.key;
+    btn.addEventListener('touchstart', e=>{ e.preventDefault(); dispatchKey(key,true); });
+    btn.addEventListener('touchend',   e=>{ e.preventDefault(); dispatchKey(key,false); });
+    btn.addEventListener('mousedown',  e=>{ e.preventDefault(); dispatchKey(key,true); });
+    btn.addEventListener('mouseup',    e=>{ e.preventDefault(); dispatchKey(key,false); });
+  });
+
+  function isTouch(){ return matchMedia('(pointer:coarse)').matches; }
+
+  // --- Local history (per game) ---
+  function keyHistory(id){ return `stance-arcade-history:${id}`; }
+  function loadHistory(id){
+    const raw = localStorage.getItem(keyHistory(id));
+    const arr = raw? JSON.parse(raw):[];
+    historyEl.innerHTML = arr.slice(-6).reverse().map(s=>{
+      const d = new Date(s.end||s.start);
+      const m = Math.max(0, Math.round(((s.end||Date.now())-s.start)/1000));
+      return `<div>· ${d.toLocaleString()} — <span class='small'>${m}s</span></div>`;
+    }).join('') || '<div class="small">기록 없음</div>';
+  }
+  function saveSession(){
+    if(!currentGame || !startAt) return;
+    const rec = { start:startAt, end:Date.now() };
+    const k = keyHistory(currentGame.id);
+    const raw = localStorage.getItem(k);
+    const arr = raw? JSON.parse(raw):[]; arr.push(rec);
+    localStorage.setItem(k, JSON.stringify(arr));
+    loadHistory(currentGame.id);
+  }
+
+  // --- Add game (quick form via prompt) ---
+  addBtn.addEventListener('click', ()=>{
+    const title = prompt('게임 이름을 입력하세요'); if(!title) return;
+    const url   = prompt('게임 파일 경로(예: ./mygame/index.html)'); if(!url) return;
+    const tags  = prompt('태그(쉼표로 구분, 예: action,arcade)')||'';
+    const id    = title.toLowerCase().replace(/[^a-z0-9가-힣]+/g,'-')+"-"+Date.now().toString(36);
+    const game  = { id, title, url, tags: tags.split(',').map(s=>s.trim()).filter(Boolean) };
+    GAMES.push(game); filter(); toast('추가되었습니다. 동일 도메인에 파일을 올려 주세요.');
+  });
+
+  // --- Toast ---
+  const toastEl = document.getElementById('toast');
+  function toast(msg){ toastEl.textContent=msg; toastEl.classList.add('show'); setTimeout(()=>toastEl.classList.remove('show'), 1600); }
+
+  // --- Optional: expose for console tweaks ---
+  window.StanceArcade = { GAMES, openGame };
+  </script>
+</body>
+</html>
