@@ -32,7 +32,7 @@
   <div class="wrap">
     <div class="panel">
       <header>
-        <h1>🎯 Dot Dodge — 네모 박스 피하기</h1>
+        <h1>🎯 Dot Dodge — 칼치기</h1>
         <div id="hud">
           <div class="pill"><span class="dot"></span><span id="score">0</span> 점</div>
           <div class="pill">LV <span id="level">1</span></div>
@@ -107,7 +107,7 @@
   function loop(now){if(!state.running)return;if(state.paused){requestAnimationFrame(loop);return draw(true);}const dt=Math.min(0.033,(now-last)/1000)||0;last=now||performance.now();update(dt);draw();if(!state.over)requestAnimationFrame(loop);}
 
   function update(dt){state.time+=dt;state.score=Math.floor(state.time*10);scoreEl.textContent=state.score;const newLevel=1+Math.floor(state.time/15);if(newLevel!==state.level){state.level=newLevel;levelEl.textContent=state.level;state.speedScale=1+(state.level-1)*0.18;}
-    spawnTimer-=dt;if(spawnTimer<=0){spawnBox();spawnTimer=Math.max(0.25,0.06-state.level*0.02);} // 빠른 스폰
+    spawnTimer-=dt;if(spawnTimer<=0){spawnBox();spawnTimer=Math.max(0.09,0.01-state.level*0.01);} // 빠른 스폰
     let ax=0,ay=0;if(keys.has('ArrowLeft'))ax-=1;if(keys.has('ArrowRight'))ax+=1;if(keys.has('ArrowUp'))ay-=1;if(keys.has('ArrowDown'))ay+=1;ax+=player.dx;ay+=player.dy;if(ax&&ay){const inv=1/Math.sqrt(2);ax*=inv;ay*=inv;}
     player.x+=ax*player.speed*dt;player.y+=ay*player.speed*dt;player.x=clamp(player.x,0,canvas.width-player.w);player.y=clamp(player.y,0,canvas.height-player.h);
     for(let i=boxes.length-1;i>=0;i--){const b=boxes[i];b.y+=b.vy*dt;if(b.y>canvas.height+30)boxes.splice(i,1);else if(aabb(player,b)){gameOver();break;}}
