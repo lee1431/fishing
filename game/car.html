@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>자동차 칼치기 — 3차선 피하기</title>
+<style>
+  :root{--bg:#0b0f14;--panel:#0f1624;--ink:#eaf2ff;--muted:#9fb0c7;--line:#1f2937;--accent:#61d6c2;--danger:#ff6b6b;}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:radial-gradient(1200px 600px at 50% -20%, #13202f 0%, var(--bg) 55%);color:var(--ink);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Noto Sans KR,sans-serif}
+  .wrap{display:grid;place-items:center;min-height:100%;padding:16px}
+  .panel{width:min(720px,100%);background:linear-gradient(180deg,#0f1624,#0b111b);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+  header h1{margin:0;font-size:16px}
+  #hud{display:flex;gap:8px;align-items:center}
+  .pill{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#0e1522;color:var(--ink)}
+  .btn{appearance:none;-webkit-tap-highlight-color:transparent;border:1px solid var(--line);background:#0f172a;color:var(--ink);border-radius:12px;padding:10px 12px;font-weight:700;cursor:pointer}
+  .btn:active{transform:translateY(1px)}
+  .area{padding:14px}
+  canvas{display:block;width:100%;height:auto;border-radius:12px;image-rendering:pixelated;background:#0a0f16}
+  .controls{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px;border-top:1px solid var(--line);background:#0c121e}
+  .dpad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,56px);gap:6px;justify-content:center;margin:0 auto}
+  .dpad .btn{border-radius:10px}
+  .row{display:flex;gap:8px;justify-content:center}
+  .help{padding:8px 14px;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <header>
+        <h1>🚗 자동차 칼치기 — 3차선 피하기</h1>
+        <div id="hud">
+          <div class="pill">점수 <b id="score">0</b></div>
+          <div class="pill">속도 <b id="speed">0</b></div>
+          <button id="startBtn" class="btn">시작</button>
+        </div>
+      </header>
+      <div class="area">
+        <canvas id="game" width="360" height="600"></canvas>
+      </div>
+      <div class="controls">
+        <div class="dpad" id="dpad">
+          <span></span><button class="btn" data-dir="up">▲</button><span></span>
+          <button class="btn" data-dir="left">◀</button><span></span><button class="btn" data-dir="right">▶</button>
+          <span></span><button class="btn" data-dir="down">▼</button><span></span>
+        </div>
+        <div class="row">
+          <button id="pauseBtn" class="btn">일시정지</button>
+          <button id="resetBtn" class="btn">재시작</button>
+        </div>
+      </div>
+      <div class="help">좌/우: 차선 변경(키/터치). 위/아래: 전후 이동(홀드). 스페이스/Enter: 시작·일시정지. 가까스로 스치면 <b>“칼치기 +50”</b> 보너스!</div>
+    </div>
+  </div>
+
+<script>
+(()=>{
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const scoreEl = document.getElementById('score');
+  const speedEl = document.getElementById('speed');
+  const startBtn = document.getElementById('startBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const dpad = document.getElementById('dpad');
+
+  function fit(){ const maxW=Math.min(720-28, window.innerWidth-28); const scale=Math.floor(maxW/canvas.width)||1; canvas.style.width=canvas.width*scale+'px'; canvas.style.height=canvas.height*scale+'px'; }
+  window.addEventListener('resize', fit); fit();
+
+  // Lanes
+  const LANE_X = [70, 180, 290]; // center x for each lane
+  const ROAD_W = canvas.width; const ROAD_H = canvas.height;
+
+  // Game state
+  const state = { running:false, paused:false, over:false, time:0, score:0, baseSpeed:110, speed:110 };
+
+  // Player
+  const PLAYER_MIN_Y = ROAD_H - 200; // 위로 이동 한계
+  const PLAYER_MAX_Y = ROAD_H - 50;  // 아래로 이동 한계
+  const player = {
+    lane:1, targetLane:1,
+    y: ROAD_H - 90,
+    w: 28, h: 46,
+    color: '#ff4d4d',
+    vy:0, vySpeed: 180, // 상하 이동 속도(px/s)
+    x(){ return LANE_X[this.lane] - this.w/2; },
+    tx: 0,
+    moveLane(dir){ if(state.over) return; this.targetLane = Math.max(0, Math.min(2, this.targetLane + dir)); tweenTimer = 0; },
+  };
+
+  // Obstacles
+  const cars = []; // {lane,y,w,h,speed,missed}
+  let spawnTimer = 0;
+
+  // Particles for bonus
+  const sparks = []; // {x,y,vx,vy,life}
+  function spark(x,y){ for(let i=0;i<10;i++){ const a=Math.random()*Math.PI*2; const s=40+Math.random()*60; sparks.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:0.35}); } }
+
+  // Tween for lane change
+  let tweenTimer = 0; const TWEEN_DUR=0.12; // seconds
+
+  function start(){
+    Object.assign(state,{running:true,paused:false,over:false,time:0,score:0,speed:state.baseSpeed});
+    cars.length=0; sparks.length=0; spawnTimer=0; tweenTimer=0;
+    player.lane=1; player.targetLane=1; player.y = ROAD_H - 90; player.vy=0;
+    startBtn.textContent='다시시작';
+    last = performance.now();
+    loop();
+  }
+  function togglePause(){ if(!state.running||state.over) return; state.paused=!state.paused; }
+  function gameOver(){ state.over=true; state.running=false; draw(); }
+
+  startBtn.addEventListener('click', start);
+  resetBtn.addEventListener('click', start);
+  pauseBtn.addEventListener('click', togglePause);
+
+  // Input — keyboard
+  const keys = new Set();
+  window.addEventListener('keydown', e=>{
+    if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' ','Enter'].includes(e.key)) e.preventDefault();
+    keys.add(e.key);
+    if(e.key==='ArrowLeft') player.moveLane(-1);
+    if(e.key==='ArrowRight') player.moveLane(1);
+    if(e.key===' '||e.key==='Enter'){
+      if(!state.running||state.over) start(); else togglePause();
+    }
+  });
+  window.addEventListener('keyup', e=> keys.delete(e.key));
+
+  // Input — mobile D-pad
+  dpad.addEventListener('click', e=>{
+    const b=e.target.closest('[data-dir]'); if(!b) return;
+    if(b.dataset.dir==='left') player.moveLane(-1);
+    if(b.dataset.dir==='right') player.moveLane(1);
+  });
+  // 상하 이동은 홀드 처리 (touch/mouse)
+  function setVy(dir){ player.vy = dir; }
+  ['up','down'].forEach(dir=>{
+    const sel = `[data-dir="${dir}"]`;
+    const btn = dpad.querySelector(sel);
+    const val = (dir==='up'?-1:1);
+    const on = ()=> setVy(val);
+    const off= ()=> setVy(0);
+    btn.addEventListener('touchstart', e=>{e.preventDefault(); on();},{passive:false});
+    btn.addEventListener('touchend', off, {passive:false});
+    btn.addEventListener('touchcancel', off, {passive:false});
+    btn.addEventListener('mousedown', on);
+    btn.addEventListener('mouseup', off);
+    btn.addEventListener('mouseleave', off);
+  });
+
+  // Helpers
+  function aabb(a,b){ return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; }
+  function rand(min,max){ return Math.random()*(max-min)+min; }
+
+  // Loop
+  let last = performance.now();
+  function loop(now){
+    if(!state.running) return;
+    if(state.paused){ requestAnimationFrame(loop); return draw(true); }
+    const dt = Math.min(0.033,(now-last)/1000)||0; last = now||performance.now();
+    update(dt); draw(); if(!state.over) requestAnimationFrame(loop);
+  }
+
+  function update(dt){
+    state.time += dt;
+    // Speed ramps up slowly
+    state.speed = state.baseSpeed + state.time*12; // px/s
+    speedEl.textContent = Math.round(state.speed);
+
+    // Spawn logic — gets faster over time
+    spawnTimer -= dt;
+    const interval = Math.max(0.45, 1.2 - state.time*0.05);
+    if(spawnTimer <= 0){
+      const lane = Math.floor(rand(0,3));
+      const car = { lane, y:-80, w:26, h:44, speed: state.speed*rand(0.95,1.2), missed:false };
+      cars.push(car);
+      spawnTimer = interval;
+    }
+
+    // Lane tween
+    if(player.lane !== player.targetLane || tweenTimer < TWEEN_DUR){
+      tweenTimer = Math.min(TWEEN_DUR, tweenTimer + dt);
+      const t = tweenTimer/TWEEN_DUR; const s = t*t*(3-2*t);
+      const px = LANE_X[player.lane]; const tx = LANE_X[player.targetLane];
+      player.tx = px + (tx-px)*s;
+      if(tweenTimer>=TWEEN_DUR){ player.lane = player.targetLane; player.tx = LANE_X[player.lane]; }
+    } else { player.tx = LANE_X[player.lane]; }
+
+    // Vertical move (keyboard keys set + mobile vy)
+    const upHeld = keys.has('ArrowUp');
+    const downHeld = keys.has('ArrowDown');
+    let vyAxis = player.vy; // from mobile
+    if(upHeld && !downHeld) vyAxis = -1; else if(downHeld && !upHeld) vyAxis = 1; else if(!upHeld && !downHeld) vyAxis = player.vy; // keep mobile
+    player.y += vyAxis * player.vySpeed * dt;
+    if(player.y < PLAYER_MIN_Y) player.y = PLAYER_MIN_Y;
+    if(player.y > PLAYER_MAX_Y - player.h) player.y = PLAYER_MAX_Y - player.h;
+
+    // Move cars
+    for(let i=cars.length-1;i>=0;i--){
+      const c = cars[i];
+      c.y += c.speed*dt;
+
+      const pRect = { x: player.tx - player.w/2, y: player.y, w: player.w, h: player.h };
+      const cRect = { x: LANE_X[c.lane]-c.w/2, y:c.y, w:c.w, h:c.h };
+      if(aabb(pRect,cRect)) { gameOver(); break; }
+
+      // Score + bonus when car passes
+      if(!c.missed && c.y > player.y + player.h){
+        c.missed = true; state.score += 10;
+        const gapTop = Math.abs((c.y + c.h) - player.y);
+        const gapBot = Math.abs(c.y - (player.y + player.h));
+        if(Math.min(gapTop,gapBot) < 14){
+          state.score += 50; spark(pRect.x + pRect.w/2, pRect.y + 6);
+          floatingText.push({x:pRect.x+pRect.w/2, y:pRect.y-8, text:'칼치기 +50', life:0.9});
+        }
+      }
+
+      if(c.y > ROAD_H + 60) cars.splice(i,1);
+    }
+
+    // Sparks update
+    for(let i=sparks.length-1;i>=0;i--){ const s = sparks[i]; s.x += s.vx*dt; s.y += s.vy*dt; s.vx*=0.92; s.vy*=0.92; s.life -= dt; if(s.life<=0) sparks.splice(i,1); }
+
+    // Floating text update
+    for(let i=floatingText.length-1;i>=0;i--){ const f=floatingText[i]; f.y -= 24*dt; f.life-=dt; if(f.life<=0) floatingText.splice(i,1); }
+
+    scoreEl.textContent = state.score;
+  }
+
+  // Floating text
+  const floatingText = []; // {x,y,text,life}
+
+  function carBody(x,y,w,h,color,shadow='#00000066'){
+    ctx.fillStyle = shadow; ctx.fillRect(Math.round(x)+1,Math.round(y)+1,Math.round(w),Math.round(h));
+    ctx.fillStyle = color; ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));
+    ctx.fillStyle = '#1e2633'; ctx.fillRect(Math.round(x+4), Math.round(y+6), Math.round(w-8), 10);
+    ctx.fillRect(Math.round(x+4), Math.round(y+h-16), Math.round(w-8), 8);
+  }
+
+  function draw(paused){
+    ctx.fillStyle = '#0a0f16'; ctx.fillRect(0,0,ROAD_W,ROAD_H);
+
+    // Lane stripes
+    ctx.strokeStyle = '#233045'; ctx.lineWidth = 4; ctx.setLineDash([16,16]); ctx.lineDashOffset = -(state.time*120)%32;
+    [120, 240].forEach(x=>{ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,ROAD_H); ctx.stroke(); });
+    ctx.setLineDash([]);
+
+    // Cars
+    cars.forEach(c=>{ const x = LANE_X[c.lane] - c.w/2; carBody(x, c.y, c.w, c.h, '#9fb0c7'); });
+
+    // Player
+    carBody(player.tx - player.w/2, player.y, player.w, player.h, player.color);
+
+    // Sparks
+    sparks.forEach(s=>{ ctx.globalAlpha = Math.max(0, s.life*2.2); ctx.fillStyle='#ffd166'; ctx.fillRect(s.x|0, s.y|0, 2,2); ctx.globalAlpha=1; });
+
+    // Floating text
+    ctx.fillStyle = '#eaf2ff'; ctx.font = 'bold 12px monospace'; ctx.textAlign='center'; ctx.textBaseline='bottom';
+    floatingText.forEach(f=>{ ctx.globalAlpha = Math.max(0, f.life); ctx.fillText(f.text, f.x, f.y); ctx.globalAlpha = 1; });
+
+    if(state.paused && !state.over){ overlay('PAUSED\n스페이스/엔터로 재개'); }
+    if(state.over){ overlay('GAME OVER\n점수: '+state.score+'\n스페이스/엔터로 재시작'); }
+  }
+
+  function overlay(text){
+    ctx.save();
+    ctx.fillStyle = '#00000088'; ctx.fillRect(20, ROAD_H/2 - 60, ROAD_W-40, 120);
+    ctx.strokeStyle = '#1f2937'; ctx.strokeRect(20.5, ROAD_H/2 - 60.5, ROAD_W-41, 121);
+    ctx.fillStyle = '#e5f0ff'; ctx.font = 'bold 16px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    const lines = String(text).split('\n'); lines.forEach((ln,i)=> ctx.fillText(ln, ROAD_W/2, ROAD_H/2 - 24 + i*22));
+    ctx.restore();
+  }
+
+  draw();
+})();
+</script>
+</body>
+</html>
