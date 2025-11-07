@@ -1,4 +1,3 @@
-<script>
 (() => {
   const cvs = document.getElementById('starbg');
   const ctx = cvs.getContext('2d');
@@ -112,4 +111,3 @@
   resize();
   draw();
 })();
-</script>
