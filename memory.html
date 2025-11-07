@@ -203,21 +203,34 @@
   const $close  = document.getElementById('closeBtn');
   const $toggle = document.getElementById('toggleSpin');
 
-  let scene, camera, renderer, controls, mesh, sprites=[], spin=true, raf;
+  let scene, camera, renderer, controls, mesh, sprites = [], spin = true, raf, gridHelper;
 
-  function resetViewer(){
-    if(renderer){ cancelAnimationFrame(raf); renderer.dispose(); renderer.domElement.remove(); }
+  function resetViewer() {
+    if (renderer) {
+      cancelAnimationFrame(raf);
+      renderer.dispose();
+      renderer.domElement.remove();
+    }
+  
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(55, $viewer.clientWidth/$viewer.clientHeight, 0.1, 100);
-    camera.position.set(0,0,3.2);
-    renderer = new THREE.WebGLRenderer({antialias:true,alpha:true});
-    renderer.setPixelRatio(devicePixelRatio);
-    renderer.setSize($viewer.clientWidth,$viewer.clientHeight);
-    $viewer.innerHTML=''; $viewer.appendChild(renderer.domElement);
-    const light = new THREE.DirectionalLight(0xffffff,.9); light.position.set(3,3,5); scene.add(light);
-    const amb = new THREE.AmbientLight(0x88aaff,.4); scene.add(amb);
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true; controls.dampingFactor=.06;
+    camera = new THREE.PerspectiveCamera(55, viewer.clientWidth / viewer.clientHeight, 0.1, 100);
+    camera.position.set(0, 0, 3.2);
+  
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(viewer.clientWidth, viewer.clientHeight);
+    viewer.innerHTML = '';
+    viewer.appendChild(renderer.domElement);
+  
+    const keyL = new THREE.DirectionalLight(0xffffff, 0.9);
+    keyL.position.set(3, 3, 5);
+    scene.add(keyL);
+    scene.add(new THREE.AmbientLight(0x88aaff, 0.35));
+  
+    // ✅ 수정 포인트 — OrbitControls는 이제 그냥 OrbitControls
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
   }
 
   function makeTextCanvas(text, color='#eaf2ff'){
