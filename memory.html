@@ -121,10 +121,9 @@
   </div>
 </dialog>
 
-<!-- three.js (non-module) for GitHub Pages & file:// compatibility -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.min.js"></script>
-<script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+<script type="module">
   // ----- Tiny constellation background -----
   const stars = document.getElementById('stars');
   const sctx = stars.getContext('2d');
@@ -202,33 +201,44 @@
   const $mMeta  = document.getElementById('mMeta');
   const $close  = document.getElementById('closeBtn');
   const $toggle = document.getElementById('toggleSpin');
+  const $grid   = document.getElementById('gridOn');
+  const $speed  = document.getElementById('speed');
 
   let scene, camera, renderer, controls, mesh, sprites = [], spin = true, raf, gridHelper;
 
+  function controlsReady() {
+    return !!(window.THREE && THREE.OrbitControls);
+  }
+  
   function resetViewer() {
+    if (!controlsReady()) {
+      console.error('OrbitControls not loaded (check script tags and order).');
+      return;
+    }
+
     if (renderer) {
       cancelAnimationFrame(raf);
       renderer.dispose();
       renderer.domElement.remove();
     }
-  
+
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(55, viewer.clientWidth / viewer.clientHeight, 0.1, 100);
+    camera = new THREE.PerspectiveCamera(55, $viewer.clientWidth / $viewer.clientHeight, 0.1, 100);
     camera.position.set(0, 0, 3.2);
-  
+
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(viewer.clientWidth, viewer.clientHeight);
-    viewer.innerHTML = '';
-    viewer.appendChild(renderer.domElement);
-  
+    renderer.setSize($viewer.clientWidth, $viewer.clientHeight);
+    $viewer.innerHTML = '';
+    $viewer.appendChild(renderer.domElement);
+
     const keyL = new THREE.DirectionalLight(0xffffff, 0.9);
     keyL.position.set(3, 3, 5);
     scene.add(keyL);
     scene.add(new THREE.AmbientLight(0x88aaff, 0.35));
-  
-    // ✅ 수정 포인트 — OrbitControls는 이제 그냥 OrbitControls
-    controls = new OrbitControls(camera, renderer.domElement);
+
+    // ✅ 여기! 전역 버전은 new THREE.OrbitControls 를 써야 합니다.
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
   }
