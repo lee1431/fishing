@@ -3,190 +3,163 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>기억의 달력 — LUNA 디자인 리디자인 v2</title>
+<title>기억의 달력 — 회전하는 구체/큐브 프로토타입</title>
 <style>
   :root{
-    /* 컬러 시스템 */
-    --bg:#0a0d12; --surface:#0d121a; --card:#0f1522; --line:#1a2433;
-    --ink:#e8f1ff; --muted:#9fb0c7; --accent:#61d6c2; --gold:#e6c15e; --rose:#e79aa5;
+    --bg:#0c0f14; --ink:#eaf2ff; --muted:#9fb0c7; --line:#1a2230; --accent:#61d6c2; --card:#121826;
   }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{margin:0; color:var(--ink); font:14px/1.55 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-       background:
-         radial-gradient(900px 480px at 75% -10%, #152035 0%, transparent 60%),
-         radial-gradient(1100px 540px at 15% -20%, #10182a 0%, transparent 65%),
-         linear-gradient(180deg,#070a0f,#0a0d12 55%, #0a0f17);
-       position:relative}
-  /* 은은한 노이즈 텍스처 */
-  body::before{content:""; position:fixed; inset:0; pointer-events:none; opacity:.06;
-    background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/></filter><rect width="160" height="160" filter="url(%23n)" opacity=".35"/></svg>'); mix-blend-mode:soft-light}
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;background:radial-gradient(1200px 600px at 70% -10%, #1a2333 0%, transparent 60%), linear-gradient(180deg,#0a0e14,#090d12 60%, #0a0f17);
+       color:var(--ink); font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,sans-serif;}
+  header{position:sticky;top:0;z-index:20;backdrop-filter:saturate(130%) blur(8px); background:rgba(10,14,20,.6); border-bottom:1px solid var(--line)}
+  .wrap{max-width:1100px;margin:0 auto;padding:18px}
+  h1{margin:0;font-size:clamp(20px,3vw,26px);letter-spacing:.3px}
+  .sub{color:var(--muted);font-size:12px;margin-top:4px}
+  .panel{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:14px}
+  form.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;align-items:end}
+  form.grid input, form.grid select, form.grid textarea{width:100%;padding:10px;border-radius:12px;border:1px solid var(--line);background:#0d1220;color:var(--ink)}
+  form.grid textarea{grid-column:span 6;min-height:64px;resize:vertical}
+  form.grid .full{grid-column:span 6}
+  button{cursor:pointer;border-radius:999px;border:1px solid var(--line);background:var(--accent);color:#001b16;padding:10px 14px;font-weight:700}
 
-  /* 헤더 */
-  header{position:sticky; top:0; z-index:30; backdrop-filter:saturate(140%) blur(10px);
-    background:linear-gradient(180deg, rgba(10,15,22,.75), rgba(10,15,22,.35)); border-bottom:1px solid var(--line)}
-  .wrap{max-width:1180px; margin:0 auto; padding:16px}
-  h1{margin:0; font-weight:800; letter-spacing:.2px; font-size:clamp(20px,3.6vw,28px)}
-  .sub{color:var(--muted); font-size:12px; margin-top:4px}
+  /* Masonry-like cards */
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:16px}
+  .card{position:relative;border:1px solid var(--line);background:linear-gradient(180deg,#0f1524,#0d1220);border-radius:16px;overflow:hidden}
+  .card .thumb{aspect-ratio:16/9;background:#0b0f1a url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 112"><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="%239fb0c7" font-size="10">no image</text></svg>') center/cover}
+  .card .body{padding:12px}
+  .pill{display:inline-flex;align-items:center;gap:6px;background:rgba(97,214,194,.12);border:1px solid rgba(97,214,194,.4);color:var(--accent);padding:.3rem .6rem;border-radius:999px;font-size:12px}
+  .title{margin:4px 0 8px;font-size:15px}
+  .meta{color:var(--muted);font-size:12px}
+  .actions{display:flex;gap:8px;margin-top:10px}
+  .ghost{background:transparent;color:var(--ink)}
 
-  /* 툴바 */
-  .toolbar{display:flex; gap:10px; align-items:center; margin-top:10px}
-  .toolbar input[type="search"], .toolbar select{height:36px; padding:0 12px; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--ink)}
-  .toolbar .chip{border:1px solid var(--line); background:rgba(97,214,194,.12); color:var(--accent); padding:.35rem .7rem; border-radius:999px; font-size:12px; cursor:pointer}
-  .toolbar .chip.active{background:rgba(97,214,194,.22)}
+  /* Constellation background (canvas overlays) */
+  #stars{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.45}
+  main{position:relative;z-index:1}
 
-  /* 패널 */
-  .panel{border:1px solid var(--line); background:linear-gradient(180deg,#0e1422,#0b111c); border-radius:18px; padding:14px}
-  form.grid{display:grid; grid-template-columns:repeat(12,1fr); gap:10px; align-items:end}
-  form.grid label{display:block; font-size:12px; color:var(--muted); margin:0 0 6px}
-  form.grid input, form.grid select, form.grid textarea{width:100%; padding:12px; border-radius:14px; border:1px solid var(--line); background:#0c1220; color:var(--ink)}
-  form.grid textarea{grid-column:span 12; min-height:70px; resize:vertical}
-  .col-3{grid-column:span 3} .col-4{grid-column:span 4} .col-5{grid-column:span 5} .col-6{grid-column:span 6} .col-12{grid-column:span 12}
-  button{cursor:pointer; border-radius:999px; border:1px solid var(--line); background:var(--accent); color:#001b16; padding:10px 16px; font-weight:800}
-  .ghost{background:transparent; color:var(--ink)}
-
-  /* 카드 리스트 — 새 레이아웃 */
-  .gridwrap{display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; margin-top:16px}
-  .card{position:relative; border:1px solid var(--line); background:var(--card); border-radius:16px; overflow:hidden}
-  .thumb{position:relative; aspect-ratio:16/10; background:#0b0f1a center/cover no-repeat}
-  .thumb .overlay{position:absolute; inset:0; background:linear-gradient(180deg, transparent, rgba(0,0,0,.25) 60%, rgba(0,0,0,.55));}
-  .badge{position:absolute; top:8px; left:8px; z-index:2; font-size:11px; padding:.35rem .6rem; border-radius:999px; border:1px solid var(--line); backdrop-filter:blur(6px); background:rgba(12,18,32,.45)}
-  .body{padding:12px}
-  .title{font-weight:700; margin:2px 0 6px; font-size:16px}
-  .meta{color:var(--muted); font-size:12px}
-  .tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
-  .tag{font-size:11px; padding:.25rem .5rem; border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,.02)}
-  .actions{display:flex; gap:8px; margin-top:10px}
-  .card:hover{transform:translateY(-3px); box-shadow:0 10px 30px rgba(0,0,0,.25); transition:all .25s ease}
-
-  /* 별빛 배경 */
-  #stars{position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.42}
-  main{position:relative; z-index:1}
-
-  /* 뷰어(모달) — 디자인 개선 */
-  dialog{border:none; border-radius:22px; background:linear-gradient(180deg,#090e16,#0a0f18); color:var(--ink); width:min(980px,92vw); padding:0; overflow:hidden}
-  dialog::backdrop{background:rgba(0,0,0,.55); backdrop-filter:blur(2px)}
-  .modal-head{display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid var(--line)}
+  /* Modal */
+  dialog{border:none;border-radius:18px;background:#0a0f18;color:var(--ink);width:min(920px,90vw);padding:0;overflow:hidden}
+  dialog::backdrop{background:rgba(0,0,0,.5);backdrop-filter:blur(2px)}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
   .modal-body{padding:0}
-  .viewer{width:100%; height:min(62vh,600px); background:#070b12; position:relative}
-  .viewer::after{content:""; position:absolute; inset:0; pointer-events:none; background:radial-gradient(60% 50% at 50% 50%, transparent 50%, rgba(0,0,0,.22) 100%)}
-  .modal-foot{display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-top:1px solid var(--line)}
-  .controls{display:flex; gap:8px; align-items:center}
-  .slider{appearance:none; width:140px; height:6px; border-radius:8px; background:#111827; outline:none}
-  .slider::-webkit-slider-thumb{appearance:none; width:16px; height:16px; border-radius:50%; background:var(--accent); border:1px solid var(--line)}
+  .viewer{width:100%;height:min(60vh,560px);background:radial-gradient(600px 300px at 70% -10%, #152035 0%, transparent 60%), #060a12}
+  .modal-foot{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
 
-  .tip{color:var(--muted); font-size:12px; margin-top:8px}
-  @media (max-width:640px){ .col-3,.col-4,.col-5,.col-6{grid-column:span 12} }
+  /* Floating, subtle 3D hint on cards */
+  .card:hover{transform:translateY(-2px);transition:transform .2s ease}
+
+  /* Tiny tip line */
+  .tip{color:var(--muted);font-size:12px;margin-top:8px}
 </style>
 </head>
 <body>
 <canvas id="stars"></canvas>
 <header>
   <div class="wrap">
-    <h1>기억의 달력 <span style="opacity:.6">— LUNA v2</span></h1>
-    <div class="sub">사진과 문장을 하나의 ‘형상(큐브/구체)’으로 입혀 돌려보는 감성 아카이브. 오늘의 공기를 저장하세요.</div>
-
-    <div class="toolbar">
-      <input id="q" type="search" placeholder="검색: 제목, 메모, 태그…"/>
-      <select id="filterShape"><option value="all">형태: 전체</option><option value="cube">큐브</option><option value="sphere">구체</option></select>
-      <span class="chip" data-preset="#61d6c2">mint</span>
-      <span class="chip" data-preset="#e6c15e">gold</span>
-      <span class="chip" data-preset="#e79aa5">rose</span>
-    </div>
+    <h1>기억의 달력 <span style="opacity:.6">— 구체/큐브 회전 뷰</span></h1>
+    <div class="sub">날짜별 이미지와 문장을 저장하고, 에망시브처럼 3D 오브젝트(큐브/구체)에 입혀 회전시켜 감성적으로 감상합니다.</div>
   </div>
 </header>
-
 <main class="wrap">
-  <!-- 입력 패널 -->
   <section class="panel">
     <form id="memoryForm" class="grid" autocomplete="off">
-      <div class="col-3">
+      <div>
         <label>날짜</label>
         <input type="date" id="date" required />
       </div>
-      <div class="col-5">
+      <div>
         <label>제목</label>
-        <input type="text" id="title" placeholder="예: 달빛 아래 첫 기록" required />
+        <input type="text" id="title" placeholder="예: 달팽이 이론 첫 문장" required />
       </div>
-      <div class="col-2">
+      <div>
         <label>형태</label>
-        <select id="shape"><option value="cube">큐브</option><option value="sphere">구체</option></select>
+        <select id="shape">
+          <option value="cube">큐브</option>
+          <option value="sphere">구체</option>
+        </select>
       </div>
-      <div class="col-2">
+      <div>
         <label>대표 색상</label>
         <input type="color" id="color" value="#61d6c2" />
       </div>
-      <div class="col-12">
+      <div class="full">
         <label>이미지 URL</label>
-        <input type="url" id="image" placeholder="https://... (CORS 허용 이미지 추천)" />
+        <input type="url" id="image" placeholder="https://... (외부 또는 로컬 서버 이미지)" />
       </div>
-      <div class="col-12">
+      <div class="full">
         <label>문장/메모</label>
-        <textarea id="text" placeholder="그날의 온도, 냄새, 한 문장..."></textarea>
+        <textarea id="text" placeholder="그날의 공기, 냄새, 한 문장..."></textarea>
       </div>
-      <div class="col-12">
-        <label>태그(쉼표로 구분)</label>
-        <input type="text" id="tags" placeholder="가족, 추모, 창작, 봄" />
+      <div>
+        <button type="submit">추가</button>
       </div>
-      <div class="col-3"><button type="submit">추가</button></div>
-      <div class="col-9 tip">• 데이터는 브라우저 <b>localStorage</b>에 저장됩니다. • 이미지는 CORS 허용 경로를 권장합니다.</div>
+      <div class="tip">• 데이터는 브라우저 <b>localStorage</b>에 저장됩니다. • 이미지는 CORS 허용 경로를 권장합니다.</div>
     </form>
   </section>
 
-  <!-- 카드 리스트 -->
   <section style="margin-top:16px">
-    <div id="cards" class="gridwrap"></div>
+    <div id="cards" class="cards"></div>
   </section>
 </main>
 
-<!-- 3D 뷰어 -->
 <dialog id="viewerModal">
   <div class="modal-head">
     <div>
-      <div id="mTitle" style="font-weight:800"></div>
+      <div id="mTitle" style="font-weight:700"></div>
       <div id="mMeta" class="meta"></div>
     </div>
     <button id="closeBtn" class="ghost">닫기 ✕</button>
   </div>
-  <div class="modal-body"><div id="viewer" class="viewer"></div></div>
+  <div class="modal-body">
+    <div id="viewer" class="viewer"></div>
+  </div>
   <div class="modal-foot">
-    <div class="meta">드래그 회전 • 휠 줌</div>
-    <div class="controls">
+    <div class="meta">드래그로 회전 / 휠로 줌</div>
+    <div>
       <button id="toggleSpin" class="ghost">자동회전 ⏯</button>
-      <label class="meta">속도</label>
-      <input id="speed" class="slider" type="range" min="0" max="8" step="1" value="3"/>
-      <button id="gridOn" class="ghost">그리드</button>
     </div>
   </div>
 </dialog>
 
+<!-- three.js (non-module) for GitHub Pages & file:// compatibility -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
 <script type="module">
-  /* ===== 별빛 배경 ===== */
-  const stars=document.getElementById('stars'); const sctx=stars.getContext('2d'); let W,H,pts=[];
-  function rs(){W=stars.width=innerWidth; H=stars.height=innerHeight; pts=Array.from({length:160},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.3+.3,dx:(Math.random()-.5)*.08,dy:(Math.random()-.5)*.08,a:Math.random()*.8+.2}))}
-  addEventListener('resize',rs); rs(); (function loop(){ sctx.clearRect(0,0,W,H); sctx.globalCompositeOperation='lighter'; for(const p of pts){ p.x+=p.dx; p.y+=p.dy; if(p.x<0||p.x>W) p.dx*=-1; if(p.y<0||p.y>H) p.dy*=-1; sctx.globalAlpha=p.a; sctx.beginPath(); sctx.arc(p.x,p.y,p.r,0,Math.PI*2); sctx.fillStyle='#b8c6e5'; sctx.fill(); } requestAnimationFrame(loop); })();
+  // ----- Tiny constellation background -----
+  const stars = document.getElementById('stars');
+  const sctx = stars.getContext('2d');
+  let W,H,points=[];
+  function resizeStar(){W=stars.width=innerWidth;H=stars.height=innerHeight;points = Array.from({length: 160},()=>({
+    x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.4+0.3,dx:(Math.random()-.5)*.08,dy:(Math.random()-.5)*.08, a: Math.random()*0.8+0.2
+  }));}
+  addEventListener('resize', resizeStar); resizeStar();
+  (function loop(){sctx.clearRect(0,0,W,H); sctx.globalCompositeOperation='lighter';
+    for(const p of points){ p.x+=p.dx; p.y+=p.dy; if(p.x<0||p.x>W) p.dx*=-1; if(p.y<0||p.y>H) p.dy*=-1; sctx.globalAlpha=p.a; sctx.beginPath(); sctx.arc(p.x,p.y,p.r,0,Math.PI*2); sctx.fillStyle='#b8c6e5'; sctx.fill(); }
+    requestAnimationFrame(loop);
+  })();
 
-  /* ===== 데이터 모델 ===== */
-  const key='memoryDays.v2'; const $cards=document.getElementById('cards');
+  // ----- Data model & storage -----
+  const key='memoryDays.v1';
+  const $cards=document.getElementById('cards');
   const $form=document.getElementById('memoryForm');
-  const $date=document.getElementById('date'); const $title=document.getElementById('title');
-  const $shape=document.getElementById('shape'); const $color=document.getElementById('color');
-  const $image=document.getElementById('image'); const $text=document.getElementById('text'); const $tags=document.getElementById('tags');
-  const $q=document.getElementById('q'); const $filterShape=document.getElementById('filterShape');
+  const $date=document.getElementById('date');
+  const $title=document.getElementById('title');
+  const $shape=document.getElementById('shape');
+  const $color=document.getElementById('color');
+  const $image=document.getElementById('image');
+  const $text=document.getElementById('text');
 
   function load(){ try{return JSON.parse(localStorage.getItem(key))||[]}catch{ return [] } }
   function save(list){ localStorage.setItem(key, JSON.stringify(list)) }
 
-  function tagChips(t){ return (t||[]).slice(0,4).map(v=>`<span class="tag">${escapeHtml(v)}</span>`).join('') }
   function cardTemplate(item, idx){
     const img = item.image? `style="background-image:url('${item.image.replace(/'/g,"%27")}')"` : '';
-    const colorDot = `<span style="width:10px;height:10px;border-radius:999px;background:${item.color};display:inline-block"></span>`;
     return `<article class="card" data-idx="${idx}">
-      <div class="thumb" ${img}><div class="overlay"></div><span class="badge">${item.shape==='cube'?'□ 큐브':'◯ 구체'}</span></div>
+      <div class="thumb" ${img}></div>
       <div class="body">
+        <div class="pill">${item.shape==='cube'?'□ 큐브':'◯ 구체'}<span style="width:10px;height:10px;border-radius:999px;background:${item.color};display:inline-block"></span></div>
         <div class="title">${escapeHtml(item.title||'무제')}</div>
-        <div class="meta">${item.date||''} · ${colorDot}</div>
-        <div class="tags">${tagChips(item.tags)}</div>
+        <div class="meta">${item.date||''}</div>
         <div class="actions">
           <button data-view>3D 보기</button>
           <button class="ghost" data-del>삭제</button>
@@ -194,89 +167,133 @@
       </div>
     </article>`
   }
-  function render(){ const list=filterList(load()); $cards.innerHTML=list.map(cardTemplate).join(''); if(list.length===0) $cards.innerHTML=`<div class="panel" style="grid-column:1/-1;text-align:center;padding:32px">아직 기록이 없어요. 위의 폼에 오늘의 공기를 남겨보세요.</div>` }
+  function render(){ const list=load(); $cards.innerHTML=list.map(cardTemplate).join(''); }
 
-  function filterList(list){ const q=($q.value||'').toLowerCase().trim(); const shape=$filterShape.value; return list.filter(it=>{
-      const hitQ = !q || [it.title,it.text,(it.tags||[]).join(' ')].join(' ').toLowerCase().includes(q);
-      const hitS = shape==='all' || it.shape===shape; return hitQ && hitS; }).slice(0,300) }
-
-  $form.addEventListener('submit', e=>{ e.preventDefault(); const it={
-      date:$date.value, title:$title.value.trim(), shape:$shape.value, color:$color.value,
-      image:$image.value.trim(), text:$text.value.trim(), tags: ($tags.value||'').split(',').map(s=>s.trim()).filter(Boolean)
-    }; const list=load(); list.unshift(it); save(list); render(); $form.reset(); });
-
-  $cards.addEventListener('click', e=>{ const root=e.target.closest('.card'); if(!root) return; const idx=+root.dataset.idx; const list=filterList(load()); const item=list[idx]; if(!item) return;
-    if(e.target.matches('[data-view]')) openViewer(item);
-    if(e.target.matches('[data-del]')){ if(confirm('삭제할까요?')){ const full=load(); const pos=full.findIndex(x=>x.date===item.date && x.title===item.title); if(pos>-1){ full.splice(pos,1); save(full); render(); } } }
+  $form.addEventListener('submit', e=>{
+    e.preventDefault();
+    const it={ date:$date.value, title:$title.value.trim(), shape:$shape.value, color:$color.value, image:$image.value.trim(), text:$text.value.trim() };
+    const list=load(); list.unshift(it); save(list); render(); $form.reset();
   });
 
-  $q.addEventListener('input', render); $filterShape.addEventListener('change', render);
-  document.querySelectorAll('.chip').forEach(ch=> ch.addEventListener('click',()=>{ document.getElementById('color').value = ch.dataset.preset; ch.classList.toggle('active'); }))
+  $cards.addEventListener('click', e=>{
+    const root = e.target.closest('.card'); if(!root) return;
+    const idx = +root.dataset.idx; const list=load();
+    if(e.target.matches('[data-view]')) openViewer(list[idx]);
+    if(e.target.matches('[data-del]')){ if(confirm('삭제할까요?')){ list.splice(idx,1); save(list); render(); } }
+  });
 
+  // HTML escaping for safety
   function escapeHtml(s=''){return s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]))}
 
-  // 시드 데이터(최초 1회)
-  if(load().length===0){ save([
-    {date:new Date().toISOString().slice(0,10), title:'은하수 아래 첫 기록', shape:'sphere', color:'#61d6c2', image:'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?q=80&w=1200&auto=format&fit=crop', text:'바람은 방향이 없을 뿐, 흐름은 있다.', tags:['밤','창작','시작']},
-    {date:'2025-05-05', title:'달팽이 이론 — 첫 문장', shape:'cube', color:'#e6c15e', image:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop', text:'느림은 멈춤이 아니라 충전이다.', tags:['달팽이','수필','봄']}
-  ]) }
+  // Seed example
+  if(load().length===0){
+    save([
+      {date:new Date().toISOString().slice(0,10), title:'은하수 아래 첫 기록', shape:'sphere', color:'#61d6c2', image:'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?q=80&w=1200&auto=format&fit=crop', text:'바람은 방향이 없을 뿐, 흐름은 있다.'},
+      {date:'2025-05-05', title:'달팽이 이론 — 첫 문장', shape:'cube', color:'#eab308', image:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop', text:'느림은 멈춤이 아니라 충전이다.'}
+    ]);
+  }
   render();
 
-  /* ===== 3D Viewer (Three.js ES Module) ===== */
-  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-  import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+  // ----- 3D Viewer (Three.js) -----
 
-  const $modal=document.getElementById('viewerModal'); const $viewer=document.getElementById('viewer');
-  const $mTitle=document.getElementById('mTitle'); const $mMeta=document.getElementById('mMeta');
-  const $close=document.getElementById('closeBtn'); const $toggle=document.getElementById('toggleSpin');
-  const $grid=document.getElementById('gridOn'); const $speed=document.getElementById('speed');
+  const $modal = document.getElementById('viewerModal');
+  const $viewer = document.getElementById('viewer');
+  const $mTitle = document.getElementById('mTitle');
+  const $mMeta  = document.getElementById('mMeta');
+  const $close  = document.getElementById('closeBtn');
+  const $toggle = document.getElementById('toggleSpin');
 
-  let scene,camera,renderer,controls,mesh,sprites=[],spin=true,raf,gridHelper;
+  let scene, camera, renderer, controls, mesh, sprites=[], spin=true, raf;
 
-  function resetViewer(){ if(renderer){ cancelAnimationFrame(raf); renderer.dispose(); renderer.domElement.remove(); }
-    scene=new THREE.Scene(); camera=new THREE.PerspectiveCamera(55,$viewer.clientWidth/$viewer.clientHeight,0.1,100); camera.position.set(0,0,3.2);
-    renderer=new THREE.WebGLRenderer({antialias:true,alpha:true}); renderer.setPixelRatio(devicePixelRatio); renderer.setSize($viewer.clientWidth,$viewer.clientHeight);
+  function resetViewer(){
+    if(renderer){ cancelAnimationFrame(raf); renderer.dispose(); renderer.domElement.remove(); }
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(55, $viewer.clientWidth/$viewer.clientHeight, 0.1, 100);
+    camera.position.set(0,0,3.2);
+    renderer = new THREE.WebGLRenderer({antialias:true,alpha:true});
+    renderer.setPixelRatio(devicePixelRatio);
+    renderer.setSize($viewer.clientWidth,$viewer.clientHeight);
     $viewer.innerHTML=''; $viewer.appendChild(renderer.domElement);
-    const keyL=new THREE.DirectionalLight(0xffffff,.9); keyL.position.set(3,3,5); scene.add(keyL);
-    scene.add(new THREE.AmbientLight(0x88aaff,.35));
-    controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.dampingFactor=.06;
+    const light = new THREE.DirectionalLight(0xffffff,.9); light.position.set(3,3,5); scene.add(light);
+    const amb = new THREE.AmbientLight(0x88aaff,.4); scene.add(amb);
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor=.06;
   }
 
-  function makeTextCanvas(text,color='#eaf1ff'){ const pad=24; const fontSize=40; const lines=wrapText(text,18); const canvas=document.createElement('canvas'); canvas.width=1024; canvas.height=1024; const ctx=canvas.getContext('2d'); ctx.fillStyle='#0b1020'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle=color; ctx.font=`${fontSize}px/1.4 Pretendard, system-ui, sans-serif`; ctx.textBaseline='top'; let y=pad; for(const line of lines){ ctx.fillText(line,pad,y); y+=fontSize*1.4; } return canvas; }
-  function wrapText(t='',w=18){ const words=t.split(/\s+/); const lines=[]; let cur=''; for(const s of words){ if((cur+s).length>w){ lines.push(cur.trim()); cur=s+' '; } else cur+=s+' '; } if(cur.trim()) lines.push(cur.trim()); return lines }
-  function textureFromUrl(url){ return new Promise((res)=>{ const loader=new THREE.TextureLoader(); loader.setCrossOrigin('anonymous'); loader.load(url, tx=>{ tx.colorSpace=THREE.SRGBColorSpace; res(tx); }, undefined, ()=>res(null)); }); }
+  function makeTextCanvas(text, color='#eaf2ff'){
+    const pad=24; const fontSize=40; const lines=wrapText(text,18);
+    const canvas=document.createElement('canvas'); canvas.width=1024; canvas.height=1024;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#0b1020'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle=color; ctx.font=`${fontSize}px/1.4 Pretendard, system-ui, sans-serif`;
+    ctx.textBaseline='top'; let y=pad; for(const line of lines){ ctx.fillText(line,pad,y); y+=fontSize*1.4; }
+    return canvas;
+  }
+  function wrapText(t='', width=18){
+    const words=t.split(/\s+/); const lines=[]; let cur='';
+    for(const w of words){ if((cur+w).length>width){ lines.push(cur.trim()); cur=w+' '; } else cur+=w+' '; }
+    if(cur.trim()) lines.push(cur.trim()); return lines;
+  }
 
-  async function openViewer(item){ $mTitle.textContent=item.title||'무제'; $mMeta.textContent=`${item.date||''} · ${item.shape==='cube'?'큐브':'구체'}`; $modal.showModal(); resetViewer();
-    const imgTex=item.image? await textureFromUrl(item.image):null;
+  function textureFromUrl(url){ return new Promise((res)=>{
+    const loader = new THREE.TextureLoader(); loader.setCrossOrigin('anonymous');
+    loader.load(url, tx=>{ tx.colorSpace=THREE.SRGBColorSpace; res(tx); }, undefined, ()=>{ res(null) });
+  }); }
+
+  async function openViewer(item){
+    $mTitle.textContent = item.title || '무제';
+    $mMeta.textContent  = `${item.date||''} · ${item.shape==='cube'?'큐브':'구체'}`;
+    $modal.showModal();
+    resetViewer();
+
+    const imgTex = item.image ? await textureFromUrl(item.image) : null;
 
     if(item.shape==='cube'){
-      const geo=new THREE.BoxGeometry(1.6,1.6,1.6); const textCanvas=makeTextCanvas(item.text||'');
-      const textTex=new THREE.CanvasTexture(textCanvas); textTex.colorSpace=THREE.SRGBColorSpace;
-      const mats=[0,1,2,3,4,5].map(i=> new THREE.MeshStandardMaterial({ map: i===0 && imgTex? imgTex : textTex, color:new THREE.Color(item.color||'#61d6c2'), metalness:.1, roughness:.6 }));
-      mesh=new THREE.Mesh(geo,mats); scene.add(mesh);
+      const geo = new THREE.BoxGeometry(1.6,1.6,1.6);
+      const textCanvas = makeTextCanvas(item.text||'');
+      const textTex = new THREE.CanvasTexture(textCanvas); textTex.colorSpace=THREE.SRGBColorSpace;
+      const mats = [0,1,2,3,4,5].map(i=> new THREE.MeshStandardMaterial({
+        map: i===0 && imgTex ? imgTex : textTex,
+        color: new THREE.Color(item.color||'#61d6c2'), metalness:.1, roughness:.6
+      }));
+      mesh = new THREE.Mesh(geo, mats); scene.add(mesh);
     } else {
-      const geo=new THREE.SphereGeometry(1.2,64,64); const mat=new THREE.MeshStandardMaterial({ map:imgTex||null, color:new THREE.Color(item.color||'#61d6c2'), metalness:.05, roughness:.8, emissive:'#0a0f18', emissiveIntensity:.22 });
-      mesh=new THREE.Mesh(geo,mat); scene.add(mesh);
-      // 텍스트 스프라이트 고리
-      sprites=[]; const ring=8; for(let i=0;i<ring;i++){ const c=makeTextCanvas((item.text||'기억').slice(0,48),'#cfe7ff'); const tx=new THREE.CanvasTexture(c); tx.colorSpace=THREE.SRGBColorSpace; const spMat=new THREE.SpriteMaterial({map:tx, transparent:false}); const sp=new THREE.Sprite(spMat); const s=.58; sp.scale.set(s,s,1); const a=i/ring*Math.PI*2; const r=2.15; sp.position.set(Math.cos(a)*r,(i%2?.4:-.4),Math.sin(a)*r); sprites.push(sp); scene.add(sp); }
+      const geo = new THREE.SphereGeometry(1.2, 64, 64);
+      const mat = new THREE.MeshStandardMaterial({ map: imgTex||null, color:new THREE.Color(item.color||'#61d6c2'), metalness:.05, roughness:.8, emissive:'#0a0f18', emissiveIntensity:.2 });
+      mesh = new THREE.Mesh(geo, mat); scene.add(mesh);
+      // floating text sprites around sphere
+      const ring=8; sprites=[];
+      for(let i=0;i<ring;i++){
+        const c = makeTextCanvas((item.text||'기억').slice(0,48), '#cfe7ff');
+        const tx = new THREE.CanvasTexture(c); tx.colorSpace=THREE.SRGBColorSpace;
+        const spMat = new THREE.SpriteMaterial({ map: tx, transparent:false});
+        const sp = new THREE.Sprite(spMat); const s=0.6; sp.scale.set(s,s,1);
+        const a=i/ring*Math.PI*2; const r=2.2; sp.position.set(Math.cos(a)*r, (i%2?0.4:-0.4), Math.sin(a)*r);
+        sprites.push(sp); scene.add(sp);
+      }
     }
 
-    // 파티클
-    const pgeo=new THREE.BufferGeometry(); const pcnt=220; const pos=new Float32Array(pcnt*3); for(let i=0;i<pcnt;i++){ pos[i*3+0]=(Math.random()-.5)*8; pos[i*3+1]=(Math.random()-.5)*6; pos[i*3+2]=(Math.random()-.5)*8; } pgeo.setAttribute('position',new THREE.BufferAttribute(pos,3)); const pmat=new THREE.PointsMaterial({size:.02,color:0xb8c6e5}); scene.add(new THREE.Points(pgeo,pmat));
+    // subtle environment particles
+    const pgeo = new THREE.BufferGeometry();
+    const pcnt = 200; const pos = new Float32Array(pcnt*3);
+    for(let i=0;i<pcnt;i++){ pos[i*3+0]=(Math.random()-0.5)*8; pos[i*3+1]=(Math.random()-0.5)*6; pos[i*3+2]=(Math.random()-0.5)*8; }
+    pgeo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+    const pmat = new THREE.PointsMaterial({ size:0.02, color:0xb8c6e5 });
+    const pts = new THREE.Points(pgeo, pmat); scene.add(pts);
 
     spin=true; animate();
   }
 
-  function animate(){ raf=requestAnimationFrame(animate); const speedFactor=(+$speed.value||3)*0.0015; if(mesh && spin){ mesh.rotation.y += 0.8*speedFactor; mesh.rotation.x += 0.3*speedFactor; } if(sprites.length){ for(const [i,sp] of sprites.entries()){ sp.rotation += 0.002; sp.position.y += Math.sin(performance.now()/1000 + i)*0.00065; } } controls.update(); renderer.render(scene,camera); }
+  function animate(){
+    raf = requestAnimationFrame(animate);
+    if(mesh && spin){ mesh.rotation.y += 0.004; mesh.rotation.x += 0.0015; }
+    if(sprites.length){ for(const [i,sp] of sprites.entries()){ sp.rotation += 0.002; sp.position.y += Math.sin(performance.now()/1000 + i)*0.0006; } }
+    controls.update(); renderer.render(scene,camera);
+  }
 
-  document.getElementById('toggleSpin').addEventListener('click',()=> spin=!spin);
-  document.getElementById('gridOn').addEventListener('click',()=>{ if(gridHelper){ scene.remove(gridHelper); gridHelper=null; } else { gridHelper=new THREE.GridHelper(10,10,0x335577,0x223344); scene.add(gridHelper); } });
-  document.getElementById('speed').addEventListener('input',()=>{});
-  document.getElementById('closeBtn').addEventListener('click',()=>{ $modal.close(); cancelAnimationFrame(raf); });
-  addEventListener('resize',()=>{ if(renderer){ camera.aspect=$viewer.clientWidth/$viewer.clientHeight; camera.updateProjectionMatrix(); renderer.setSize($viewer.clientWidth,$viewer.clientHeight); }});
-
-  // 공개 함수로 노출 (카드에서 사용)
-  window.openViewer=openViewer;
+  $toggle.addEventListener('click', ()=>{ spin=!spin; });
+  $close.addEventListener('click', ()=>{ $modal.close(); cancelAnimationFrame(raf); });
+  addEventListener('resize', ()=>{ if(renderer){ camera.aspect=$viewer.clientWidth/$viewer.clientHeight; camera.updateProjectionMatrix(); renderer.setSize($viewer.clientWidth,$viewer.clientHeight); }});
 </script>
 </body>
 </html>
