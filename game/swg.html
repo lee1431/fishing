@@ -45,6 +45,23 @@
     /* Footer */
     footer{margin:18px 0 36px;color:var(--muted);font-size:12px;text-align:center}
     .hr{height:1px;background:var(--line);margin:18px 0}
+
+
+    /* --- Play Count Badge --- */
+    .card.game-card{ position:relative; }
+    .play-badge{
+      position:absolute; left:12px; top:12px;
+      display:inline-flex; align-items:center; gap:6px;
+      padding:4px 10px; border-radius:999px;
+      background:#101826; border:1px solid #1f2937; color:#cbd5e1;
+      font-size:12px; line-height:1; user-select:none;
+      box-shadow:0 1px 0 rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.03);
+    }
+    .play-badge .dot{ width:6px; height:6px; border-radius:50%; background:#22c55e; opacity:.9; }
+    .play-badge .num{ font-weight:700; }
+    .play-badge .unit{ opacity:.8; }
+
+    
   </style>
 
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9382191250873184"
@@ -97,6 +114,7 @@
   // 🎮 게임 목록 — 제목/경로/설명/태그만 채우면 카드가 자동 생성됩니다.
   const GAMES = [
     {
+      key: 'BARBAR',
       title: '바바리안 — 맨주먹 전장',
       path: './baroker.html',
       desc: '스페이스: 공격 · Q: 광역 스킬(쿨 6초). 모바일 터치 버튼 지원.',
@@ -104,6 +122,7 @@
       thumb: './img/baba.png'
     },
     {
+      key: 'DODGE',
       title: 'Dot Dodge — 네모 피하기',
       path: './dge.html',
       desc: '방향키/터치로 이동, 떨어지는 박스를 피해 생존 점수에 도전!',
@@ -111,6 +130,7 @@
       thumb: './img/nemo.png'
     },
     {
+      key: 'ICEFISHING',
       title: '얼음낚시',
       path: './icefishing.html',
       desc: '얼음이 갈라지는 맛을 느껴 보세요!!',
@@ -118,6 +138,7 @@
       thumb: './img/if.png'
     },
     {
+      key: 'PUTTING',
       title: 'Putting 챌린지',
       path: './putting.html',
       desc: '람각을 이용하여 퍼팅 챌린지에 참여하세요!',
@@ -125,6 +146,7 @@
       thumb: './img/putting.png'
     },
     {
+      key: 'CAR',
       title: '차선 바꾸기',
       path: './car.html',
       desc: '차선변경을 하며 점수를 획득!! 운전면허증은 필수!',
@@ -132,6 +154,8 @@
       thumb: './img/kal.png'
     }
   ];
+
+  
 
   // 렌더링 -------------------------------------------------
   function el(html){ const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstElementChild; }
@@ -150,10 +174,13 @@
     grid.innerHTML = '';
     GAMES.forEach(g => {
       const pills = (g.tags||[]).map(t=>`<span class="pill">${t}</span>`).join('');
-      const thumb = g.thumb ? `<img src="${g.thumb}" alt="${g.title} 썸네일" style="width:100%;height:120px;object-fit:cover;border-radius:10px"/>`
-                             : 'No Thumbnail';
+      const thumb = g.thumb
+        ? `<img src="${g.thumb}" alt="${g.title} 썸네일" style="width:100%;height:120px;object-fit:cover;border-radius:10px"/>`
+        : 'No Thumbnail';
+  
       grid.appendChild(el(`
-        <article class="card">
+        <article class="card game-card" data-game="${g.key}">
+          <!-- 조회수 배지 자리: JS가 채움 -->
           <div class="thumb">${thumb}</div>
           <div>
             <h3>${g.title}</h3>
@@ -166,8 +193,36 @@
     });
   }
 
-  renderNotices();
-  renderGames();
+const COUNT_URL = "https://mrdindoin.ddns.net/data/favCnt.json";
+
+async function renderPlayCounts(){
+  try{
+    const res = await fetch(COUNT_URL + "?t=" + Date.now(), { cache: "no-store" });
+    const data = await res.json();
+
+    document.querySelectorAll(".game-card").forEach(card => {
+      const key = card.dataset.game;
+      const n   = (data && data[key] != null) ? data[key] : 0;
+
+      let badge = card.querySelector(".play-badge");
+      if(!badge){
+        badge = document.createElement("div");
+        badge.className = "play-badge";
+        badge.innerHTML = `<span class="dot"></span><span class="num"></span><span class="unit">회</span>`;
+        card.prepend(badge);
+      }
+      badge.querySelector(".num").textContent = n.toLocaleString();
+    });
+  } catch(e){
+    console.error("play count fetch failed:", e);
+  }
+}
+
+renderNotices();
+renderGames();
+renderPlayCounts();
+setInterval(renderPlayCounts, 60000);
+  
 </script>
   <script src="./js/luna2.js"></script>
 </body>
