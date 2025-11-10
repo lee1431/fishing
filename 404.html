@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
 <title>페이지를 찾을 수 없습니다</title>
 <style>
 body {
@@ -20,5 +21,11 @@ a:hover{text-decoration:underline;}
   <h1>404</h1>
   <p>요청하신 페이지를 찾을 수 없습니다.</p>
   <a href="https://llsshh.com">홈으로 돌아가기</a>
+
+<script>
+  var redirectUrl = window.location.origin + '/#' + window.location.pathname;
+  window.location.replace(redirectUrl);
+</script>
+  
 </body>
 </html>
