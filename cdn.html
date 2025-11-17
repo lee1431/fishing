@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>무료 로컬 CDN 갤러리</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --panel: #020617;
+      --card: #020617;
+      --border: #1e293b;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.15);
+      --text-main: #e5e7eb;
+      --text-sub: #9ca3af;
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0;
+      min-height:100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #0f172a, #020617 60%);
+      color: var(--text-main);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
+    header {
+      width:100%;
+      max-width:1080px;
+      padding:16px 16px 8px;
+    }
+    header h1 {
+      margin:0 0 6px;
+      font-size:clamp(20px, 4vw, 26px);
+      letter-spacing:0.02em;
+    }
+    header p {
+      margin:0;
+      font-size:13px;
+      color:var(--text-sub);
+    }
+    main {
+      width:100%;
+      max-width:1080px;
+      padding:8px 16px 24px;
+    }
+    .toolbar {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:10px;
+      gap:8px;
+      font-size:12px;
+      color:var(--text-sub);
+    }
+    .pill {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(15,23,42,0.9);
+    }
+    .pill-dot {
+      width:6px;
+      height:6px;
+      border-radius:999px;
+      background:#22c55e;
+      box-shadow:0 0 0 4px rgba(34,197,94,.25);
+    }
+    .grid {
+      display:grid;
+      /* 5x5 느낌: 기본 5열, 화면 줄어들면 자동으로 줄어듦 */
+      grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+      gap:10px;
+    }
+    .card {
+      background:var(--card);
+      border-radius:14px;
+      border:1px solid var(--border);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+      cursor:pointer;
+    }
+    .card:hover {
+      transform:translateY(-2px);
+      border-color:var(--accent);
+      box-shadow:0 10px 25px rgba(15,23,42,0.75);
+    }
+    .card-img-wrap {
+      position:relative;
+      width:100%;
+      aspect-ratio:1/1;
+      background:radial-gradient(circle at 30% 0%, #1f2937, #020617 70%);
+    }
+    .card img {
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .card-body {
+      padding:6px 8px 8px;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .card-meta {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:10px;
+      color:var(--text-sub);
+      opacity:0.85;
+    }
+    .btn-copy {
+      margin-top:4px;
+      padding:4px 6px;
+      font-size:11px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#020617;
+      color:var(--text-main);
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:4px;
+      transition:background .15s ease, border-color .15s ease, transform .08s ease;
+    }
+    .btn-copy:hover {
+      background:var(--accent-soft);
+      border-color:var(--accent);
+    }
+    .btn-copy:active {
+      transform:scale(0.97);
+    }
+    .status {
+      margin-top:6px;
+      font-size:11px;
+      color:var(--text-sub);
+      min-height:14px;
+    }
+    .status.ok { color:#4ade80; }
+    .status.err { color:#f97373; }
+    .empty {
+      margin-top:40px;
+      text-align:center;
+      font-size:13px;
+      color:var(--text-sub);
+    }
+    @media (max-width:640px){
+      main { padding-inline:10px; }
+      .grid { gap:8px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>무료 로컬 CDN 갤러리</h1>
+    <p>업로드된 이미지를 카드형 갤러리로 보고, 한 번의 클릭으로 URL을 복사합니다.</p>
+  </header>
+
+  <main>
+    <div class="toolbar">
+      <div class="pill">
+        <span class="pill-dot"></span>
+        <span id="infoText">로딩 중…</span>
+      </div>
+      <div>
+        <span style="font-size:11px;">우클릭 → “이미지 주소 복사” 또는 버튼으로 URL 복사</span>
+      </div>
+    </div>
+
+    <div id="grid" class="grid"></div>
+    <div id="emptyMsg" class="empty" style="display:none;">
+      아직 등록된 이미지가 없습니다.<br/>
+      업로드 후 이 페이지를 새로고침 해주세요.
+    </div>
+    <div id="status" class="status"></div>
+  </main>
+
+  <script>
+    // === 설정 부분 ===
+    // 계정별 JSON 위치 (예: /cdn/meta/users/{user}.json)
+    const USER_ID = 'llsshh';  // 필요하면 쿼리스트링에서 가져오도록 수정
+    const META_URL = `https://mrdindoin.ddns.net/data/llsshh.json`;
+
+    // CDN 이미지 URL 패턴: file.id 기준으로 만드는 경우
+    const CDN_IMAGE_BASE = 'https://mrdindoin.ddns.net/uploadimg/image/'; // 형 환경에 맞게 수정
+
+    // === 유틸 ===
+    function fmtDate(iso) {
+      if (!iso) return '';
+      try {
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return '';
+        const y = d.getFullYear();
+        const m = String(d.getMonth()+1).padStart(2,'0');
+        const day = String(d.getDate()).padStart(2,'0');
+        return `${y}.${m}.${day}`;
+      } catch {
+        return '';
+      }
+    }
+
+    function showStatus(msg, type) {
+      const el = document.getElementById('status');
+      el.textContent = msg || '';
+      el.className = 'status' + (type ? ' ' + type : '');
+      if (msg) {
+        setTimeout(() => {
+          el.textContent = '';
+          el.className = 'status';
+        }, 2200);
+      }
+    }
+
+    async function copyToClipboard(text) {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          // fallback
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        }
+        showStatus('URL이 복사되었습니다.', 'ok');
+      } catch (e) {
+        console.error(e);
+        showStatus('복사에 실패했습니다.', 'err');
+      }
+    }
+
+    function renderGallery(data) {
+      const grid = document.getElementById('grid');
+      const empty = document.getElementById('emptyMsg');
+      const infoText = document.getElementById('infoText');
+
+      grid.innerHTML = '';
+
+      if (!data || !Array.isArray(data.files) || data.files.length === 0) {
+        empty.style.display = 'block';
+        infoText.textContent = `이미지 0개 • 사용자 ${USER_ID}`;
+        return;
+      }
+
+      empty.style.display = 'none';
+      infoText.textContent = `이미지 ${data.files.length}개 • 사용자 ${USER_ID}`;
+
+      data.files.forEach((file) => {
+        // file.url이 있으면 그걸 쓰고, 없으면 id로 조립
+        const imgUrl = file.url || (CDN_IMAGE_BASE + file.id);
+        const dateStr = fmtDate(file.created_at);
+
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const imgWrap = document.createElement('div');
+        imgWrap.className = 'card-img-wrap';
+
+        const img = document.createElement('img');
+        img.src = imgUrl;
+        img.alt = file.id || 'cdn image';
+        imgWrap.appendChild(img);
+
+        const body = document.createElement('div');
+        body.className = 'card-body';
+
+        const meta = document.createElement('div');
+        meta.className = 'card-meta';
+        const left = document.createElement('span');
+        left.textContent = (file.tags && file.tags[0]) ? `#${file.tags[0]}` : 'image';
+        const right = document.createElement('span');
+        right.textContent = dateStr;
+        meta.appendChild(left);
+        meta.appendChild(right);
+
+        const btn = document.createElement('button');
+        btn.className = 'btn-copy';
+        btn.type = 'button';
+        btn.textContent = 'URL Copy';
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          copyToClipboard(imgUrl);
+        });
+
+        body.appendChild(meta);
+        body.appendChild(btn);
+
+        card.appendChild(imgWrap);
+        card.appendChild(body);
+
+        // 카드 전체 클릭 시에도 이미지 새 탭 열기 등 활용 가능
+        card.addEventListener('click', () => {
+          window.open(imgUrl, '_blank');
+        });
+
+        grid.appendChild(card);
+      });
+    }
+
+    async function init() {
+      const infoText = document.getElementById('infoText');
+      try {
+        infoText.textContent = '이미지 목록을 불러오는 중…';
+        const res = await fetch(META_URL, { cache: 'no-cache' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        renderGallery(data);
+      } catch (e) {
+        console.error(e);
+        infoText.textContent = '이미지 정보를 불러올 수 없습니다.';
+        document.getElementById('emptyMsg').style.display = 'block';
+        showStatus('메타 JSON 로드 실패', 'err');
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
