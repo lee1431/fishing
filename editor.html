@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>eBay Page Builder (Mini)</title>
+<style>
+  body{margin:0;font-family:system-ui,Arial,sans-serif;display:flex;height:100vh;}
+  aside, main, section{box-sizing:border-box;}
+  aside{width:180px;border-right:1px solid #ddd;padding:10px;font-size:14px;}
+  main{flex:1;display:flex;flex-direction:column;}
+  .topbar{padding:8px 10px;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;}
+  .canvas{flex:1;padding:10px;overflow:auto;background:#f7f7f7;}
+  .block{border:1px solid #ccc;background:#fff;margin-bottom:8px;padding:8px;position:relative;}
+  .block.selected{border-color:#4f46e5;box-shadow:0 0 0 1px #4f46e5;}
+  .block-toolbar{position:absolute;top:4px;right:4px;font-size:11px;}
+  .block-toolbar button{margin-left:2px;}
+  .props{width:260px;border-left:1px solid #ddd;padding:10px;font-size:13px;}
+  textarea{width:100%;box-sizing:border-box;}
+</style>
+</head>
+<body>
+
+<aside>
+  <h3>컴포넌트</h3>
+  <button onclick="addBlock('header')">헤더</button><br><br>
+  <button onclick="addBlock('text')">텍스트</button><br><br>
+  <button onclick="addBlock('notice')">주의사항 박스</button>
+</aside>
+
+<main>
+  <div class="topbar">
+    <strong>프리뷰</strong>
+    <button onclick="showExport()">HTML 내보내기</button>
+  </div>
+  <div id="canvas" class="canvas"></div>
+</main>
+
+<section class="props">
+  <h3>속성</h3>
+  <div id="propsArea">블럭을 선택하세요.</div>
+  <hr>
+  <h4>Export</h4>
+  <textarea id="exportArea" rows="8" readonly></textarea>
+</section>
+
+<script>
+const COMPONENTS = {
+  header:{
+    label:"헤더",
+    defaultProps:{ title:"상품명", subtitle:"한 줄 설명" },
+    renderPreview:(p)=>`<h2>${p.title}</h2><p>${p.subtitle}</p>`,
+    renderHtml:(p)=>`
+      <div class="ebc-section ebc-section--soft">
+        <h1 class="ebc-title">${p.title}</h1>
+        <p class="ebc-subtitle">${p.subtitle}</p>
+      </div>`
+  },
+  text:{
+    label:"텍스트",
+    defaultProps:{ text:"설명 텍스트를 입력하세요." },
+    renderPreview:(p)=>`<p>${p.text}</p>`,
+    renderHtml:(p)=>`
+      <div class="ebc-section">
+        <p class="ebc-text">${p.text}</p>
+      </div>`
+  },
+  notice:{
+    label:"주의사항",
+    defaultProps:{ text:"주의사항을 입력하세요." },
+    renderPreview:(p)=>`<p style="color:#b91c1c;">${p.text}</p>`,
+    renderHtml:(p)=>`
+      <div class="ebc-section" style="background:#fff7f7;border-color:#f3c0c0;">
+        <p class="ebc-note">${p.text}</p>
+      </div>`
+  }
+};
+
+let page = { blocks: [] };
+let selectedId = null;
+
+function addBlock(type){
+  const def = COMPONENTS[type];
+  const id = "b" + Date.now() + Math.random().toString(16).slice(2);
+  page.blocks.push({ id, type, props:{...def.defaultProps} });
+  selectedId = id;
+  render();
+}
+
+function selectBlock(id){
+  selectedId = id;
+  render();
+}
+
+function moveBlock(id, dir){
+  const idx = page.blocks.findIndex(b=>b.id===id);
+  if(idx<0) return;
+  const nx = idx + (dir==="up"?-1:1);
+  if(nx<0 || nx>=page.blocks.length) return;
+  [page.blocks[idx], page.blocks[nx]] = [page.blocks[nx], page.blocks[idx]];
+  render();
+}
+
+function deleteBlock(id){
+  page.blocks = page.blocks.filter(b=>b.id!==id);
+  if(selectedId === id) selectedId = null;
+  render();
+}
+
+function updateProps(id, key, value){
+  const b = page.blocks.find(b=>b.id===id);
+  if(!b) return;
+  b.props[key] = value;
+  render(false); // props만 바꿀때는 선택 유지
+}
+
+function render(updateSelection=true){
+  const canvas = document.getElementById('canvas');
+  canvas.innerHTML = "";
+  page.blocks.forEach(b=>{
+    const def = COMPONENTS[b.type];
+    const div = document.createElement('div');
+    div.className = "block" + (b.id===selectedId ? " selected":"");
+    div.onclick = ()=>selectBlock(b.id);
+    div.innerHTML = `
+      <div class="block-toolbar">
+        <button onclick="event.stopPropagation();moveBlock('${b.id}','up')">↑</button>
+        <button onclick="event.stopPropagation();moveBlock('${b.id}','down')">↓</button>
+        <button onclick="event.stopPropagation();deleteBlock('${b.id}')">X</button>
+      </div>
+      ${def.renderPreview(b.props)}
+    `;
+    canvas.appendChild(div);
+  });
+
+  // 속성 영역
+  const propsArea = document.getElementById('propsArea');
+  const sel = page.blocks.find(b=>b.id===selectedId);
+  if(!sel){
+    propsArea.innerHTML = "블럭을 선택하세요.";
+  }else{
+    const def = COMPONENTS[sel.type];
+    if(sel.type === "header"){
+      propsArea.innerHTML = `
+        <label>상품명<br>
+          <input value="${sel.props.title}" 
+                 oninput="updateProps('${sel.id}','title',this.value)">
+        </label><br><br>
+        <label>한 줄 설명<br>
+          <textarea rows="3"
+            oninput="updateProps('${sel.id}','subtitle',this.value)">${sel.props.subtitle}</textarea>
+        </label>
+      `;
+    }else if(sel.type === "text" || sel.type === "notice"){
+      propsArea.innerHTML = `
+        <label>텍스트<br>
+          <textarea rows="5"
+            oninput="updateProps('${sel.id}','text',this.value)">${sel.props.text}</textarea>
+        </label>
+      `;
+    }
+  }
+}
+
+function showExport(){
+  const bodyHtml = page.blocks.map(b=>{
+    const def = COMPONENTS[b.type];
+    return def.renderHtml(b.props);
+  }).join("\n");
+  const fullHtml = `
+<!-- eBay Cosmetics Snippet -->
+<style>
+.ebc-section{margin:12px 0;padding:14px 16px;border:1px solid #e5e5e5;border-radius:6px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#222;}
+.ebc-section--soft{background:#fdfbff;border-color:#e3d8ff;}
+.ebc-title{font-size:20px;margin:0 0 6px;}
+.ebc-subtitle{margin:0;color:#666;font-size:13px;}
+.ebc-text{margin:0;color:#444;font-size:13px;}
+.ebc-note{margin:0;color:#b91c1c;font-size:12px;}
+</style>
+<div>
+${bodyHtml}
+</div>`.trim();
+  document.getElementById('exportArea').value = fullHtml;
+}
+
+render();
+</script>
+</body>
+</html>
