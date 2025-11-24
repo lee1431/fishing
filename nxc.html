@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Mini CAD Sketch (Menu + Zoom/Pan + Measure/Angle)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background:#020617;
+    color:#e5e7eb;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* 상단 메뉴바 */
+  .menubar{
+    display:flex;
+    gap:8px;
+    padding:4px 10px;
+    background:#020617;
+    border-bottom:1px solid #111827;
+    align-items:center;
+    font-size:12px;
+  }
+  .menu{
+    position:relative;
+  }
+  .menu-btn{
+    border:none;
+    background:transparent;
+    color:#e5e7eb;
+    padding:4px 10px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .menu-btn:hover{
+    background:#111827;
+  }
+  .menu-dropdown{
+    position:absolute;
+    top:100%;
+    left:0;
+    min-width:120px;
+    background:#020617;
+    border:1px solid #1f2937;
+    border-radius:6px;
+    padding:4px 0;
+    box-shadow:0 10px 20px rgba(0,0,0,0.4);
+    display:none;
+    z-index:20;
+  }
+  .menu.open .menu-dropdown{
+    display:block;
+  }
+  .menu-item{
+    padding:4px 10px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .menu-item:hover{
+    background:#111827;
+  }
+
+  .toolbar{
+    display:flex;
+    gap:8px;
+    padding:8px 12px;
+    background:#020617;
+    border-bottom:1px solid #1f2937;
+    align-items:center;
+  }
+  .toolbar button{
+    border:1px solid #374151;
+    background:#111827;
+    color:#e5e7eb;
+    padding:6px 12px;
+    border-radius:999px;
+    cursor:pointer;
+    font-size:13px;
+  }
+  .toolbar button.active{
+    border-color:#22c55e;
+    background:#022c22;
+  }
+  .toolbar span{
+    margin-left:auto;
+    font-size:12px;
+    color:#9ca3af;
+  }
+
+  .main{
+    flex:1;
+    display:flex;
+    min-height:0;
+  }
+  #cadCanvas{
+    flex:2;
+    background:#020617;
+    border-right:1px solid #1f2937;
+    cursor:crosshair;
+  }
+  .side{
+    flex:1;
+    min-width:260px;
+    display:flex;
+    flex-direction:column;
+  }
+  .panel{
+    padding:10px;
+    border-bottom:1px solid #1f2937;
+    font-size:12px;
+  }
+  .panel h3{
+    margin:0 0 6px;
+    font-size:13px;
+  }
+  .panel label{
+    display:block;
+    margin-top:4px;
+    margin-bottom:2px;
+  }
+  .panel input{
+    width:100%;
+    padding:4px 6px;
+    border-radius:6px;
+    border:1px solid #4b5563;
+    background:#020617;
+    color:#e5e7eb;
+    font-size:12px;
+  }
+  .panel button.small{
+    margin-top:6px;
+    padding:4px 8px;
+    border-radius:999px;
+    border:1px solid #4b5563;
+    background:#111827;
+    color:#e5e7eb;
+    font-size:12px;
+    cursor:pointer;
+  }
+  .status-panel{
+    padding:8px 10px;
+    font-size:12px;
+    color:#9ca3af;
+  }
+  .status-line{
+    margin-bottom:2px;
+  }
+</style>
+</head>
+<body>
+
+  <!-- 상단 메뉴바 -->
+  <div class="menubar">
+    <div class="menu" id="menuMeasure">
+      <button class="menu-btn" id="menuMeasureBtn">측정 ▾</button>
+      <div class="menu-dropdown" id="menuMeasureDropdown">
+        <div class="menu-item" data-action="measure-distance">거리 측정</div>
+        <div class="menu-item" data-action="measure-angle">각도 측정</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 툴바 -->
+  <div class="toolbar">
+    <button id="toolLine" class="active">Line</button>
+    <button id="toolCircle">Circle</button>
+    <button id="toolArc">Arc(3점)</button>
+    <button id="toolRect">Rect</button>
+    <button id="toolMeasure">Measure</button>
+    <button id="toolAngle">Angle</button>
+    <button id="btnUndo">Undo</button>
+    <button id="btnClear">Clear</button>
+    <span id="statusText">Line 모드 · 시작점 클릭</span>
+  </div>
+
+  <div class="main">
+    <canvas id="cadCanvas"></canvas>
+    <div class="side">
+      <div class="panel">
+        <h3>라인 길이/각도 입력 (Line 도구)</h3>
+        <label for="lenInput">길이 (mm)</label>
+        <input id="lenInput" type="number" step="0.1" placeholder="예: 50">
+        <label for="angInput">각도 (도)</label>
+        <input id="angInput" type="number" step="0.1" placeholder="예: 0=오른쪽, 90=위쪽">
+        <button id="btnApplyLA" class="small">적용 (현재 시작점 기준)</button>
+        <p style="margin:6px 0 0;color:#9ca3af;font-size:11px;">
+          단축키: D → 길이 입력창, Enter → 적용, Esc → 취소<br>
+          줌: 휠, 팬: 오른쪽/휠 버튼 드래그
+        </p>
+      </div>
+      <div class="status-panel">
+        <div class="status-line">현재 길이: <span id="curLen">-</span> mm</div>
+        <div class="status-line">현재 각도: <span id="curAng">-</span> °</div>
+        <div class="status-line">스냅: <span id="curSnap">없음</span></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const canvas = document.getElementById('cadCanvas');
+const ctx = canvas.getContext('2d');
+
+// 툴바
+const toolLine    = document.getElementById('toolLine');
+const toolCircle  = document.getElementById('toolCircle');
+const toolArc     = document.getElementById('toolArc');
+const toolRect    = document.getElementById('toolRect');
+const toolMeasure = document.getElementById('toolMeasure');
+const toolAngle   = document.getElementById('toolAngle');
+const btnUndo     = document.getElementById('btnUndo');
+const btnClear    = document.getElementById('btnClear');
+const statusText  = document.getElementById('statusText');
+
+// 측정 메뉴
+const menuMeasure        = document.getElementById('menuMeasure');
+const menuMeasureBtn     = document.getElementById('menuMeasureBtn');
+const menuMeasureDropdown= document.getElementById('menuMeasureDropdown');
+
+// 패널
+const lenInput   = document.getElementById('lenInput');
+const angInput   = document.getElementById('angInput');
+const btnApplyLA = document.getElementById('btnApplyLA');
+const curLenEl   = document.getElementById('curLen');
+const curAngEl   = document.getElementById('curAng');
+const curSnapEl  = document.getElementById('curSnap');
+
+const MM_PER_WORLD = 0.5;  // 1 world unit = 0.5mm
+const GRID_STEP = 50;      // world units
+const GRID_SNAP_RADIUS_PX = 14;
+
+// 뷰 (줌/팬)
+let view = {
+  scale: 1,
+  offsetX: 0,
+  offsetY: 0,
+  minScale: 0.2,
+  maxScale: 8
+};
+
+// 상태
+let tool = 'line';              // 'line' | 'circle' | 'arc' | 'rect' | 'measure' | 'angle'
+let entities = [];              // line / circle / arc / rect / dim / angdim
+let isDrawing = false;
+let stage = 0;
+let basePoint = null;           // world
+let tempPoint = null;           // world
+let arcPoints = [];             // arc용 [start, end]
+let anglePoints = [];           // angle용 [firstLinePoint, secondLinePoint]
+let snapIndicator = null;       // world
+let curSnapKind = null;
+let lastMouseScreen = null;
+
+// 팬
+let isPanning = false;
+let panStart = null;
+
+// --- 좌표 변환 ---
+function worldToScreen(p){
+  return {
+    x: p.x * view.scale + view.offsetX,
+    y: p.y * view.scale + view.offsetY
+  };
+}
+function screenToWorld(p){
+  return {
+    x: (p.x - view.offsetX) / view.scale,
+    y: (p.y - view.offsetY) / view.scale
+  };
+}
+function resizeCanvas(){
+  const rect = canvas.getBoundingClientRect();
+  canvas.width  = rect.width;
+  canvas.height = rect.height;
+  draw();
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function getCanvasScreenPoint(evt){
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: evt.clientX - rect.left,
+    y: evt.clientY - rect.top
+  };
+}
+function dist2(p, q){
+  const dx = p.x - q.x;
+  const dy = p.y - q.y;
+  return dx*dx + dy*dy;
+}
+
+// --- 스냅 ---
+function getAllObjectSnaps(){
+  const snaps = [];
+  for(const e of entities){
+    if(e.type === 'line'){
+      const {p1, p2} = e;
+      snaps.push({x:p1.x, y:p1.y, kind:'END'});
+      snaps.push({x:p2.x, y:p2.y, kind:'END'});
+      const mid = {x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2};
+      snaps.push({x:mid.x, y:mid.y, kind:'MID'});
+    }else if(e.type === 'circle'){
+      const {c, r} = e;
+      snaps.push({x:c.x,   y:c.y,   kind:'CEN'});
+      snaps.push({x:c.x+r, y:c.y,   kind:'QUAD'});
+      snaps.push({x:c.x-r, y:c.y,   kind:'QUAD'});
+      snaps.push({x:c.x,   y:c.y+r, kind:'QUAD'});
+      snaps.push({x:c.x,   y:c.y-r, kind:'QUAD'});
+    }else if(e.type === 'arc'){
+      const {p1, p2, p3} = e;
+      snaps.push({x:p1.x, y:p1.y, kind:'END'});
+      snaps.push({x:p3.x, y:p3.y, kind:'END'});
+      snaps.push({x:p2.x, y:p2.y, kind:'MID'});
+    }else if(e.type === 'rect'){
+      const {p1, p2} = e;
+      const x1 = Math.min(p1.x, p2.x);
+      const x2 = Math.max(p1.x, p2.x);
+      const y1 = Math.min(p1.y, p2.y);
+      const y2 = Math.max(p1.y, p2.y);
+      snaps.push({x:x1, y:y1, kind:'COR'});
+      snaps.push({x:x2, y:y1, kind:'COR'});
+      snaps.push({x:x2, y:y2, kind:'COR'});
+      snaps.push({x:x1, y:y2, kind:'COR'});
+      const mx = (x1+x2)/2;
+      const my = (y1+y2)/2;
+      snaps.push({x:mx, y:y1, kind:'MID'});
+      snaps.push({x:x2, y:my, kind:'MID'});
+      snaps.push({x:mx, y:y2, kind:'MID'});
+      snaps.push({x:x1, y:my, kind:'MID'});
+      snaps.push({x:mx, y:my, kind:'CEN'});
+    }
+  }
+  return snaps;
+}
+function findObjectSnap(rawWorld, rawScreen){
+  const snaps = getAllObjectSnaps();
+  const maxDistPx = 12;
+  const maxDist2  = maxDistPx*maxDistPx;
+  let best = null;
+  let bestD2 = Infinity;
+  for(const s of snaps){
+    const ss = worldToScreen(s);
+    const d2 = dist2(ss, rawScreen);
+    if(d2 < bestD2 && d2 <= maxDist2){
+      bestD2 = d2;
+      best = s;
+    }
+  }
+  if(!best) return null;
+  return { point:{x:best.x, y:best.y}, kind:best.kind };
+}
+function findGridSnap(rawWorld, rawScreen){
+  const gx = Math.round(rawWorld.x / GRID_STEP) * GRID_STEP;
+  const gy = Math.round(rawWorld.y / GRID_STEP) * GRID_STEP;
+  const gWorld = {x:gx, y:gy};
+  const gScreen = worldToScreen(gWorld);
+  const d2 = dist2(gScreen, rawScreen);
+  if(d2 <= GRID_SNAP_RADIUS_PX*GRID_SNAP_RADIUS_PX){
+    return { point:gWorld, kind:'GRID' };
+  }
+  return null;
+}
+function getSnap(rawWorld, rawScreen){
+  const obj = findObjectSnap(rawWorld, rawScreen);
+  if(obj) return obj;
+  const grid = findGridSnap(rawWorld, rawScreen);
+  if(grid) return grid;
+  return null;
+}
+function applyOrtho(base, p){
+  const dx = p.x - base.x;
+  const dy = p.y - base.y;
+  const angleRad = Math.atan2(-dy, dx);
+  let deg = angleRad * 180 / Math.PI;
+  if(deg < 0) deg += 360;
+  const tol = 10;
+  if( Math.abs(deg-0) < tol || Math.abs(deg-180)<tol || Math.abs(deg-360)<tol ){
+    return {x:p.x, y:base.y};
+  }
+  if( Math.abs(deg-90)<tol || Math.abs(deg-270)<tol ){
+    return {x:base.x, y:p.y};
+  }
+  return p;
+}
+function getLengthAngle(base, p){
+  if(!base || !p) return {lenMm:null, angleDeg:null};
+  const dx = p.x - base.x;
+  const dy = base.y - p.y;
+  const lenWorld = Math.sqrt(dx*dx + dy*dy);
+  const lenMm = lenWorld * MM_PER_WORLD;
+  let angleRad = Math.atan2(dy, dx);
+  let angleDeg = angleRad * 180 / Math.PI;
+  if(angleDeg < 0) angleDeg += 360;
+  return {lenMm, angleDeg};
+}
+function computeAngleDeg(v, p1, p2){
+  const v1x = p1.x - v.x;
+  const v1y = p1.y - v.y;
+  const v2x = p2.x - v.x;
+  const v2y = p2.y - v.y;
+  const len1 = Math.hypot(v1x, v1y);
+  const len2 = Math.hypot(v2x, v2y);
+  if(len1 < 1e-6 || len2 < 1e-6) return 0;
+  let cos = (v1x*v2x + v1y*v2y) / (len1*len2);
+  cos = Math.max(-1, Math.min(1, cos));
+  let ang = Math.acos(cos) * 180 / Math.PI;
+  if(ang > 180) ang = 360 - ang;
+  return ang;
+}
+
+// --- 그리기 ---
+function drawGrid(){
+  const step = GRID_STEP;
+  const topLeftWorld = screenToWorld({x:0,y:0});
+  const bottomRightWorld = screenToWorld({x:canvas.width,y:canvas.height});
+  const xStart = Math.floor(topLeftWorld.x / step) * step;
+  const xEnd   = Math.ceil(bottomRightWorld.x / step) * step;
+  const yStart = Math.floor(topLeftWorld.y / step) * step;
+  const yEnd   = Math.ceil(bottomRightWorld.y / step) * step;
+
+  ctx.save();
+  ctx.strokeStyle = '#111827';
+  ctx.lineWidth = 1;
+
+  for(let x=xStart; x<=xEnd; x+=step){
+    const p1 = worldToScreen({x, y:topLeftWorld.y});
+    const p2 = worldToScreen({x, y:bottomRightWorld.y});
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+  }
+  for(let y=yStart; y<=yEnd; y+=step){
+    const p1 = worldToScreen({x:topLeftWorld.x, y});
+    const p2 = worldToScreen({x:bottomRightWorld.x, y});
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+function drawEntities(){
+  ctx.save();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#e5e7eb';
+  ctx.font = '11px system-ui, sans-serif';
+
+  for(const e of entities){
+    if(e.type === 'line'){
+      const s1 = worldToScreen(e.p1);
+      const s2 = worldToScreen(e.p2);
+      ctx.beginPath();
+      ctx.moveTo(s1.x, s1.y);
+      ctx.lineTo(s2.x, s2.y);
+      ctx.stroke();
+    }else if(e.type === 'circle'){
+      const sc = worldToScreen(e.c);
+      const r  = e.r * view.scale;
+      ctx.beginPath();
+      ctx.arc(sc.x, sc.y, r, 0, Math.PI*2);
+      ctx.stroke();
+    }else if(e.type === 'arc'){
+      const p1s = worldToScreen(e.p1);
+      const p2s = worldToScreen(e.p2);
+      const p3s = worldToScreen(e.p3);
+      ctx.beginPath();
+      ctx.moveTo(p1s.x, p1s.y);
+      ctx.quadraticCurveTo(p2s.x, p2s.y, p3s.x, p3s.y);
+      ctx.stroke();
+    }else if(e.type === 'rect'){
+      const p1s = worldToScreen(e.p1);
+      const p2s = worldToScreen(e.p2);
+      ctx.beginPath();
+      ctx.moveTo(p1s.x, p1s.y);
+      ctx.lineTo(p2s.x, p1s.y);
+      ctx.lineTo(p2s.x, p2s.y);
+      ctx.lineTo(p1s.x, p2s.y);
+      ctx.closePath();
+      ctx.stroke();
+    }else if(e.type === 'dim'){
+      drawDimensionEntity(e);
+    }else if(e.type === 'angdim'){
+      drawAngleDimEntity(e);
+    }
+  }
+
+  ctx.restore();
+}
+function drawDimensionEntity(e){
+  const p1s = worldToScreen(e.p1);
+  const p2s = worldToScreen(e.p2);
+  ctx.save();
+  ctx.setLineDash([4,2]);
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 1.5;
+
+  ctx.beginPath();
+  ctx.moveTo(p1s.x, p1s.y);
+  ctx.lineTo(p2s.x, p2s.y);
+  ctx.stroke();
+
+  const dx = p2s.x - p1s.x;
+  const dy = p2s.y - p1s.y;
+  const len = Math.sqrt(dx*dx + dy*dy) || 1;
+  const ux = dx / len;
+  const uy = dy / len;
+  const arrowSize = 8;
+
+  ctx.beginPath();
+  ctx.moveTo(p1s.x, p1s.y);
+  ctx.lineTo(p1s.x + (-ux+uy)*arrowSize*0.5, p1s.y + (-uy-ux)*arrowSize*0.5);
+  ctx.moveTo(p2s.x, p2s.y);
+  ctx.lineTo(p2s.x + (ux+uy)*arrowSize*0.5, p2s.y + (uy-ux)*arrowSize*0.5);
+  ctx.stroke();
+
+  const mid = {x:(p1s.x+p2s.x)/2, y:(p1s.y+p2s.y)/2};
+  const text = e.label || '';
+  if(text){
+    ctx.font = '11px system-ui, sans-serif';
+    const padding = 3;
+    const metrics = ctx.measureText(text);
+    const tw = metrics.width;
+    const th = 11;
+    const bx = mid.x - tw/2 - padding;
+    const by = mid.y - th/2 - padding;
+
+    ctx.fillStyle = 'rgba(15,23,42,0.9)';
+    ctx.fillRect(bx, by, tw + padding*2, th + padding*2);
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillText(text, mid.x - tw/2, mid.y + th/4);
+  }
+  ctx.restore();
+}
+function drawAngleDimEntity(e){
+  const vs = worldToScreen(e.v);
+  const p1s = worldToScreen(e.p1);
+  const p2s = worldToScreen(e.p2);
+
+  ctx.save();
+  ctx.setLineDash([4,2]);
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 1.5;
+
+  ctx.beginPath();
+  ctx.moveTo(vs.x, vs.y);
+  ctx.lineTo(p1s.x, p1s.y);
+  ctx.moveTo(vs.x, vs.y);
+  ctx.lineTo(p2s.x, p2s.y);
+  ctx.stroke();
+
+  const midX = (p1s.x + p2s.x) / 2;
+  const midY = (p1s.y + p2s.y) / 2;
+  const tx = (vs.x + midX) / 2;
+  const ty = (vs.y + midY) / 2;
+
+  const text = e.label || '';
+  if(text){
+    ctx.font = '11px system-ui, sans-serif';
+    const pad = 3;
+    const w = ctx.measureText(text).width;
+    const h = 11;
+    const bx = tx - w/2 - pad;
+    const by = ty - h/2 - pad;
+    ctx.fillStyle = 'rgba(15,23,42,0.9)';
+    ctx.fillRect(bx, by, w + pad*2, h + pad*2);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillText(text, tx - w/2, ty + h/4);
+  }
+
+  ctx.restore();
+}
+function drawPreview(){
+  if(!isDrawing || !basePoint) return;
+  if(!tempPoint && tool !== 'arc' && tool !== 'measure' && tool !== 'angle') return;
+
+  ctx.save();
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4,4]);
+  ctx.strokeStyle = '#22c55e';
+
+  const b = worldToScreen(basePoint);
+  const t = tempPoint ? worldToScreen(tempPoint) : null;
+
+  if(tool === 'line' && t){
+    ctx.beginPath();
+    ctx.moveTo(b.x, b.y);
+    ctx.lineTo(t.x, t.y);
+    ctx.stroke();
+  }else if(tool === 'circle' && t){
+    const dx = tempPoint.x - basePoint.x;
+    const dy = tempPoint.y - basePoint.y;
+    const rWorld = Math.sqrt(dx*dx + dy*dy);
+    const r = rWorld * view.scale;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, r, 0, Math.PI*2);
+    ctx.stroke();
+  }else if(tool === 'rect' && t){
+    ctx.beginPath();
+    ctx.moveTo(b.x, b.y);
+    ctx.lineTo(t.x, b.y);
+    ctx.lineTo(t.x, t.y);
+    ctx.lineTo(b.x, t.y);
+    ctx.closePath();
+    ctx.stroke();
+  }else if(tool === 'arc'){
+    if(stage === 1 && t){
+      ctx.beginPath();
+      ctx.moveTo(b.x, b.y);
+      ctx.lineTo(t.x, t.y);
+      ctx.stroke();
+    }else if(stage === 2 && arcPoints.length === 2 && t){
+      const p1s = worldToScreen(arcPoints[0]);
+      const p2s = worldToScreen(arcPoints[1]);
+      const p3s = worldToScreen(tempPoint);
+      ctx.beginPath();
+      ctx.moveTo(p1s.x, p1s.y);
+      ctx.quadraticCurveTo(p3s.x, p3s.y, p2s.x, p2s.y);
+      ctx.stroke();
+    }
+  }else if(tool === 'measure' && t){
+    ctx.beginPath();
+    ctx.moveTo(b.x, b.y);
+    ctx.lineTo(t.x, t.y);
+    ctx.stroke();
+  }else if(tool === 'angle'){
+    if(stage === 1 && t){
+      ctx.beginPath();
+      ctx.moveTo(b.x, b.y);
+      ctx.lineTo(t.x, t.y);
+      ctx.stroke();
+    }else if(stage === 2 && anglePoints[0] && t){
+      const p1s = worldToScreen(anglePoints[0]);
+      ctx.beginPath();
+      ctx.moveTo(b.x, b.y);
+      ctx.lineTo(p1s.x, p1s.y);
+      ctx.moveTo(b.x, b.y);
+      ctx.lineTo(t.x, t.y);
+      ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+}
+function drawSnapMarker(){
+  if(!snapIndicator) return;
+  const s = worldToScreen(snapIndicator);
+  ctx.save();
+  ctx.fillStyle = '#22c55e';
+  ctx.beginPath();
+  ctx.arc(s.x, s.y, 4, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawGrid();
+  drawEntities();
+  drawPreview();
+  drawSnapMarker();
+}
+
+// --- 도구/상태 관리 ---
+function setTool(t){
+  tool = t;
+  isDrawing = false;
+  stage = 0;
+  basePoint = null;
+  tempPoint = null;
+  arcPoints = [];
+  anglePoints = [];
+  snapIndicator = null;
+  curSnapKind = null;
+
+  [toolLine, toolCircle, toolArc, toolRect, toolMeasure, toolAngle]
+    .forEach(btn => btn.classList.remove('active'));
+  if(t === 'line')    toolLine.classList.add('active');
+  if(t === 'circle')  toolCircle.classList.add('active');
+  if(t === 'arc')     toolArc.classList.add('active');
+  if(t === 'rect')    toolRect.classList.add('active');
+  if(t === 'measure') toolMeasure.classList.add('active');
+  if(t === 'angle')   toolAngle.classList.add('active');
+
+  statusText.textContent = {
+    line:    'Line 모드 · 시작점 클릭',
+    circle:  'Circle 모드 · 중심점 클릭',
+    arc:     'Arc(3점) 모드 · 시작점 클릭',
+    rect:    'Rect 모드 · 첫 코너 클릭',
+    measure: 'Measure 모드 · 첫 점 클릭',
+    angle:   'Angle 모드 · 꼭짓점(두 선이 만나는 점) 클릭'
+  }[t];
+
+  draw();
+}
+
+toolLine.onclick    = () => setTool('line');
+toolCircle.onclick  = () => setTool('circle');
+toolArc.onclick     = () => setTool('arc');
+toolRect.onclick    = () => setTool('rect');
+toolMeasure.onclick = () => setTool('measure');
+toolAngle.onclick   = () => setTool('angle');
+
+// Undo / Clear
+btnUndo.onclick = () => { entities.pop(); draw(); };
+btnClear.onclick = () => {
+  entities = [];
+  isDrawing = false;
+  stage = 0;
+  basePoint = null;
+  tempPoint = null;
+  arcPoints = [];
+  anglePoints = [];
+  snapIndicator = null;
+  curSnapKind = null;
+  draw();
+};
+
+// --- 메뉴바 로직 ---
+menuMeasureBtn.addEventListener('click', () => {
+  menuMeasure.classList.toggle('open');
+});
+document.addEventListener('click', (e) => {
+  if(!menuMeasure.contains(e.target)){
+    menuMeasure.classList.remove('open');
+  }
+});
+menuMeasureDropdown.addEventListener('click', (e) => {
+  const item = e.target.closest('.menu-item');
+  if(!item) return;
+  const action = item.dataset.action;
+  if(action === 'measure-distance'){
+    setTool('measure');
+  }else if(action === 'measure-angle'){
+    setTool('angle');
+  }
+  menuMeasure.classList.remove('open');
+});
+
+// --- 마우스 / 팬 / 줌 ---
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+canvas.addEventListener('mousedown', evt => {
+  if(evt.button === 1 || evt.button === 2){
+    isPanning = true;
+    panStart = {
+      x: evt.clientX,
+      y: evt.clientY,
+      offsetX: view.offsetX,
+      offsetY: view.offsetY
+    };
+    return;
+  }
+  if(evt.button !== 0) return;
+
+  const screen = getCanvasScreenPoint(evt);
+  const world  = screenToWorld(screen);
+  const snapInfo = getSnap(world, screen);
+  const pos = snapInfo ? snapInfo.point : world;
+
+  if(!isDrawing){
+    isDrawing = true;
+    stage = 1;
+    basePoint = pos;
+    tempPoint = null;
+    arcPoints = [];
+    anglePoints = [];
+    if(tool === 'arc'){
+      arcPoints.push(basePoint);
+      statusText.textContent = 'Arc(3점) 모드 · 끝점 클릭';
+    }else if(tool === 'line'){
+      statusText.textContent = 'Line 모드 · 끝점 클릭';
+    }else if(tool === 'circle'){
+      statusText.textContent = 'Circle 모드 · 반지름점 클릭';
+    }else if(tool === 'rect'){
+      statusText.textContent = 'Rect 모드 · 반대 코너 클릭';
+    }else if(tool === 'measure'){
+      statusText.textContent = 'Measure 모드 · 두 번째 점 클릭';
+    }else if(tool === 'angle'){
+      statusText.textContent = 'Angle 모드 · 첫 번째 선 위의 점 클릭';
+    }
+  }else{
+    if(tool === 'line' && basePoint){
+      const end = pos;
+      entities.push({ type:'line', p1:{...basePoint}, p2:{...end} });
+      isDrawing = false; stage=0; basePoint=null; tempPoint=null;
+      statusText.textContent = 'Line 모드 · 시작점 클릭';
+    }else if(tool === 'circle' && basePoint){
+      const dx = pos.x - basePoint.x;
+      const dy = pos.y - basePoint.y;
+      const r  = Math.sqrt(dx*dx + dy*dy);
+      entities.push({ type:'circle', c:{...basePoint}, r });
+      isDrawing = false; stage=0; basePoint=null; tempPoint=null;
+      statusText.textContent = 'Circle 모드 · 중심점 클릭';
+    }else if(tool === 'rect' && basePoint){
+      entities.push({ type:'rect', p1:{...basePoint}, p2:{...pos} });
+      isDrawing = false; stage=0; basePoint=null; tempPoint=null;
+      statusText.textContent = 'Rect 모드 · 첫 코너 클릭';
+    }else if(tool === 'arc'){
+      if(stage === 1){
+        arcPoints.push({...pos}); stage=2;
+        statusText.textContent = 'Arc(3점) 모드 · 호 위의 한 점 클릭';
+      }else if(stage === 2 && arcPoints.length === 2){
+        const p1 = arcPoints[0];
+        const p2 = arcPoints[1];
+        const p3 = pos;
+        entities.push({ type:'arc', p1:{...p1}, p2:{...p3}, p3:{...p2} });
+        isDrawing = false; stage=0; basePoint=null; tempPoint=null; arcPoints=[];
+        statusText.textContent = 'Arc(3점) 모드 · 시작점 클릭';
+      }
+    }else if(tool === 'measure' && basePoint){
+      const end = pos;
+      const {lenMm, angleDeg} = getLengthAngle(basePoint, end);
+      const label = `${lenMm.toFixed(2)} mm`;
+      entities.push({ type:'dim', p1:{...basePoint}, p2:{...end}, label, angle:angleDeg });
+      isDrawing = false; stage=0; basePoint=null; tempPoint=null;
+      curLenEl.textContent = lenMm.toFixed(2);
+      curAngEl.textContent = angleDeg.toFixed(1);
+      statusText.textContent =
+        `Measure 모드 · 측정 완료 (${label}, ${angleDeg.toFixed(1)}°) · 다시 측정하려면 첫 점 클릭`;
+    }else if(tool === 'angle' && basePoint){
+      if(stage === 1){
+        anglePoints[0] = pos;
+        stage = 2;
+        statusText.textContent = 'Angle 모드 · 두 번째 선 위의 점 클릭';
+      }else if(stage === 2){
+        anglePoints[1] = pos;
+        const v  = basePoint;
+        const p1 = anglePoints[0];
+        const p2 = anglePoints[1];
+        const ang = computeAngleDeg(v, p1, p2);
+        const label = `${ang.toFixed(1)}°`;
+        entities.push({ type:'angdim', v:{...v}, p1:{...p1}, p2:{...p2}, angle:ang, label });
+        isDrawing = false; stage=0; basePoint=null; tempPoint=null; anglePoints=[];
+        curLenEl.textContent = '-';
+        curAngEl.textContent = ang.toFixed(1);
+        statusText.textContent =
+          `Angle 모드 · 측정 완료 (${label}) · 다시 측정하려면 꼭짓점 클릭`;
+      }
+    }
+  }
+  draw();
+});
+
+canvas.addEventListener('mousemove', evt => {
+  const screen = getCanvasScreenPoint(evt);
+  lastMouseScreen = screen;
+
+  if(isPanning && panStart){
+    const dx = evt.clientX - panStart.x;
+    const dy = evt.clientY - panStart.y;
+    view.offsetX = panStart.offsetX + dx;
+    view.offsetY = panStart.offsetY + dy;
+    draw();
+    return;
+  }
+
+  const world  = screenToWorld(screen);
+  const snapInfo = getSnap(world, screen);
+
+  if(snapInfo){
+    snapIndicator = snapInfo.point;
+    curSnapKind   = snapInfo.kind;
+    const s = worldToScreen(snapInfo.point);
+    curSnapEl.textContent = `${snapInfo.kind} @ (${s.x.toFixed(1)}, ${s.y.toFixed(1)})`;
+  }else{
+    snapIndicator = null;
+    curSnapKind   = null;
+    curSnapEl.textContent = '없음';
+  }
+
+  if(isDrawing && basePoint){
+    let pos = snapInfo ? snapInfo.point : world;
+    if(tool === 'line' || tool === 'rect'){
+      pos = applyOrtho(basePoint, pos);
+    }
+    tempPoint = pos;
+    const {lenMm, angleDeg} = getLengthAngle(basePoint, tempPoint);
+    if(lenMm != null){
+      curLenEl.textContent = lenMm.toFixed(2);
+      curAngEl.textContent = angleDeg.toFixed(1);
+    }
+  }else{
+    curLenEl.textContent = '-';
+    curAngEl.textContent = '-';
+  }
+
+  draw();
+});
+
+canvas.addEventListener('mouseup', () => {
+  isPanning = false;
+  panStart = null;
+});
+canvas.addEventListener('mouseleave', () => {
+  isPanning = false;
+  panStart = null;
+  snapIndicator = null;
+  curSnapKind = null;
+  curSnapEl.textContent = '없음';
+  draw();
+});
+
+// 줌
+canvas.addEventListener('wheel', evt => {
+  evt.preventDefault();
+  const zoomFactor = evt.deltaY < 0 ? 1.1 : 0.9;
+  let newScale = view.scale * zoomFactor;
+  newScale = Math.max(view.minScale, Math.min(view.maxScale, newScale));
+
+  const mouseScreen = getCanvasScreenPoint(evt);
+  const worldBefore = screenToWorld(mouseScreen);
+  view.scale = newScale;
+  view.offsetX = mouseScreen.x - worldBefore.x * view.scale;
+  view.offsetY = mouseScreen.y - worldBefore.y * view.scale;
+  draw();
+}, {passive:false});
+
+// --- 길이/각도 입력 → Line ---
+btnApplyLA.onclick = () => {
+  if(tool !== 'line' || !isDrawing || !basePoint){
+    alert('Line 모드에서 시작점을 먼저 클릭한 후 사용하세요.');
+    return;
+  }
+  const lenMm = parseFloat(lenInput.value);
+  const angDeg = parseFloat(angInput.value);
+  if(isNaN(lenMm) || isNaN(angDeg)){
+    alert('길이와 각도를 숫자로 입력하세요.');
+    return;
+  }
+  const lenWorld = lenMm / MM_PER_WORLD;
+  const angRad = angDeg * Math.PI / 180;
+  const dx = lenWorld * Math.cos(angRad);
+  const dy = lenWorld * Math.sin(angRad);
+
+  const end = { x: basePoint.x + dx, y: basePoint.y - dy };
+  entities.push({ type:'line', p1:{...basePoint}, p2:{...end} });
+  isDrawing = false; stage=0; basePoint=null; tempPoint=null;
+
+  const {lenMm: lm, angleDeg: ad} =
+    getLengthAngle(entities[entities.length-1].p1, entities[entities.length-1].p2);
+  if(lm != null){
+    curLenEl.textContent = lm.toFixed(2);
+    curAngEl.textContent = ad.toFixed(1);
+  }
+  statusText.textContent = 'Line 모드 · 시작점 클릭';
+  draw();
+};
+[lenInput, angInput].forEach(inp => {
+  inp.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      btnApplyLA.click();
+    }
+  });
+});
+
+// --- 단축키 ---
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    if(isDrawing){
+      isDrawing = false; stage=0; basePoint=null; tempPoint=null;
+      arcPoints=[]; anglePoints=[];
+      statusText.textContent = {
+        line:    'Line 모드 · 시작점 클릭',
+        circle:  'Circle 모드 · 중심점 클릭',
+        arc:     'Arc(3점) 모드 · 시작점 클릭',
+        rect:    'Rect 모드 · 첫 코너 클릭',
+        measure: 'Measure 모드 · 첫 점 클릭',
+        angle:   'Angle 모드 · 꼭짓점(두 선이 만나는 점) 클릭'
+      }[tool];
+      draw();
+    }
+  }
+  if(e.key === 'd' || e.key === 'D'){
+    lenInput.focus();
+    lenInput.select();
+    e.preventDefault();
+  }
+});
+
+// 초기 그리기
+draw();
+</script>
+</body>
+</html>
