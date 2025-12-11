@@ -83,7 +83,7 @@
       codeStatus.textContent = '불러오는 중...';
 
       try {
-        const res = await fetch('http://localflow.ddns.net/ebayimages/api/ebay-desc-images', {
+        const res = await fetch('https://localflow.ddns.net/ebayimages/api/ebay-desc-images', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ url })
