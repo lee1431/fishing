@@ -2,165 +2,485 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <title>eBay 상세페이지 이미지 선택기</title>
+  <title>eBay 추천 블록 4개 이미지 코드 생성기</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f5f5;margin:0}
-    .wrap{max-width:960px;margin:0 auto;padding:24px 16px 40px}
-    h1{font-size:1.6rem;margin-bottom:12px}
-    .muted{color:#666;font-size:.9rem;margin-bottom:20px}
-    label{display:block;font-weight:600;margin:12px 0 4px;font-size:.9rem}
-    input[type=text]{width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1px solid #ccc;font-size:.9rem;font-family:inherit}
-    .btn{display:inline-flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:999px;border:1px solid #111;background:#111;color:#fff;font-size:.9rem;margin-top:10px;cursor:pointer;text-decoration:none}
-    .btn.sub{background:#fff;color:#111;border-color:#ccc;margin-left:8px}
-    .btn:disabled{opacity:.5;cursor:default}
-    .section-title{margin-top:24px;font-size:1rem;font-weight:600}
-    .thumb-grid{margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px}
-    .thumb{position:relative;border-radius:10px;overflow:hidden;border:2px solid transparent;background:#eee;cursor:pointer;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center}
-    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-    .thumb.selected{border-color:#111;box-shadow:0 0 0 2px #111}
-    .thumb-tag{position:absolute;bottom:6px;left:6px;padding:2px 8px;border-radius:999px;background:rgba(0,0,0,.7);color:#fff;font-size:.75rem}
-    .code-box{margin-top:8px}
-    .code-area{width:100%;min-height:200px;font-family:Menlo,Consolas,monospace;font-size:.85rem;border-radius:8px;border:1px solid #ccc;padding:10px;box-sizing:border-box;background:#111;color:#f5f5f5;resize:vertical}
-    .code-actions{margin-top:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.8rem}
-    .pill{padding:2px 8px;border-radius:999px;background:#e9e9e9;color:#555}
-    @media(max-width:600px){h1{font-size:1.3rem}}
-  </style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:#f5f5f5;
+      margin:0;
+    }
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+    h1 {
+      font-size: 1.7rem;
+      margin-bottom: 6px;
+    }
+    .muted {
+      color:#666;
+      font-size:0.9rem;
+      margin-bottom:18px;
+    }
+    label {
+      display:block;
+      font-weight:600;
+      margin:10px 0 4px;
+      font-size:0.9rem;
+    }
+    input[type="text"] {
+      width:100%;
+      padding:8px 10px;
+      border-radius:8px;
+      border:1px solid #ccc;
+      font-size:0.9rem;
+      font-family:inherit;
+    }
+    .btn {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:8px 16px;
+      border-radius:999px;
+      border:1px solid #111;
+      background:#111;
+      color:#fff;
+      font-size:0.9rem;
+      margin-top:12px;
+      cursor:pointer;
+      text-decoration:none;
+      gap:6px;
+    }
+    .btn.sub {
+      background:#fff;
+      color:#111;
+      border-color:#ccc;
+      margin-left:8px;
+    }
+    .btn:disabled {
+      opacity:0.5;
+      cursor:default;
+    }
 
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9382191250873184"
-     crossorigin="anonymous"></script>
-  
+    .url-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+      gap:12px 18px;
+      margin-top:10px;
+    }
+    .url-card {
+      background:#fff;
+      border-radius:12px;
+      padding:10px 12px 12px;
+      box-shadow:0 2px 5px rgba(0,0,0,0.04);
+      border:1px solid #e4e4e4;
+    }
+    .url-title {
+      font-size:0.9rem;
+      font-weight:600;
+      margin-bottom:6px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+    .url-tag {
+      font-size:0.75rem;
+      padding:2px 8px;
+      border-radius:999px;
+      background:#111;
+      color:#fff;
+    }
+
+    .section-title {
+      margin-top:24px;
+      font-size:1rem;
+      font-weight:600;
+    }
+    .slot-grid {
+      margin-top:14px;
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+      gap:16px;
+    }
+
+    .slot {
+      background:#fff;
+      border-radius:14px;
+      padding:10px 10px 14px;
+      border:1px solid #e4e4e4;
+      box-shadow:0 2px 5px rgba(0,0,0,0.04);
+      min-height:210px;
+      display:flex;
+      flex-direction:column;
+    }
+    .slot-header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      font-size:0.9rem;
+      margin-bottom:8px;
+    }
+    .slot-name {
+      font-weight:600;
+    }
+    .slot-status {
+      font-size:0.75rem;
+      padding:2px 8px;
+      border-radius:999px;
+      background:#f2f2f2;
+      color:#555;
+    }
+
+    .thumb-grid {
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:8px;
+      flex:1;
+    }
+    .thumb {
+      position:relative;
+      border-radius:10px;
+      overflow:hidden;
+      border:2px solid transparent;
+      background:#eee;
+      cursor:pointer;
+      aspect-ratio:4/3;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:0.8rem;
+      color:#999;
+    }
+    .thumb img {
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .thumb.selected {
+      border-color:#111;
+      box-shadow:0 0 0 2px #111;
+    }
+    .thumb-tag {
+      position:absolute;
+      bottom:6px;
+      left:6px;
+      padding:2px 8px;
+      border-radius:999px;
+      background:rgba(0,0,0,0.7);
+      color:#fff;
+      font-size:0.7rem;
+    }
+
+    .code-box {
+      margin-top:10px;
+    }
+    .code-area {
+      width:100%;
+      min-height:140px;
+      font-family:Menlo,Consolas,monospace;
+      font-size:0.85rem;
+      border-radius:10px;
+      border:1px solid #ccc;
+      padding:10px;
+      box-sizing:border-box;
+      background:#111;
+      color:#f5f5f5;
+      resize:vertical;
+    }
+    .code-footer {
+      margin-top:6px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:0.8rem;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .pill {
+      padding:2px 8px;
+      border-radius:999px;
+      background:#e9e9e9;
+      color:#555;
+    }
+    @media (max-width:600px) {
+      h1 { font-size:1.4rem; }
+    }
+  </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>eBay 상세페이지 이미지 코드 생성기</h1>
+    <h1>eBay 추천 블록 (4개) 이미지 코드 생성기</h1>
     <div class="muted">
-      이베이 상품 URL을 입력하면, 해당 아이템의 설명페이지(<code>itm.ebaydesc.com</code>)에서 이미지를 모아 보여주고,<br>
-      선택한 이미지로 <code>.recommendation-item</code> 소스를 만들어 줍니다.
+      eBay 상품 URL 4개를 입력하면, 각 상품의 상세페이지에서 이미지를 모아 보여주고<br>
+      선택된 4개 이미지로 <code>.product-recommendation</code> 블록 HTML을 만들어 줍니다.
     </div>
 
-    <label for="item-url">이베이 상품 URL</label>
-    <input type="text" id="item-url" placeholder="https://www.ebay.com/itm/297834599466" />
+    <!-- URL 입력 4개 -->
+    <div class="url-grid">
+      <div class="url-card">
+        <div class="url-title">
+          <span>추천 1번 상품 URL</span>
+          <span class="url-tag">slot 1</span>
+        </div>
+        <input type="text" id="url1" placeholder="https://www.ebay.com/itm/..." />
+      </div>
+      <div class="url-card">
+        <div class="url-title">
+          <span>추천 2번 상품 URL</span>
+          <span class="url-tag">slot 2</span>
+        </div>
+        <input type="text" id="url2" placeholder="https://www.ebay.com/itm/..." />
+      </div>
+      <div class="url-card">
+        <div class="url-title">
+          <span>추천 3번 상품 URL</span>
+          <span class="url-tag">slot 3</span>
+        </div>
+        <input type="text" id="url3" placeholder="https://www.ebay.com/itm/..." />
+      </div>
+      <div class="url-card">
+        <div class="url-title">
+          <span>추천 4번 상품 URL</span>
+          <span class="url-tag">slot 4</span>
+        </div>
+        <input type="text" id="url4" placeholder="https://www.ebay.com/itm/..." />
+      </div>
+    </div>
 
-    <button class="btn" id="btn-fetch">이미지 가져오기</button>
+    <button class="btn" id="btn-fetch">4개 상품 이미지 가져오기</button>
 
-    <div class="section-title">1. 대표 이미지 선택</div>
-    <div id="thumb-grid" class="thumb-grid"></div>
+    <!-- 슬롯별 이미지 선택 -->
+    <div class="section-title">1. 각 추천 슬롯의 대표 이미지 선택</div>
+    <div class="slot-grid">
+      <div class="slot" data-slot="slot1">
+        <div class="slot-header">
+          <span class="slot-name">추천 1번</span>
+          <span class="slot-status" id="status-slot1">URL 입력 후 "이미지 가져오기"</span>
+        </div>
+        <div class="thumb-grid" id="grid-slot1">
+          <!-- 이미지 썸네일들 -->
+        </div>
+      </div>
+      <div class="slot" data-slot="slot2">
+        <div class="slot-header">
+          <span class="slot-name">추천 2번</span>
+          <span class="slot-status" id="status-slot2">URL 입력 후 "이미지 가져오기"</span>
+        </div>
+        <div class="thumb-grid" id="grid-slot2"></div>
+      </div>
+      <div class="slot" data-slot="slot3">
+        <div class="slot-header">
+          <span class="slot-name">추천 3번</span>
+          <span class="slot-status" id="status-slot3">URL 입력 후 "이미지 가져오기"</span>
+        </div>
+        <div class="thumb-grid" id="grid-slot3"></div>
+      </div>
+      <div class="slot" data-slot="slot4">
+        <div class="slot-header">
+          <span class="slot-name">추천 4번</span>
+          <span class="slot-status" id="status-slot4">URL 입력 후 "이미지 가져오기"</span>
+        </div>
+        <div class="thumb-grid" id="grid-slot4"></div>
+      </div>
+    </div>
 
-    <div class="section-title">2. 생성된 코드</div>
+    <!-- 최종 코드 -->
+    <div class="section-title">2. 생성된 최종 코드</div>
     <div class="code-box">
-      <textarea id="code-area" class="code-area" readonly></textarea>
-      <div class="code-actions">
-        <span id="code-status" class="pill">상품 URL을 입력하고 "이미지 가져오기"를 눌러주세요.</span>
+      <textarea id="final-code" class="code-area" readonly></textarea>
+      <div class="code-footer">
+        <span id="final-status" class="pill">4개의 대표 이미지를 모두 선택하면 코드가 생성됩니다.</span>
         <button class="btn sub" id="btn-copy" disabled>코드 복사</button>
       </div>
     </div>
   </div>
 
   <script>
-    const itemUrlInput = document.getElementById('item-url');
-    const btnFetch     = document.getElementById('btn-fetch');
-    const thumbGrid    = document.getElementById('thumb-grid');
-    const codeArea     = document.getElementById('code-area');
-    const codeStatus   = document.getElementById('code-status');
-    const btnCopy      = document.getElementById('btn-copy');
+    // ★ 여기 URL을 네 서버 주소에 맞게 조정해도 됨
+    const API_URL = "https://localflow.ddns.net/ebayimages/api/ebay-desc-images";
 
-    let selectedImg = null;
-    let currentItemUrl = null;
+    const urlInputs = {
+      slot1: document.getElementById("url1"),
+      slot2: document.getElementById("url2"),
+      slot3: document.getElementById("url3"),
+      slot4: document.getElementById("url4"),
+    };
 
-    btnFetch.addEventListener('click', async () => {
-      const url = (itemUrlInput.value || '').trim();
+    const grids = {
+      slot1: document.getElementById("grid-slot1"),
+      slot2: document.getElementById("grid-slot2"),
+      slot3: document.getElementById("grid-slot3"),
+      slot4: document.getElementById("grid-slot4"),
+    };
+
+    const statusEls = {
+      slot1: document.getElementById("status-slot1"),
+      slot2: document.getElementById("status-slot2"),
+      slot3: document.getElementById("status-slot3"),
+      slot4: document.getElementById("status-slot4"),
+    };
+
+    const btnFetch   = document.getElementById("btn-fetch");
+    const finalCode  = document.getElementById("final-code");
+    const finalStatus= document.getElementById("final-status");
+    const btnCopy    = document.getElementById("btn-copy");
+
+    const selectedImages = {
+      slot1: null,
+      slot2: null,
+      slot3: null,
+      slot4: null,
+    };
+
+    async function fetchImagesForSlot(slotKey) {
+      const url = (urlInputs[slotKey].value || "").trim();
+      const grid = grids[slotKey];
+      const st   = statusEls[slotKey];
+
+      grid.innerHTML = "";
+      selectedImages[slotKey] = null;
+
       if (!url) {
-        codeStatus.textContent = '상품 URL을 입력해 주세요.';
+        st.textContent = "URL이 비어 있습니다.";
         return;
       }
 
-      thumbGrid.innerHTML = '';
-      codeArea.value = '';
-      btnCopy.disabled = true;
-      selectedImg = null;
-      currentItemUrl = url;
-      codeStatus.textContent = '불러오는 중...';
+      st.textContent = "불러오는 중...";
 
       try {
-        const res = await fetch('https://localflow.ddns.net/ebayimages/api/ebay-desc-images', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url })
         });
 
         const j = await res.json();
         if (!res.ok) {
-          codeStatus.textContent = '에러: ' + (j.message || j.error || '알 수 없는 오류');
+          st.textContent = "에러: " + (j.message || j.error || res.status);
           return;
         }
 
-        const imgs = j.images || [];
-        if (!imgs.length) {
-          codeStatus.textContent = '이미지를 찾지 못했습니다.';
+        const imgs = j.images || j; // (서버 구현에 따라 j.images 또는 j)
+        if (!imgs || !imgs.length) {
+          st.textContent = "이미지를 찾지 못했습니다.";
           return;
         }
 
-        thumbGrid.innerHTML = '';
         imgs.forEach((img, idx) => {
-          const div = document.createElement('div');
-          div.className = 'thumb';
+          const src = img.src || img; // 형태에 따라 처리
+          const div = document.createElement("div");
+          div.className = "thumb";
 
-          const tag = document.createElement('div');
-          tag.className = 'thumb-tag';
-          tag.textContent = '이미지 ' + (idx + 1);
+          const tag = document.createElement("div");
+          tag.className = "thumb-tag";
+          tag.textContent = "이미지 " + (idx + 1);
 
-          const el = document.createElement('img');
-          el.src = img.src;
-          el.alt = img.alt || '';
+          const el = document.createElement("img");
+          el.src = src;
 
           div.appendChild(el);
           div.appendChild(tag);
 
-          div.addEventListener('click', () => {
-            document.querySelectorAll('.thumb').forEach(t => t.classList.remove('selected'));
-            div.classList.add('selected');
-            selectedImg = img.src;
-            updateCode();
+          div.addEventListener("click", () => {
+            // 같은 슬롯 내의 선택 표시 리셋
+            grid.querySelectorAll(".thumb").forEach(t => t.classList.remove("selected"));
+            div.classList.add("selected");
+            selectedImages[slotKey] = src;
+            st.textContent = "선택됨: 이미지 " + (idx + 1);
+            updateFinalCode();
           });
 
-          thumbGrid.appendChild(div);
+          grid.appendChild(div);
         });
 
-        codeStatus.textContent = '대표 이미지를 클릭해서 선택해 주세요.';
+        st.textContent = "대표 이미지를 선택하세요.";
       } catch (e) {
         console.error(e);
-        codeStatus.textContent = '요청 실패. 서버 또는 네트워크를 확인해 주세요.';
+        st.textContent = "요청 실패. 서버 또는 네트워크를 확인해 주세요.";
       }
+    }
+
+    btnFetch.addEventListener("click", async () => {
+      finalStatus.textContent = "이미지 로딩 중...";
+      btnFetch.disabled = true;
+      btnCopy.disabled = true;
+      finalCode.value = "";
+
+      // 4개 슬롯 모두 병렬 요청
+      await Promise.all([
+        fetchImagesForSlot("slot1"),
+        fetchImagesForSlot("slot2"),
+        fetchImagesForSlot("slot3"),
+        fetchImagesForSlot("slot4"),
+      ]);
+
+      finalStatus.textContent = "각 슬롯에서 대표 이미지를 하나씩 선택해 주세요.";
+      btnFetch.disabled = false;
     });
 
-    function updateCode() {
-      if (!selectedImg) {
-        codeArea.value = '';
+    function updateFinalCode() {
+      const slots = [
+        selectedImages.slot1,
+        selectedImages.slot2,
+        selectedImages.slot3,
+        selectedImages.slot4,
+      ];
+
+      if (slots.some(v => !v)) {
+        finalCode.value = "4개의 슬롯 모두에서 대표 이미지를 선택해야 코드가 생성됩니다.";
         btnCopy.disabled = true;
+        finalStatus.textContent = "아직 선택되지 않은 슬롯이 있습니다.";
         return;
       }
 
-      const hrefAttr = currentItemUrl ? ` href="${currentItemUrl}"` : '';
+      const html =
+`<div class="product-recommendation">
+  <h3>
+   🍊 You might also like
+  </h3>
+  <div class="recommendation-list">
+   <div class="recommendation-item">
+    <a >
+     <img alt="" src="${slots[0]}">
+     </img>
+    </a>
+   </div>
+   <div class="recommendation-item">
+    <a >
+     <img alt="" src="${slots[1]}">
+     </img>
+    </a>
+   </div>
+   <div class="recommendation-item">
+    <a >
+     <img alt="" src="${slots[2]}">
+     </img>
+    </a>
+   </div>
+   <div class="recommendation-item">
+    <a >
+     <img alt="" src="${slots[3]}">
+     </img>
+    </a>
+   </div>
+  </div>
+ </div>`;
 
-      const snippet =
-`<div class="recommendation-item">
-  <a${hrefAttr}>
-    <img alt="" src="${selectedImg}">
-  </a>
-</div>`;
-
-      codeArea.value = snippet;
+      finalCode.value = html;
       btnCopy.disabled = false;
-      codeStatus.textContent = '코드가 생성되었습니다. "코드 복사"를 눌러 사용하세요.';
+      finalStatus.textContent = "코드가 생성되었습니다. '코드 복사' 버튼을 눌러 이베이에 붙여 넣으면 됩니다.";
     }
 
-    btnCopy.addEventListener('click', async () => {
+    btnCopy.addEventListener("click", async () => {
       try {
-        await navigator.clipboard.writeText(codeArea.value);
-        codeStatus.textContent = '복사 완료!';
+        await navigator.clipboard.writeText(finalCode.value);
+        finalStatus.textContent = "복사 완료!";
       } catch {
-        codeStatus.textContent = '복사 실패. 직접 드래그해서 복사해 주세요.';
+        finalStatus.textContent = "복사 실패. 직접 드래그해서 복사해 주세요.";
       }
     });
   </script>
