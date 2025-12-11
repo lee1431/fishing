@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>eBay 상세페이지 이미지 선택기</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f5f5;margin:0}
+    .wrap{max-width:960px;margin:0 auto;padding:24px 16px 40px}
+    h1{font-size:1.6rem;margin-bottom:12px}
+    .muted{color:#666;font-size:.9rem;margin-bottom:20px}
+    label{display:block;font-weight:600;margin:12px 0 4px;font-size:.9rem}
+    input[type=text]{width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1px solid #ccc;font-size:.9rem;font-family:inherit}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:999px;border:1px solid #111;background:#111;color:#fff;font-size:.9rem;margin-top:10px;cursor:pointer;text-decoration:none}
+    .btn.sub{background:#fff;color:#111;border-color:#ccc;margin-left:8px}
+    .btn:disabled{opacity:.5;cursor:default}
+    .section-title{margin-top:24px;font-size:1rem;font-weight:600}
+    .thumb-grid{margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px}
+    .thumb{position:relative;border-radius:10px;overflow:hidden;border:2px solid transparent;background:#eee;cursor:pointer;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .thumb.selected{border-color:#111;box-shadow:0 0 0 2px #111}
+    .thumb-tag{position:absolute;bottom:6px;left:6px;padding:2px 8px;border-radius:999px;background:rgba(0,0,0,.7);color:#fff;font-size:.75rem}
+    .code-box{margin-top:8px}
+    .code-area{width:100%;min-height:90px;font-family:Menlo,Consolas,monospace;font-size:.85rem;border-radius:8px;border:1px solid #ccc;padding:10px;box-sizing:border-box;background:#111;color:#f5f5f5;resize:vertical}
+    .code-actions{margin-top:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.8rem}
+    .pill{padding:2px 8px;border-radius:999px;background:#e9e9e9;color:#555}
+    @media(max-width:600px){h1{font-size:1.3rem}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>eBay 상세페이지 이미지 코드 생성기</h1>
+    <div class="muted">
+      이베이 상품 URL을 입력하면, 해당 아이템의 설명페이지(<code>itm.ebaydesc.com</code>)에서 이미지를 모아 보여주고,<br>
+      선택한 이미지로 <code>.recommendation-item</code> 소스를 만들어 줍니다.
+    </div>
+
+    <label for="item-url">이베이 상품 URL</label>
+    <input type="text" id="item-url" placeholder="https://www.ebay.com/itm/297834599466" />
+
+    <button class="btn" id="btn-fetch">이미지 가져오기</button>
+
+    <div class="section-title">1. 대표 이미지 선택</div>
+    <div id="thumb-grid" class="thumb-grid"></div>
+
+    <div class="section-title">2. 생성된 코드</div>
+    <div class="code-box">
+      <textarea id="code-area" class="code-area" readonly></textarea>
+      <div class="code-actions">
+        <span id="code-status" class="pill">상품 URL을 입력하고 "이미지 가져오기"를 눌러주세요.</span>
+        <button class="btn sub" id="btn-copy" disabled>코드 복사</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const itemUrlInput = document.getElementById('item-url');
+    const btnFetch     = document.getElementById('btn-fetch');
+    const thumbGrid    = document.getElementById('thumb-grid');
+    const codeArea     = document.getElementById('code-area');
+    const codeStatus   = document.getElementById('code-status');
+    const btnCopy      = document.getElementById('btn-copy');
+
+    let selectedImg = null;
+    let currentItemUrl = null;
+
+    btnFetch.addEventListener('click', async () => {
+      const url = (itemUrlInput.value || '').trim();
+      if (!url) {
+        codeStatus.textContent = '상품 URL을 입력해 주세요.';
+        return;
+      }
+
+      thumbGrid.innerHTML = '';
+      codeArea.value = '';
+      btnCopy.disabled = true;
+      selectedImg = null;
+      currentItemUrl = url;
+      codeStatus.textContent = '불러오는 중...';
+
+      try {
+        const res = await fetch('http://localflow.ddns.net/ebayimages/api/ebay-desc-images', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ url })
+        });
+
+        const j = await res.json();
+        if (!res.ok) {
+          codeStatus.textContent = '에러: ' + (j.message || j.error || '알 수 없는 오류');
+          return;
+        }
+
+        const imgs = j.images || [];
+        if (!imgs.length) {
+          codeStatus.textContent = '이미지를 찾지 못했습니다.';
+          return;
+        }
+
+        thumbGrid.innerHTML = '';
+        imgs.forEach((img, idx) => {
+          const div = document.createElement('div');
+          div.className = 'thumb';
+
+          const tag = document.createElement('div');
+          tag.className = 'thumb-tag';
+          tag.textContent = '이미지 ' + (idx + 1);
+
+          const el = document.createElement('img');
+          el.src = img.src;
+          el.alt = img.alt || '';
+
+          div.appendChild(el);
+          div.appendChild(tag);
+
+          div.addEventListener('click', () => {
+            document.querySelectorAll('.thumb').forEach(t => t.classList.remove('selected'));
+            div.classList.add('selected');
+            selectedImg = img.src;
+            updateCode();
+          });
+
+          thumbGrid.appendChild(div);
+        });
+
+        codeStatus.textContent = '대표 이미지를 클릭해서 선택해 주세요.';
+      } catch (e) {
+        console.error(e);
+        codeStatus.textContent = '요청 실패. 서버 또는 네트워크를 확인해 주세요.';
+      }
+    });
+
+    function updateCode() {
+      if (!selectedImg) {
+        codeArea.value = '';
+        btnCopy.disabled = true;
+        return;
+      }
+
+      const hrefAttr = currentItemUrl ? ` href="${currentItemUrl}"` : '';
+
+      const snippet =
+`<div class="recommendation-item">
+  <a${hrefAttr}>
+    <img alt="" src="${selectedImg}">
+  </a>
+</div>`;
+
+      codeArea.value = snippet;
+      btnCopy.disabled = false;
+      codeStatus.textContent = '코드가 생성되었습니다. "코드 복사"를 눌러 사용하세요.';
+    }
+
+    btnCopy.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(codeArea.value);
+        codeStatus.textContent = '복사 완료!';
+      } catch {
+        codeStatus.textContent = '복사 실패. 직접 드래그해서 복사해 주세요.';
+      }
+    });
+  </script>
+</body>
+</html>
