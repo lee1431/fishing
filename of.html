@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>STANCE — One-line Feed</title>
+  <style>
+    :root{
+      --bg0:#06070a;
+      --glass: rgba(255,255,255,.06);
+      --glass2: rgba(255,255,255,.10);
+      --line: rgba(255,255,255,.14);
+      --ink: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.62);
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --radius: 18px;
+      --pad: 14px;
+      --accent: 160 90% 60%; /* HSL: 민트계열 글로우 */
+      --accent2: 280 85% 62%; /* 보라 글로우 */
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,"Noto Sans KR",sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 800px at 20% 10%, hsla(var(--accent), .14), transparent 60%),
+        radial-gradient(1000px 700px at 85% 20%, hsla(var(--accent2), .16), transparent 60%),
+        radial-gradient(900px 600px at 40% 90%, rgba(255,255,255,.06), transparent 60%),
+        linear-gradient(180deg, #05060a, #070a12 45%, #05060a);
+      overflow-x:hidden;
+    }
+
+    /* subtle noise */
+    body:before{
+      content:"";
+      position:fixed; inset:0;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
+      mix-blend-mode: overlay;
+      opacity:.22;
+      pointer-events:none;
+    }
+
+    .wrap{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 22px 14px 70px;
+      position:relative;
+    }
+
+    header{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+      margin: 10px 0 16px;
+    }
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .brand h1{
+      margin:0;
+      font-size: 18px;
+      letter-spacing: .2px;
+      font-weight: 750;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .brand .sub{
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: .2px;
+    }
+
+    .panel{
+      border: 1px solid rgba(255,255,255,.12);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+
+    .toolbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.78);
+      font-size: 12px;
+      user-select:none;
+    }
+    .dot{
+      width:8px; height:8px; border-radius:50%;
+      background: hsla(var(--accent), .95);
+      box-shadow: 0 0 12px hsla(var(--accent), .55);
+    }
+    .actions{
+      display:flex; gap:8px; align-items:center;
+    }
+    .btn{
+      cursor:pointer;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.86);
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      transition: transform .12s ease, background .2s ease, border-color .2s ease;
+      user-select:none;
+    }
+    .btn:hover{ background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.18); }
+    .btn:active{ transform: translateY(1px); }
+
+    /* Feed list */
+    .feed{
+      padding: 10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .item{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 12px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.055);
+      position:relative;
+      transition: transform .14s ease, background .2s ease, border-color .2s ease;
+    }
+    .item:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.08);
+      border-color: rgba(255,255,255,.18);
+    }
+
+    .badge{
+      width: 34px; height: 34px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background:
+        radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.20), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      display:grid;
+      place-items:center;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.06) inset;
+      flex: 0 0 auto;
+    }
+    .badge span{
+      font-size: 14px;
+      filter: drop-shadow(0 0 10px rgba(255,255,255,.15));
+      opacity:.95;
+    }
+
+    .text{
+      min-width:0;
+      flex: 1 1 auto;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .line{
+      font-size: 14px;
+      letter-spacing: .1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .meta{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .meta .sep{opacity:.35}
+
+    .hint{
+      margin-top: 14px;
+      color: rgba(255,255,255,.62);
+      font-size: 12px;
+      text-align:center;
+    }
+
+    /* glowing border accent line */
+    .panel:after{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      border-radius: var(--radius);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.08) inset,
+        0 -1px 30px hsla(var(--accent2), .08),
+        0 1px 30px hsla(var(--accent), .06);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <h1>🧠 STANCE — One-line Feed</h1>
+        <div class="sub">투명 패널 감성 · 한 줄 기록만 쭉 쌓기</div>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="toolbar">
+        <div class="chip"><span class="dot"></span> LIVE PANEL</div>
+        <div class="actions">
+          <div class="btn" onclick="alert('HTML에서 직접 복붙해서 쓰는 모드 ㅋㅋ')">+ Add</div>
+          <div class="btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">Top</div>
+        </div>
+      </div>
+
+      <div class="feed">
+        <!-- ✅ 여기부터 “한 줄 피드” 복붙해서 계속 늘리면 됨 -->
+        <div class="item">
+          <div class="badge"><span>⚡</span></div>
+          <div class="text">
+            <div class="line">오늘은 신용카드 안쓰는 캠페인 시작.</div>
+            <div class="meta">2025-12-17 <span class="sep">·</span> 생활실험 <span class="sep">·</span> 돈 안쓰기</div>
+          </div>
+        </div>
+
+        <div class="item">
+          <div class="badge"><span>🧪</span></div>
+          <div class="text">
+            <div class="line">투명 디스플레이 패널 UI로 피드 페이지 프로토타입.</div>
+            <div class="meta">2025-12-17 <span class="sep">·</span> STANCE <span class="sep">·</span> UI</div>
+          </div>
+        </div>
+
+        <div class="item">
+          <div class="badge"><span>🎣</span></div>
+          <div class="text">
+            <div class="line">낚시는 인생의 등대다. 오늘도 자연인 모드.</div>
+            <div class="meta">2025-12-14 <span class="sep">·</span> 감성로그 <span class="sep">·</span> 바깥</div>
+          </div>
+        </div>
+        <!-- ✅ 여기까지 -->
+      </div>
+    </section>
+
+    <div class="hint">Tip: 한 줄은 <b>.line</b> 텍스트만 바꾸면 끝. 태그/날짜는 <b>.meta</b>에서 수정.</div>
+  </div>
+</body>
+</html>
