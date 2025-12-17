@@ -1,283 +1,397 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>STANCE — One-line Feed</title>
-  <style>
-    :root{
-      --bg0:#06070a;
-      --glass: rgba(255,255,255,.06);
-      --glass2: rgba(255,255,255,.10);
-      --line: rgba(255,255,255,.14);
-      --ink: #f5f7fa;
-      --ink-strong: #ffffff;
-      --muted: #c9d1d9;
-      --muted: rgba(255,255,255,.62);
-      --shadow: 0 18px 60px rgba(0,0,0,.55);
-      --radius: 18px;
-      --pad: 14px;
-      --accent: 160 90% 60%; /* HSL: 민트계열 글로우 */
-      --accent2: 280 85% 62%; /* 보라 글로우 */
-    }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>STANCE — One-line Feed</title>
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family: system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,"Noto Sans KR",sans-serif;
-      color: var(--ink);
-      background:
-        radial-gradient(1200px 800px at 20% 10%, hsla(var(--accent), .14), transparent 60%),
-        radial-gradient(1000px 700px at 85% 20%, hsla(var(--accent2), .16), transparent 60%),
-        radial-gradient(900px 600px at 40% 90%, rgba(255,255,255,.06), transparent 60%),
-        linear-gradient(180deg, #05060a, #070a12 45%, #05060a);
-      overflow-x:hidden;
-    }
+<style>
+  :root{
+    /* ===== theme ===== */
+    --bg0:#070A10;
+    --bg1:#0B1020;
+    --ink:#EAF0FF;        /* 메인 글자 (밝게) */
+    --ink2:#C9D3EE;       /* 보조 글자 */
+    --muted:#9AA7C7;
+    --line:rgba(255,255,255,.12);
 
-    /* subtle noise */
-    body:before{
-      content:"";
-      position:fixed; inset:0;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
-      mix-blend-mode: overlay;
-      opacity:.22;
-      pointer-events:none;
-    }
+    --glass:rgba(15,18,30,.46);    /* 패널 바탕 */
+    --glass2:rgba(255,255,255,.06);
+    --shadow: 0 28px 90px rgba(0,0,0,.55);
+    --shadow2: 0 10px 30px rgba(0,0,0,.35);
 
-    .wrap{
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 22px 14px 70px;
-      position:relative;
-    }
+    --accent:#B57CFF;     /* 플래닛충주 보라 느낌 */
+    --accent2:#61D0FF;
+    --ok:#7CFFA7;
+    --warn:#FFC56B;
+    --danger:#FF6B8F;
 
-    header{
-      display:flex;
-      align-items:flex-end;
-      justify-content:space-between;
-      gap:12px;
-      margin: 10px 0 16px;
-    }
-    .brand{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
-    .brand h1{
-      margin:0;
-      font-size: 18px;
-      letter-spacing: .2px;
-      font-weight: 750;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      color: var(--ink-strong);
-      text-shadow:
-        0 0 8px rgba(255,255,255,.18),
-        0 1px 2px rgba(0,0,0,.5);
-    }
-    .brand .sub{
-      font-size: 12px;
-      color: #d1d5db;
-      letter-spacing: .2px;
-    }
+    --radius:18px;
+  }
 
-    .panel{
-      background: rgba(255,255,255,.72);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border: 1px solid rgba(0,0,0,.08);
-      box-shadow:
-        0 20px 60px rgba(0,0,0,.18),
-        inset 0 1px 0 rgba(255,255,255,.6);
-    }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    color:var(--ink);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    background:
+      radial-gradient(1200px 700px at 20% 10%, rgba(181,124,255,.22), transparent 60%),
+      radial-gradient(900px 600px at 80% 20%, rgba(97,208,255,.18), transparent 55%),
+      radial-gradient(900px 600px at 60% 90%, rgba(124,255,167,.10), transparent 60%),
+      linear-gradient(180deg, var(--bg0), var(--bg1));
+    overflow-x:hidden;
+  }
 
-    .toolbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      padding: 12px 14px;
-      border-bottom: 1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.18);
-    }
-    .chip{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding: 8px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
-      color: rgba(255,255,255,.78);
-      font-size: 12px;
-      user-select:none;
-    }
-    .dot{
-      width:8px; height:8px; border-radius:50%;
-      background: hsla(var(--accent), .95);
-      box-shadow: 0 0 12px hsla(var(--accent), .55);
-    }
-    .actions{
-      display:flex; gap:8px; align-items:center;
-    }
-    .btn{
-      cursor:pointer;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
-      color: rgba(255,255,255,.86);
-      padding: 8px 10px;
-      border-radius: 12px;
-      font-size: 12px;
-      transition: transform .12s ease, background .2s ease, border-color .2s ease;
-      user-select:none;
-    }
-    .btn:hover{ background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.18); }
-    .btn:active{ transform: translateY(1px); }
+  /* ===== subtle “transparent display” noise & scanlines ===== */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,.030) 0px,
+        rgba(255,255,255,.030) 1px,
+        rgba(0,0,0,0) 3px,
+        rgba(0,0,0,0) 6px
+      );
+    mix-blend-mode: overlay;
+    opacity:.25;
+    pointer-events:none;
+  }
+  body::after{
+    content:"";
+    position:fixed; inset:-40px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
+    opacity:.12;
+    pointer-events:none;
+  }
 
-    /* Feed list */
-    .feed{
-      padding: 10px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
+  .wrap{
+    width:min(980px, 92vw);
+    margin:0 auto;
+    padding:40px 0 64px;
+  }
 
-    .item{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding: 12px 12px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.055);
-      position:relative;
-      transition: transform .14s ease, background .2s ease, border-color .2s ease;
-    }
-    .item:hover{
-      transform: translateY(-1px);
-      background: rgba(255,255,255,.08);
-      border-color: rgba(255,255,255,.18);
-    }
+  /* ===== top brand ===== */
+  .brand{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    margin-bottom:18px;
+    user-select:none;
+  }
+  .logo{
+    width:34px; height:34px;
+    border-radius:12px;
+    background:
+      radial-gradient(12px 12px at 30% 30%, rgba(255,255,255,.55), transparent 55%),
+      linear-gradient(135deg, rgba(181,124,255,.9), rgba(97,208,255,.7));
+    box-shadow: 0 12px 28px rgba(181,124,255,.18);
+  }
+  .brand h1{
+    margin:0;
+    font-size:22px;
+    letter-spacing:-.4px;
+    line-height:1.1;
+    text-shadow: 0 2px 18px rgba(0,0,0,.55);
+  }
+  .brand p{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-size:13px;
+  }
 
-    .badge{
-      width: 34px; height: 34px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.14);
-      background:
-        radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.20), transparent 60%),
-        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
-      display:grid;
-      place-items:center;
-      box-shadow: 0 0 0 1px rgba(255,255,255,.06) inset;
-      flex: 0 0 auto;
-    }
-    .badge span{
-      font-size: 14px;
-      filter: drop-shadow(0 0 10px rgba(255,255,255,.15));
-      opacity:.95;
-    }
+  /* ===== glass panel ===== */
+  .panel{
+    position:relative;
+    border-radius: var(--radius);
+    background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03)) , var(--glass);
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow: var(--shadow);
+    overflow:hidden;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
 
-    .text{
-      min-width:0;
-      flex: 1 1 auto;
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-    }
-    .line{
-      font-size: 14px;
-      letter-spacing: .1px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      color: #111827;
-      text-shadow: 0 1px 2px rgba(0,0,0,.45);
-    }
-    .meta{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      font-size: 12px;
-      white-space: nowrap;
-      overflow:hidden;
-      text-overflow: ellipsis;
-      color: var(--muted);
-      text-shadow: 0 1px 1px rgba(0,0,0,.35);
-    }
-    .meta .sep{opacity:.35}
+  .panel::before{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      radial-gradient(900px 200px at 30% 0%, rgba(181,124,255,.20), transparent 60%),
+      radial-gradient(800px 240px at 90% 10%, rgba(97,208,255,.14), transparent 62%),
+      linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+    opacity:.7;
+    pointer-events:none;
+  }
 
-    .hint{
-      margin-top: 14px;
-      color: rgba(255,255,255,.62);
-      font-size: 12px;
-      text-align:center;
-    }
+  /* ===== header bar ===== */
+  .bar{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 16px;
+    border-bottom:1px solid rgba(255,255,255,.10);
+    background: rgba(0,0,0,.10);
+  }
 
-    /* glowing border accent line */
-    .panel:after{
-      content:"";
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      border-radius: var(--radius);
-      box-shadow:
-        0 0 0 1px rgba(255,255,255,.08) inset,
-        0 -1px 30px hsla(var(--accent2), .08),
-        0 1px 30px hsla(var(--accent), .06);
-    }
-  </style>
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 10px;
+    border-radius:999px;
+    font-size:12px;
+    color:var(--ink2);
+    background: rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow: var(--shadow2);
+  }
+  .dot{
+    width:8px; height:8px;
+    border-radius:50%;
+    background: var(--ok);
+    box-shadow: 0 0 0 6px rgba(124,255,167,.12), 0 0 18px rgba(124,255,167,.28);
+  }
+
+  .actions{
+    display:flex;
+    gap:10px;
+  }
+  .btn{
+    appearance:none;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.06);
+    color:var(--ink);
+    padding:8px 12px;
+    border-radius:12px;
+    font-size:13px;
+    cursor:pointer;
+    transition: transform .08s ease, background .2s ease, border-color .2s ease;
+    box-shadow: var(--shadow2);
+  }
+  .btn:hover{ background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.20); }
+  .btn:active{ transform: translateY(1px) scale(.99); }
+  .btn.primary{
+    background: linear-gradient(135deg, rgba(181,124,255,.35), rgba(97,208,255,.22));
+    border-color: rgba(181,124,255,.35);
+  }
+
+  /* ===== list ===== */
+  .list{
+    position:relative;
+    padding:10px 10px 12px;
+  }
+
+  .item{
+    display:grid;
+    grid-template-columns: 42px 1fr auto;
+    gap:12px;
+    padding:12px 12px;
+    border-radius:14px;
+    margin:8px 4px;
+    background: rgba(0,0,0,.18);
+    border:1px solid rgba(255,255,255,.08);
+    transition: background .2s ease, border-color .2s ease, transform .08s ease;
+  }
+  .item:hover{
+    background: rgba(0,0,0,.26);
+    border-color: rgba(255,255,255,.16);
+  }
+  .ico{
+    width:38px; height:38px;
+    border-radius:14px;
+    display:grid; place-items:center;
+    background: rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.10);
+    font-size:18px;
+    filter: drop-shadow(0 10px 18px rgba(0,0,0,.22));
+  }
+
+  .title{
+    margin:0;
+    font-size:15px;
+    line-height:1.35;
+    letter-spacing:-.2px;
+    color: var(--ink);
+    text-shadow: 0 1px 12px rgba(0,0,0,.38);
+  }
+  .meta{
+    margin-top:6px;
+    font-size:12px;
+    color: var(--muted);
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .tag{
+    padding:4px 8px;
+    border-radius:999px;
+    background: rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.10);
+    color: var(--ink2);
+  }
+
+  .time{
+    font-size:12px;
+    color: rgba(234,240,255,.80);
+    padding:6px 10px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.10);
+    background: rgba(255,255,255,.05);
+    height: fit-content;
+    align-self:center;
+  }
+
+  /* ===== footer hint ===== */
+  .hint{
+    padding:12px 16px 16px;
+    color: rgba(234,240,255,.72);
+    font-size:12px;
+    border-top:1px solid rgba(255,255,255,.08);
+    background: rgba(0,0,0,.10);
+  }
+  .hint b{ color: var(--ink); }
+  .kbd{
+    display:inline-block;
+    padding:2px 7px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,.16);
+    background: rgba(255,255,255,.08);
+    color: var(--ink);
+    font-size:11px;
+    margin:0 2px;
+  }
+
+  /* ===== small screen ===== */
+  @media (max-width:560px){
+    .item{ grid-template-columns: 42px 1fr; }
+    .time{ grid-column: 2 / 3; justify-self:start; margin-top:8px; }
+  }
+</style>
 </head>
 
 <body>
   <div class="wrap">
-    <header>
-      <div class="brand">
-        <h1>🧠 STANCE — One-line Feed</h1>
-        <div class="sub">투명 패널 감성 · 한 줄 기록만 쭉 쌓기</div>
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <h1>STANCE — One-line Feed</h1>
+        <p>투명 패널 감성 · 한 줄 기록만 쭉쭉</p>
       </div>
-    </header>
+    </div>
 
-    <section class="panel">
-      <div class="toolbar">
-        <div class="chip"><span class="dot"></span> LIVE PANEL</div>
+    <section class="panel" aria-label="One-line feed panel">
+      <div class="bar">
+        <div class="pill"><span class="dot"></span> LIVE PANEL</div>
+
         <div class="actions">
-          <div class="btn" onclick="alert('HTML에서 직접 복붙해서 쓰는 모드 ㅋㅋ')">+ Add</div>
-          <div class="btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">Top</div>
+          <button class="btn primary" id="btnAdd">+ Add</button>
+          <button class="btn" id="btnTop">Top</button>
         </div>
       </div>
 
-      <div class="feed">
-        <!-- ✅ 여기부터 “한 줄 피드” 복붙해서 계속 늘리면 됨 -->
-        <div class="item">
-          <div class="badge"><span>⚡</span></div>
-          <div class="text">
-            <div class="line">오늘은 신용카드 안쓰는 캠페인 시작.</div>
-            <div class="meta">2025-12-17 <span class="sep">·</span> 생활실험 <span class="sep">·</span> 돈 안쓰기</div>
+      <div class="list" id="feed">
+        <!-- 너가 여기 HTML만 수정해서 계속 쓰면 됨 -->
+        <article class="item">
+          <div class="ico">⚡</div>
+          <div>
+            <p class="title">오늘은 신용카드 안 쓰는 캠페인 시작. “돈을 안 써보자, 얼마까지 아끼나”</p>
+            <div class="meta">
+              <span>2025-12-17</span>
+              <span class="tag">습관</span>
+              <span class="tag">재정</span>
+            </div>
           </div>
-        </div>
+          <div class="time">21:08</div>
+        </article>
 
-        <div class="item">
-          <div class="badge"><span>🧪</span></div>
-          <div class="text">
-            <div class="line">투명 디스플레이 패널 UI로 피드 페이지 프로토타입.</div>
-            <div class="meta">2025-12-17 <span class="sep">·</span> STANCE <span class="sep">·</span> UI</div>
+        <article class="item">
+          <div class="ico">🧊</div>
+          <div>
+            <p class="title">투명 디스플레이 패널 느낌의 한줄 피드 페이지 프로토타입 완성(가독성 강화).</p>
+            <div class="meta">
+              <span>2025-12-17</span>
+              <span class="tag">STANCE</span>
+              <span class="tag">UI</span>
+            </div>
           </div>
-        </div>
+          <div class="time">20:41</div>
+        </article>
 
-        <div class="item">
-          <div class="badge"><span>🎣</span></div>
-          <div class="text">
-            <div class="line">낚시는 인생의 등대다. 오늘도 자연인 모드.</div>
-            <div class="meta">2025-12-14 <span class="sep">·</span> 감성로그 <span class="sep">·</span> 바깥</div>
+        <article class="item">
+          <div class="ico">🎣</div>
+          <div>
+            <p class="title">낚시는 인생의 등대. 오늘은 자연인 모드 유지.</p>
+            <div class="meta">
+              <span>2025-12-14</span>
+              <span class="tag">감성로그</span>
+              <span class="tag">바깥</span>
+            </div>
           </div>
-        </div>
-        <!-- ✅ 여기까지 -->
+          <div class="time">07:12</div>
+        </article>
+      </div>
+
+      <div class="hint">
+        팁: <b>HTML만 복붙</b>해서 아이템 계속 추가하면 끝.  
+        단축키: <span class="kbd">A</span> 새 항목(맨 위), <span class="kbd">T</span> 맨 위로
       </div>
     </section>
-
-    <div class="hint">Tip: 한 줄은 <b>.line</b> 텍스트만 바꾸면 끝. 태그/날짜는 <b>.meta</b>에서 수정.</div>
   </div>
+
+<script>
+  const feed = document.getElementById("feed");
+  const btnAdd = document.getElementById("btnAdd");
+  const btnTop = document.getElementById("btnTop");
+
+  function pad(n){ return String(n).padStart(2,"0"); }
+
+  function addItem(){
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = pad(now.getMonth()+1);
+    const dd = pad(now.getDate());
+    const hh = pad(now.getHours());
+    const mi = pad(now.getMinutes());
+
+    const el = document.createElement("article");
+    el.className = "item";
+    el.innerHTML = `
+      <div class="ico">📝</div>
+      <div>
+        <p class="title" contenteditable="true" spellcheck="false">
+          여기에 한 줄 입력하고 Enter 치지 말고 그냥 저장해라 ㅋㅋ
+        </p>
+        <div class="meta">
+          <span>${yyyy}-${mm}-${dd}</span>
+          <span class="tag" contenteditable="true" spellcheck="false">메모</span>
+        </div>
+      </div>
+      <div class="time">${hh}:${mi}</div>
+    `;
+
+    feed.prepend(el);
+    const title = el.querySelector(".title");
+    title.focus();
+    // 커서 끝으로
+    const range = document.createRange();
+    range.selectNodeContents(title);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  btnAdd.addEventListener("click", addItem);
+  btnTop.addEventListener("click", () => window.scrollTo({top:0, behavior:"smooth"}));
+
+  window.addEventListener("keydown", (e) => {
+    if(e.target && (e.target.isContentEditable || ["INPUT","TEXTAREA"].includes(e.target.tagName))) return;
+    if(e.key.toLowerCase() === "a") addItem();
+    if(e.key.toLowerCase() === "t") window.scrollTo({top:0, behavior:"smooth"});
+  });
+</script>
 </body>
 </html>
