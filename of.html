@@ -438,7 +438,6 @@
           <!-- 닉네임 설정 영역 (상단 고정) -->
           <div class="nick-row">
             <input id="name" placeholder="닉네임" />
-            <span class="nick-hint">한 번만 입력</span>
           </div>
         
           <!-- 채팅 로그 -->
@@ -515,51 +514,78 @@
 
 
   const log = document.querySelector("#log");
-  const nameEl = document.querySelector("#name");
-  const msgEl  = document.querySelector("#msg");
-  const sendBtn= document.querySelector("#send");
+const nameEl = document.querySelector("#name");
+const msgEl  = document.querySelector("#msg");
+const sendBtn= document.querySelector("#send");
+const btnSetName = document.querySelector("#btnSetName");
 
-  const sock = io("https://mrdindoin.ddns.net", {
-    path: "/jagannath/socket.io",
-    transports: ["websocket"],
-    withCredentials: true
+const sock = io("https://mrdindoin.ddns.net", {
+  path: "/jagannath/socket.io",
+  transports: ["websocket"],
+  withCredentials: true,
+  reconnection: true
+});
+
+let joined = false; // 이 탭에서 join 1번만
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function add(html){
+  const div = document.createElement("div");
+  div.className = "msg";
+  div.innerHTML = html;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function doJoin(){
+  const name = (nameEl.value || "").trim().slice(0,30);
+  if(!name){
+    add(`<div class="sys">• 닉네임을 먼저 입력해줘</div>`);
+    nameEl.focus();
+    return;
+  }
+  if(joined) return;             // ✅ 중복 join 방지
+  joined = true;
+
+  sock.emit("join", { name }, (ack) => {
+    // 서버가 ack 줄 때만 처리(선택)
   });
 
-  function add(html){
-    const div = document.createElement("div");
-    div.className = "msg";
-    div.innerHTML = html;
-    log.appendChild(div);
-    log.scrollTop = log.scrollHeight;
+  add(`<div class="sys">• 닉네임 설정: ${escapeHtml(name)}</div>`);
+}
+
+btnSetName.addEventListener("click", doJoin);
+nameEl.addEventListener("keydown", (e)=>{ if(e.key==="Enter") doJoin(); });
+
+sock.on("connect", () => {
+  // ✅ connect 때 join 안 보냄 (여기가 핵심)
+  add(`<div class="sys">• connected</div>`);
+});
+
+sock.on("disconnect", () => {
+  add(`<div class="sys">• disconnected</div>`);
+});
+
+sock.on("system", (d) => add(`<div class="sys">• ${escapeHtml(d.msg||"")}</div>`));
+sock.on("chat", (d) => add(`<b>${escapeHtml(d.name||"anon")}</b> : ${escapeHtml(d.msg||"")}`));
+
+function send(){
+  if(!joined){
+    add(`<div class="sys">• 먼저 닉네임 설정을 눌러줘</div>`);
+    return;
   }
+  const msg  = (msgEl.value || "").trim().slice(0,500);
+  if(!msg) return;
+  sock.emit("chat", { msg });   // ✅ name은 서버에 저장된 걸 쓰게 만들거임(아래 서버 수정)
+  msgEl.value = "";
+  msgEl.focus();
+}
 
-  function joinIfNeeded(){
-    const name = (nameEl.value || "anon").trim();
-    sock.emit("join", {name});
-  }
+sendBtn.onclick = send;
+msgEl.addEventListener("keydown", (e)=>{ if(e.key==="Enter") send(); });
 
-  sock.on("connect", () => {
-    joinIfNeeded();
-  });
-
-  sock.on("system", (d) => add(`<div class="sys">• ${escapeHtml(d.msg||"")}</div>`));
-  sock.on("chat", (d) => add(`<b>${escapeHtml(d.name||"anon")}</b> : ${escapeHtml(d.msg||"")}`));
-
-  function send(){
-    const name = (nameEl.value || "anon").trim();
-    const msg  = (msgEl.value || "").trim();
-    if(!msg) return;
-    sock.emit("chat", {name, msg});
-    msgEl.value = "";
-    msgEl.focus();
-  }
-
-  sendBtn.onclick = send;
-  msgEl.addEventListener("keydown", (e)=>{ if(e.key==="Enter") send(); });
-
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  }
 
 
 
