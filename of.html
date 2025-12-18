@@ -386,6 +386,46 @@
   cursor:pointer;
 }
 
+  .chatWrap{ width:min(980px,92vw); margin:18px auto 64px; }
+
+.chatPanel{ width:min(360px,92vw); } /* 우측 패널 폭 */
+.chatBody{ padding:12px; display:flex; flex-direction:column; gap:10px; }
+
+.chatLog{
+  height:52vh;
+  overflow:auto;
+  padding:12px;
+  border-radius:14px;
+  background: rgba(0,0,0,.16);
+  border:1px solid rgba(255,255,255,.08);
+}
+
+.chatNameRow, .chatMsgRow{
+  display:flex;
+  gap:10px;
+}
+
+.chatInput{
+  flex:1;
+  padding:12px 12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.25);
+  color:#fff;
+  outline:none;
+}
+
+.chatHint{
+  margin-top:-4px;
+  font-size:12px;
+  color: rgba(234,240,255,.62);
+  padding-left:2px;
+}
+
+.msg{ margin:8px 0; }
+.sys{ opacity:.72; font-size:.92rem; }
+b{ color:#a7f3d0; }
+
 
   
   
@@ -424,31 +464,33 @@
       </section>
 
       <!-- RIGHT: Chat (feed 패널이랑 같은 'panel' 스타일로 통일) -->
-      <section class="panel chatpanel">
+      <div class="chatWrap">
+  <section class="panel chatPanel" aria-label="Flask chat panel">
     <div class="bar">
       <div class="pill"><span class="dot"></span> Flask 실시간 채팅</div>
       <div class="actions">
-        <button class="btn" id="btnFocus">Focus</button>
+        <button class="btn" id="btnFocusChat">Focus</button>
       </div>
     </div>
 
-    <div class="list" style="padding:12px">
-      <div id="log" class="chatlog"></div>
+    <div class="chatBody">
+      <div id="log" class="chatLog"></div>
 
-      <!-- 닉네임: 위에서 1회 -->
-      <div class="chatname">
-        <input id="name" placeholder="닉네임 (한 번만 입력)" />
-        <button id="btnSetName" class="btn primary" type="button">Set</button>
-        <div class="namehint">※ 닉네임은 최초 1회 설정</div>
+      <!-- 닉네임(위) -->
+      <div class="chatNameRow">
+        <input id="name" class="chatInput" placeholder="닉네임 (한 번만 설정)" />
+        <button id="btnSetName" class="btn primary">Set</button>
       </div>
+      <div class="chatHint" id="nameHint">※ 닉네임은 최초 1회 설정</div>
 
-      <!-- 메시지: 아래에서 입력 -->
-      <div class="chatinput">
-        <input id="msg" placeholder="메시지 입력..." />
-        <button id="send" class="btn" type="button">전송</button>
+      <!-- 메시지(아래) -->
+      <div class="chatMsgRow">
+        <input id="msg" class="chatInput" placeholder="메시지 입력..." />
+        <button id="send" class="btn">전송</button>
       </div>
     </div>
   </section>
+</div>
 
     </div>
     <!-- ✅ 2열 끝 -->
@@ -509,78 +551,118 @@
   });
 
 
+  
+
   const log = document.querySelector("#log");
-const nameEl = document.querySelector("#name");
-const msgEl  = document.querySelector("#msg");
-const sendBtn= document.querySelector("#send");
-const btnSetName = document.querySelector("#btnSetName");
+  const nameEl = document.querySelector("#name");
+  const msgEl  = document.querySelector("#msg");
+  const sendBtn= document.querySelector("#send");
+  const btnSet = document.querySelector("#btnSetName");
+  const btnFocus = document.querySelector("#btnFocusChat");
+  const nameHint = document.querySelector("#nameHint");
 
-const sock = io("https://mrdindoin.ddns.net", {
-  path: "/jagannath/socket.io",
-  transports: ["websocket"],
-  withCredentials: true,
-  reconnection: true
-});
-
-let joined = false; // 이 탭에서 join 1번만
-
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
-function add(html){
-  const div = document.createElement("div");
-  div.className = "msg";
-  div.innerHTML = html;
-  log.appendChild(div);
-  log.scrollTop = log.scrollHeight;
-}
-
-function doJoin(){
-  const name = (nameEl.value || "").trim().slice(0,30);
-  if(!name){
-    add(`<div class="sys">• 닉네임을 먼저 입력해줘</div>`);
-    nameEl.focus();
-    return;
-  }
-  if(joined) return;             // ✅ 중복 join 방지
-  joined = true;
-
-  sock.emit("join", { name }, (ack) => {
-    // 서버가 ack 줄 때만 처리(선택)
+  const sock = io("https://mrdindoin.ddns.net", {
+    path: "/jagannath/socket.io",
+    transports: ["websocket"],
+    withCredentials: true,
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 600,
+    reconnectionDelayMax: 3000
   });
 
-  add(`<div class="sys">• 닉네임 설정: ${escapeHtml(name)}</div>`);
-}
+  // 닉네임 상태
+  let myName = localStorage.getItem("lf_chat_name") || "";
+  let joinedOnce = false;
 
-btnSetName.addEventListener("click", doJoin);
-nameEl.addEventListener("keydown", (e)=>{ if(e.key==="Enter") doJoin(); });
-
-sock.on("connect", () => {
-  // ✅ connect 때 join 안 보냄 (여기가 핵심)
-  add(`<div class="sys">• connected</div>`);
-});
-
-sock.on("disconnect", () => {
-  add(`<div class="sys">• disconnected</div>`);
-});
-
-sock.on("system", (d) => add(`<div class="sys">• ${escapeHtml(d.msg||"")}</div>`));
-sock.on("chat", (d) => add(`<b>${escapeHtml(d.name||"anon")}</b> : ${escapeHtml(d.msg||"")}`));
-
-function send(){
-  if(!joined){
-    add(`<div class="sys">• 먼저 닉네임 설정을 눌러줘</div>`);
-    return;
+  if (myName) {
+    nameEl.value = myName;
+    nameEl.disabled = true;
+    btnSet.disabled = true;
+    nameHint.textContent = "※ 닉네임 설정됨";
   }
-  const msg  = (msgEl.value || "").trim().slice(0,500);
-  if(!msg) return;
-  sock.emit("chat", { msg });   // ✅ name은 서버에 저장된 걸 쓰게 만들거임(아래 서버 수정)
-  msgEl.value = "";
-  msgEl.focus();
-}
 
-sendBtn.onclick = send;
-msgEl.addEventListener("keydown", (e)=>{ if(e.key==="Enter") send(); });
+  function add(html){
+    const div = document.createElement("div");
+    div.className = "msg";
+    div.innerHTML = html;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, m => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[m]));
+  }
+
+  function doJoinSilently(){
+    if (!myName) return;
+    // 재연결 등으로 connect가 다시 떠도, 클라에서는 1회만 "내 UI 로그"를 찍고
+    // 서버에는 sid 바뀌었을 수 있으니 join은 재전송 가능
+    sock.emit("join", { name: myName });
+  }
+
+  btnSet.addEventListener("click", () => {
+    const v = (nameEl.value || "").trim().slice(0, 30);
+    if (!v) {
+      add(`<div class="sys">• 닉네임부터 입력해줘</div>`);
+      nameEl.focus();
+      return;
+    }
+    myName = v;
+    localStorage.setItem("lf_chat_name", myName);
+
+    nameEl.disabled = true;
+    btnSet.disabled = true;
+    nameHint.textContent = "※ 닉네임 설정됨";
+
+    // 여기서 딱 1번만 join 로그를 남기고
+    if (!joinedOnce) {
+      add(`<div class="sys">• 닉네임 설정: ${escapeHtml(myName)}</div>`);
+      joinedOnce = true;
+    }
+
+    doJoinSilently();
+    msgEl.focus();
+  });
+
+  function send(){
+    if (!myName) {
+      add(`<div class="sys">• 닉네임을 먼저 Set 해줘</div>`);
+      nameEl.focus();
+      return;
+    }
+    const msg = (msgEl.value || "").trim().slice(0, 500);
+    if(!msg) return;
+    sock.emit("chat", { name: myName, msg });
+    msgEl.value = "";
+    msgEl.focus();
+  }
+
+  sendBtn.addEventListener("click", send);
+  msgEl.addEventListener("keydown", (e)=>{ if(e.key==="Enter") send(); });
+
+  btnFocus?.addEventListener("click", ()=> msgEl.focus());
+
+  // ✅ connect/disconnect 로그는 UI에 안 찍음(시끄러움)
+  sock.on("connect", () => {
+    // 닉네임이 이미 설정되어 있으면 조용히 재-join만
+    doJoinSilently();
+  });
+
+  // 서버가 보내는 system/join 메시지가 너무 많으면, 여기서 필터링 가능
+  sock.on("system", (d) => {
+    const m = (d.msg || "");
+    // 예: "xxx joined"는 UI에서 숨기고 싶으면 아래 주석 해제
+    // if (m.includes(" joined")) return;
+    add(`<div class="sys">• ${escapeHtml(m)}</div>`);
+  });
+
+  sock.on("chat", (d) => {
+    add(`<b>${escapeHtml(d.name || "anon")}</b> : ${escapeHtml(d.msg || "")}`);
+  });
+
 
 
 
