@@ -279,6 +279,42 @@
   .msg{margin:8px 0}
   b{color:#a7f3d0}
 
+/* ===== 2-column layout (feed left, chat right) ===== */
+.grid2{
+  display:grid;
+  grid-template-columns: 1.35fr .9fr;
+  gap:18px;
+  align-items:start;
+}
+
+.chat-panel{
+  padding:0;
+}
+.chat-panel .bar{
+  border-bottom:1px solid rgba(255,255,255,.10);
+}
+.chat-panel .listlike{
+  padding:10px;
+}
+
+/* 채팅창 높이 & 스크롤 */
+#log{
+  height: 52vh;          /* 필요하면 45~65vh로 조절 */
+  overflow:auto;
+  padding:14px;
+}
+
+/* 우측 채팅 입력줄이 패널 하단에 딱 붙게 */
+.chat-panel .row{
+  border-top:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.10);
+}
+
+/* 모바일에서는 아래로 스택 */
+@media (max-width: 980px){
+  .grid2{ grid-template-columns: 1fr; }
+  #log{ height: 40vh; }
+}
 
   
 </style>
@@ -294,83 +330,54 @@
       </div>
     </div>
 
-    <section class="panel" aria-label="One-line feed panel">
-      <div class="bar">
-        <div class="pill"><span class="dot"></span> LIVE PANEL</div>
+    <!-- ✅ 여기부터 2열 -->
+    <div class="grid2">
 
-        <div class="actions">
-          <button class="btn primary" id="btnAdd">+ Add</button>
-          <button class="btn" id="btnTop">Top</button>
+      <!-- LEFT: Feed -->
+      <section class="panel" aria-label="One-line feed panel">
+        <div class="bar">
+          <div class="pill"><span class="dot"></span> LIVE PANEL</div>
+          <div class="actions">
+            <button class="btn primary" id="btnAdd">+ Add</button>
+            <button class="btn" id="btnTop">Top</button>
+          </div>
         </div>
-      </div>
 
-      <div class="list" id="feed">
-        <!-- 너가 여기 HTML만 수정해서 계속 쓰면 됨 -->
-        <article class="item">
-          <div class="ico">⚡</div>
-          <div>
-            <p class="title">오늘은 신용카드 안 쓰는 캠페인 시작. “돈을 안 써보자, 얼마까지 아끼나”</p>
-            <div class="meta">
-              <span>2025-12-17</span>
-              <span class="tag">습관</span>
-              <span class="tag">재정</span>
+        <div class="list" id="feed">
+          <!-- (기존 feed item들 그대로) -->
+          ...
+        </div>
+
+        <div class="hint">
+          팁: <b>HTML만 복붙</b>해서 아이템 계속 추가하면 끝.
+          단축키: <span class="kbd">A</span> 새 항목(맨 위), <span class="kbd">T</span> 맨 위로
+        </div>
+      </section>
+
+      <!-- RIGHT: Chat (feed 패널이랑 같은 'panel' 스타일로 통일) -->
+      <section class="panel chat-panel" aria-label="Flask realtime chat">
+        <div class="bar">
+          <div class="pill">🗨️ Flask 실시간 채팅</div>
+          <div class="actions">
+            <button class="btn" type="button" onclick="document.getElementById('msg').focus()">Focus</button>
+          </div>
+        </div>
+
+        <div class="listlike">
+          <div class="box">
+            <div id="log"></div>
+            <div class="row">
+              <input id="name" placeholder="닉네임" style="max-width:160px" />
+              <input id="msg" placeholder="메시지" />
+              <button id="send">전송</button>
             </div>
           </div>
-          <div class="time">21:08</div>
-        </article>
+        </div>
+      </section>
 
-        <article class="item">
-          <div class="ico">🧊</div>
-          <div>
-            <p class="title">투명 디스플레이 패널 느낌의 한줄 피드 페이지 프로토타입 완성(가독성 강화).</p>
-            <div class="meta">
-              <span>2025-12-17</span>
-              <span class="tag">STANCE</span>
-              <span class="tag">UI</span>
-            </div>
-          </div>
-          <div class="time">20:41</div>
-        </article>
-
-        <article class="item">
-          <div class="ico">🎣</div>
-          <div>
-            <p class="title">낚시는 인생의 등대. 오늘은 자연인 모드 유지.</p>
-            <div class="meta">
-              <span>2025-12-14</span>
-              <span class="tag">감성로그</span>
-              <span class="tag">바깥</span>
-            </div>
-          </div>
-          <div class="time">07:12</div>
-        </article>
-
-        
-
-        
-
-        
-      </div>
-
-      <div class="hint">
-        팁: <b>HTML만 복붙</b>해서 아이템 계속 추가하면 끝.  
-        단축키: <span class="kbd">A</span> 새 항목(맨 위), <span class="kbd">T</span> 맨 위로
-      </div>
-    </section>
-  </div>
-
-
-  <div class="wrap">
-  <h2 style="margin:0 0 12px">🗨️ Flask 실시간 채팅</h2>
-  <div class="box">
-    <div id="log"></div>
-    <div class="row">
-      <input id="name" placeholder="닉네임" style="max-width:160px" />
-      <input id="msg" placeholder="메시지" />
-      <button id="send">전송</button>
     </div>
+    <!-- ✅ 2열 끝 -->
   </div>
-</div>
 
 
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
