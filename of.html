@@ -269,6 +269,18 @@
     .item{ grid-template-columns: 42px 1fr; }
     .time{ grid-column: 2 / 3; justify-self:start; margin-top:8px; }
   }
+
+  .box{border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.06)}
+  #log{height:55vh;overflow:auto;padding:14px}
+  .row{display:flex;gap:10px;padding:14px;border-top:1px solid rgba(255,255,255,.10)}
+  input{flex:1;padding:12px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.25);color:#fff}
+  button{padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.10);color:#fff;cursor:pointer}
+  .sys{opacity:.75;font-size:.92rem}
+  .msg{margin:8px 0}
+  b{color:#a7f3d0}
+
+
+  
 </style>
 </head>
 
@@ -347,6 +359,20 @@
     </section>
   </div>
 
+
+  <div class="wrap">
+  <h2 style="margin:0 0 12px">🗨️ Flask 실시간 채팅</h2>
+  <div class="box">
+    <div id="log"></div>
+    <div class="row">
+      <input id="name" placeholder="닉네임" style="max-width:160px" />
+      <input id="msg" placeholder="메시지" />
+      <button id="send">전송</button>
+    </div>
+  </div>
+</div>
+
+
 <script>
   const feed = document.getElementById("feed");
   const btnAdd = document.getElementById("btnAdd");
@@ -398,6 +424,57 @@
     if(e.key.toLowerCase() === "a") addItem();
     if(e.key.toLowerCase() === "t") window.scrollTo({top:0, behavior:"smooth"});
   });
+
+
+  const log = document.querySelector("#log");
+  const nameEl = document.querySelector("#name");
+  const msgEl  = document.querySelector("#msg");
+  const sendBtn= document.querySelector("#send");
+
+  const sock = io({
+    path: "/jagannath/socket.io",
+    transports: ["websocket"]   // 폴링 싫으면 강제
+  });
+
+  function add(html){
+    const div = document.createElement("div");
+    div.className = "msg";
+    div.innerHTML = html;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function joinIfNeeded(){
+    const name = (nameEl.value || "anon").trim();
+    sock.emit("join", {name});
+  }
+
+  sock.on("connect", () => {
+    joinIfNeeded();
+  });
+
+  sock.on("system", (d) => add(`<div class="sys">• ${escapeHtml(d.msg||"")}</div>`));
+  sock.on("chat", (d) => add(`<b>${escapeHtml(d.name||"anon")}</b> : ${escapeHtml(d.msg||"")}`));
+
+  function send(){
+    const name = (nameEl.value || "anon").trim();
+    const msg  = (msgEl.value || "").trim();
+    if(!msg) return;
+    sock.emit("chat", {name, msg});
+    msgEl.value = "";
+    msgEl.focus();
+  }
+
+  sendBtn.onclick = send;
+  msgEl.addEventListener("keydown", (e)=>{ if(e.key==="Enter") send(); });
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+
+
+  
 </script>
 </body>
 </html>
