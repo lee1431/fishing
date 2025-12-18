@@ -362,7 +362,6 @@
       <div class="logo" aria-hidden="true"></div>
       <div>
         <h1>STANCE — One-line Feed</h1>
-        <p>투명 패널 감성 · 한 줄 기록 + 우측 채팅</p>
       </div>
     </div>
 
@@ -378,53 +377,15 @@
         </div>
 
         <div class="list" id="feed">
-          <article class="item">
-            <div class="ico">⚡</div>
-            <div>
-              <p class="title">오늘은 신용카드 안 쓰는 캠페인 시작. “돈을 안 써보자, 얼마까지 아끼나”</p>
-              <div class="meta">
-                <span>2025-12-17</span>
-                <span class="tag">습관</span>
-                <span class="tag">재정</span>
-              </div>
-            </div>
-            <div class="time">21:08</div>
-          </article>
-
-          <article class="item">
-            <div class="ico">🧊</div>
-            <div>
-              <p class="title">투명 디스플레이 패널 느낌의 한줄 피드 페이지 프로토타입 완성(가독성 강화).</p>
-              <div class="meta">
-                <span>2025-12-17</span>
-                <span class="tag">STANCE</span>
-                <span class="tag">UI</span>
-              </div>
-            </div>
-            <div class="time">20:41</div>
-          </article>
-
-          <article class="item">
-            <div class="ico">🎣</div>
-            <div>
-              <p class="title">낚시는 인생의 등대. 오늘은 자연인 모드 유지.</p>
-              <div class="meta">
-                <span>2025-12-14</span>
-                <span class="tag">감성로그</span>
-                <span class="tag">바깥</span>
-              </div>
-            </div>
-            <div class="time">07:12</div>
-          </article>
+          
+          
         </div>
 
         <div class="hint">
-          팁: <b>HTML만 복붙</b>해서 아이템 계속 추가하면 끝.
           단축키: <span class="kbd">A</span> 새 항목(맨 위), <span class="kbd">T</span> 맨 위로
         </div>
       </section>
 
-      <!-- RIGHT: CHAT -->
       <aside class="panel chat" aria-label="Flask chat panel">
         <div class="bar">
           <div class="pill"><span class="dot"></span> Flask 실시간 채팅</div>
@@ -434,23 +395,17 @@
         </div>
 
         <div class="chatBody">
-          <!-- Nickname TOP (한 번 설정) -->
           <div class="nameBox">
-            <input id="name" placeholder="닉네임 (한 번 설정)" maxlength="30" />
+            <input id="name" placeholder="닉네임" maxlength="30" />
             <button class="btn primary" id="btnSetName">Set</button>
-            <span class="nameHint">닉네임은 1회 설정</span>
           </div>
 
-          <!-- Log MIDDLE -->
           <div id="log"></div>
 
-          <!-- Message BOTTOM -->
           <div class="composer">
             <input id="msg" placeholder="메시지 입력…" maxlength="500" />
             <button id="send">전송</button>
           </div>
-
-          <div class="tiny">※ join 스팸 방지: connect 때 자동 join 안 함(닉네임 Set 눌러야 join)</div>
         </div>
       </aside>
     </div>
