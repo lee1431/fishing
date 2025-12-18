@@ -424,35 +424,31 @@
       </section>
 
       <!-- RIGHT: Chat (feed 패널이랑 같은 'panel' 스타일로 통일) -->
-      <section class="panel chat-panel" aria-label="Flask realtime chat">
-        <div class="bar">
-          <div class="pill">🗨️ Flask 실시간 채팅</div>
-          <div class="actions">
-            <button class="btn" type="button" onclick="document.getElementById('msg').focus()">Focus</button>
-          </div>
-        </div>
+      <section class="panel chatpanel">
+    <div class="bar">
+      <div class="pill"><span class="dot"></span> Flask 실시간 채팅</div>
+      <div class="actions">
+        <button class="btn" id="btnFocus">Focus</button>
+      </div>
+    </div>
 
-        <div class="listlike">
-          <div class="box chat-box">
+    <div class="list" style="padding:12px">
+      <div id="log" class="chatlog"></div>
 
-          <!-- 닉네임 설정 영역 (상단 고정) -->
-          <div class="nick-row">
-            <input id="name" placeholder="닉네임" />
-          </div>
-        
-          <!-- 채팅 로그 -->
-          <div id="log"></div>
-        
-          <!-- 메시지 입력 영역 (하단) -->
-          <div class="msg-row">
-            <input id="msg" placeholder="메시지 입력…" />
-            <button id="send">전송</button>
-          </div>
-        
-        </div>
+      <!-- 닉네임: 위에서 1회 -->
+      <div class="chatname">
+        <input id="name" placeholder="닉네임 (한 번만 입력)" />
+        <button id="btnSetName" class="btn primary" type="button">Set</button>
+        <div class="namehint">※ 닉네임은 최초 1회 설정</div>
+      </div>
 
-        </div>
-      </section>
+      <!-- 메시지: 아래에서 입력 -->
+      <div class="chatinput">
+        <input id="msg" placeholder="메시지 입력..." />
+        <button id="send" class="btn" type="button">전송</button>
+      </div>
+    </div>
+  </section>
 
     </div>
     <!-- ✅ 2열 끝 -->
