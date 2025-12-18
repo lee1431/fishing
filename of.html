@@ -431,9 +431,10 @@
   const msgEl  = document.querySelector("#msg");
   const sendBtn= document.querySelector("#send");
 
-  const sock = io({
+  const sock = io("https://mrdindoin.ddns.net" ,{
     path: "/jagannath/socket.io",
-    transports: ["websocket"]   // 폴링 싫으면 강제
+    transports: ["websocket"],
+    withCredentials: true
   });
 
   function add(html){
