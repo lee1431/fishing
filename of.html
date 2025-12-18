@@ -3,30 +3,24 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="theme-color" content="#B57CFF" />
-  
 <title>STANCE — One-line Feed</title>
 
 <style>
   :root{
-    /* ===== theme ===== */
     --bg0:#070A10;
     --bg1:#0B1020;
-    --ink:#EAF0FF;        /* 메인 글자 (밝게) */
-    --ink2:#C9D3EE;       /* 보조 글자 */
+    --ink:#EAF0FF;
+    --ink2:#C9D3EE;
     --muted:#9AA7C7;
     --line:rgba(255,255,255,.12);
 
-    --glass:rgba(15,18,30,.46);    /* 패널 바탕 */
-    --glass2:rgba(255,255,255,.06);
+    --glass:rgba(15,18,30,.46);
     --shadow: 0 28px 90px rgba(0,0,0,.55);
     --shadow2: 0 10px 30px rgba(0,0,0,.35);
 
-    --accent:#B57CFF;     /* 플래닛충주 보라 느낌 */
+    --accent:#B57CFF;
     --accent2:#61D0FF;
     --ok:#7CFFA7;
-    --warn:#FFC56B;
-    --danger:#FF6B8F;
 
     --radius:18px;
   }
@@ -45,7 +39,6 @@
     overflow-x:hidden;
   }
 
-  /* ===== subtle “transparent display” noise & scanlines ===== */
   body::before{
     content:"";
     position:fixed; inset:0;
@@ -70,9 +63,9 @@
   }
 
   .wrap{
-    width:min(980px, 92vw);
+    width:min(1180px, 94vw);
     margin:0 auto;
-    padding:40px 0 64px;
+    padding:36px 0 64px;
   }
 
   /* ===== top brand ===== */
@@ -80,7 +73,7 @@
     display:flex;
     align-items:flex-start;
     gap:12px;
-    margin-bottom:18px;
+    margin-bottom:16px;
     user-select:none;
   }
   .logo{
@@ -104,6 +97,17 @@
     font-size:13px;
   }
 
+  /* ===== layout: feed left, chat right ===== */
+  .grid{
+    display:grid;
+    grid-template-columns: 1fr 360px;
+    gap:14px;
+    align-items:start;
+  }
+  @media (max-width: 980px){
+    .grid{ grid-template-columns: 1fr; }
+  }
+
   /* ===== glass panel ===== */
   .panel{
     position:relative;
@@ -115,7 +119,6 @@
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
   }
-
   .panel::before{
     content:"";
     position:absolute; inset:0;
@@ -137,7 +140,6 @@
     border-bottom:1px solid rgba(255,255,255,.10);
     background: rgba(0,0,0,.10);
   }
-
   .pill{
     display:inline-flex;
     align-items:center;
@@ -156,11 +158,7 @@
     background: var(--ok);
     box-shadow: 0 0 0 6px rgba(124,255,167,.12), 0 0 18px rgba(124,255,167,.28);
   }
-
-  .actions{
-    display:flex;
-    gap:10px;
-  }
+  .actions{ display:flex; gap:10px; }
   .btn{
     appearance:none;
     border:1px solid rgba(255,255,255,.12);
@@ -180,12 +178,8 @@
     border-color: rgba(181,124,255,.35);
   }
 
-  /* ===== list ===== */
-  .list{
-    position:relative;
-    padding:10px 10px 12px;
-  }
-
+  /* ===== feed list ===== */
+  .list{ position:relative; padding:10px 10px 12px; }
   .item{
     display:grid;
     grid-template-columns: 42px 1fr auto;
@@ -195,12 +189,9 @@
     margin:8px 4px;
     background: rgba(0,0,0,.18);
     border:1px solid rgba(255,255,255,.08);
-    transition: background .2s ease, border-color .2s ease, transform .08s ease;
+    transition: background .2s ease, border-color .2s ease;
   }
-  .item:hover{
-    background: rgba(0,0,0,.26);
-    border-color: rgba(255,255,255,.16);
-  }
+  .item:hover{ background: rgba(0,0,0,.26); border-color: rgba(255,255,255,.16); }
   .ico{
     width:38px; height:38px;
     border-radius:14px;
@@ -210,7 +201,6 @@
     font-size:18px;
     filter: drop-shadow(0 10px 18px rgba(0,0,0,.22));
   }
-
   .title{
     margin:0;
     font-size:15px;
@@ -234,7 +224,6 @@
     border:1px solid rgba(255,255,255,.10);
     color: var(--ink2);
   }
-
   .time{
     font-size:12px;
     color: rgba(234,240,255,.80);
@@ -245,8 +234,11 @@
     height: fit-content;
     align-self:center;
   }
+  @media (max-width:560px){
+    .item{ grid-template-columns: 42px 1fr; }
+    .time{ grid-column: 2 / 3; justify-self:start; margin-top:8px; }
+  }
 
-  /* ===== footer hint ===== */
   .hint{
     padding:12px 16px 16px;
     color: rgba(234,240,255,.72);
@@ -254,7 +246,6 @@
     border-top:1px solid rgba(255,255,255,.08);
     background: rgba(0,0,0,.10);
   }
-  .hint b{ color: var(--ink); }
   .kbd{
     display:inline-block;
     padding:2px 7px;
@@ -266,169 +257,102 @@
     margin:0 2px;
   }
 
-  /* ===== small screen ===== */
-  @media (max-width:560px){
-    .item{ grid-template-columns: 42px 1fr; }
-    .time{ grid-column: 2 / 3; justify-self:start; margin-top:8px; }
+  /* ===== chat panel ===== */
+  .chat{
+    display:flex;
+    flex-direction:column;
+    min-height: 560px;
+  }
+  @media (max-width: 980px){
+    .chat{ min-height: 520px; }
   }
 
-  .box{border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.06)}
-  #log{height:55vh;overflow:auto;padding:14px}
-  .row{display:flex;gap:10px;padding:14px;border-top:1px solid rgba(255,255,255,.10)}
-  input{flex:1;padding:12px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.25);color:#fff}
-  button{padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.10);color:#fff;cursor:pointer}
-  .sys{opacity:.75;font-size:.92rem}
-  .msg{margin:8px 0}
-  b{color:#a7f3d0}
+  .chatBody{
+    position:relative;
+    padding:12px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    min-height: 0;
+    flex:1;
+  }
 
-/* ===== 2-column layout (feed left, chat right) ===== */
-.grid2{
-  display:grid;
-  grid-template-columns: 1.35fr .9fr;
-  gap:18px;
-  align-items:start;
-}
+  /* nickname area (top) */
+  .nameBox{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    padding:10px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(0,0,0,.18);
+  }
+  .nameBox input{
+    flex:1;
+    padding:12px 12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.14);
+    background: rgba(0,0,0,.25);
+    color:#fff;
+    outline:none;
+  }
+  .nameHint{
+    font-size:12px;
+    color: rgba(234,240,255,.68);
+    white-space:nowrap;
+    opacity:.9;
+  }
 
-.chat-panel{
-  padding:0;
-}
-.chat-panel .bar{
-  border-bottom:1px solid rgba(255,255,255,.10);
-}
-.chat-panel .listlike{
-  padding:10px;
-}
+  /* log area (middle) */
+  #log{
+    flex:1;
+    min-height: 0;
+    overflow:auto;
+    padding:12px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.10);
+    background: rgba(0,0,0,.12);
+  }
 
-/* 채팅창 높이 & 스크롤 */
-#log{
-  height: 52vh;          /* 필요하면 45~65vh로 조절 */
-  overflow:auto;
-  padding:14px;
-}
+  .msg{ margin:8px 0; }
+  .sys{ opacity:.72; font-size:.92rem; }
+  .nick{ color:#a7f3d0; font-weight:700; }
 
-/* 우측 채팅 입력줄이 패널 하단에 딱 붙게 */
-.chat-panel .row{
-  border-top:1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.10);
-}
+  /* composer (bottom) */
+  .composer{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    padding:10px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(0,0,0,.18);
+  }
+  .composer input{
+    flex:1;
+    padding:12px 12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.14);
+    background: rgba(0,0,0,.25);
+    color:#fff;
+    outline:none;
+  }
+  .composer button{
+    padding:12px 14px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.18);
+    background: rgba(255,255,255,.10);
+    color:#fff;
+    cursor:pointer;
+  }
+  .composer button:hover{ background: rgba(255,255,255,.14); }
 
-/* 모바일에서는 아래로 스택 */
-@media (max-width: 980px){
-  .grid2{ grid-template-columns: 1fr; }
-  #log{ height: 40vh; }
-}
-
-
-  /* ===== Chat layout refine ===== */
-.chat-box{
-  display:flex;
-  flex-direction:column;
-  height:100%;
-}
-
-/* 닉네임 영역 */
-.nick-row{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:12px 14px;
-  border-bottom:1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.18);
-}
-
-.nick-row input{
-  flex:1;
-  padding:10px 12px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(0,0,0,.25);
-  color:#fff;
-}
-
-.nick-hint{
-  font-size:11px;
-  color:var(--muted);
-  opacity:.8;
-  white-space:nowrap;
-}
-
-/* 로그 영역이 가운데서 늘어나도록 */
-#log{
-  flex:1;
-  overflow:auto;
-  padding:14px;
-}
-
-/* 메시지 입력 영역 */
-.msg-row{
-  display:flex;
-  gap:10px;
-  padding:12px 14px;
-  border-top:1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.20);
-}
-
-.msg-row input{
-  flex:1;
-  padding:12px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(0,0,0,.25);
-  color:#fff;
-}
-
-.msg-row button{
-  padding:12px 16px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(255,255,255,.10);
-  color:#fff;
-  cursor:pointer;
-}
-
-  .chatWrap{ width:min(980px,92vw); margin:18px auto 64px; }
-
-.chatPanel{ width:min(360px,92vw); } /* 우측 패널 폭 */
-.chatBody{ padding:12px; display:flex; flex-direction:column; gap:10px; }
-
-.chatLog{
-  height:52vh;
-  overflow:auto;
-  padding:12px;
-  border-radius:14px;
-  background: rgba(0,0,0,.16);
-  border:1px solid rgba(255,255,255,.08);
-}
-
-.chatNameRow, .chatMsgRow{
-  display:flex;
-  gap:10px;
-}
-
-.chatInput{
-  flex:1;
-  padding:12px 12px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(0,0,0,.25);
-  color:#fff;
-  outline:none;
-}
-
-.chatHint{
-  margin-top:-4px;
-  font-size:12px;
-  color: rgba(234,240,255,.62);
-  padding-left:2px;
-}
-
-.msg{ margin:8px 0; }
-.sys{ opacity:.72; font-size:.92rem; }
-b{ color:#a7f3d0; }
-
-
-  
-  
+  .tiny{
+    font-size:12px;
+    color: rgba(234,240,255,.65);
+    padding: 0 2px;
+    user-select:none;
+  }
 </style>
 </head>
 
@@ -438,12 +362,12 @@ b{ color:#a7f3d0; }
       <div class="logo" aria-hidden="true"></div>
       <div>
         <h1>STANCE — One-line Feed</h1>
+        <p>투명 패널 감성 · 한 줄 기록 + 우측 채팅</p>
       </div>
     </div>
 
-    <div class="grid2">
-
-      <!-- LEFT: Feed -->
+    <div class="grid">
+      <!-- LEFT: FEED -->
       <section class="panel" aria-label="One-line feed panel">
         <div class="bar">
           <div class="pill"><span class="dot"></span> LIVE PANEL</div>
@@ -454,51 +378,87 @@ b{ color:#a7f3d0; }
         </div>
 
         <div class="list" id="feed">
-          <!-- (기존 feed item들 그대로) -->
-          ...
+          <article class="item">
+            <div class="ico">⚡</div>
+            <div>
+              <p class="title">오늘은 신용카드 안 쓰는 캠페인 시작. “돈을 안 써보자, 얼마까지 아끼나”</p>
+              <div class="meta">
+                <span>2025-12-17</span>
+                <span class="tag">습관</span>
+                <span class="tag">재정</span>
+              </div>
+            </div>
+            <div class="time">21:08</div>
+          </article>
+
+          <article class="item">
+            <div class="ico">🧊</div>
+            <div>
+              <p class="title">투명 디스플레이 패널 느낌의 한줄 피드 페이지 프로토타입 완성(가독성 강화).</p>
+              <div class="meta">
+                <span>2025-12-17</span>
+                <span class="tag">STANCE</span>
+                <span class="tag">UI</span>
+              </div>
+            </div>
+            <div class="time">20:41</div>
+          </article>
+
+          <article class="item">
+            <div class="ico">🎣</div>
+            <div>
+              <p class="title">낚시는 인생의 등대. 오늘은 자연인 모드 유지.</p>
+              <div class="meta">
+                <span>2025-12-14</span>
+                <span class="tag">감성로그</span>
+                <span class="tag">바깥</span>
+              </div>
+            </div>
+            <div class="time">07:12</div>
+          </article>
         </div>
 
         <div class="hint">
+          팁: <b>HTML만 복붙</b>해서 아이템 계속 추가하면 끝.
           단축키: <span class="kbd">A</span> 새 항목(맨 위), <span class="kbd">T</span> 맨 위로
         </div>
       </section>
 
-      <!-- RIGHT: Chat (feed 패널이랑 같은 'panel' 스타일로 통일) -->
-      <div class="chatWrap">
-  <section class="panel chatPanel" aria-label="Flask chat panel">
-    <div class="bar">
-      <div class="pill"><span class="dot"></span> Flask 실시간 채팅</div>
-      <div class="actions">
-        <button class="btn" id="btnFocusChat">Focus</button>
-      </div>
+      <!-- RIGHT: CHAT -->
+      <aside class="panel chat" aria-label="Flask chat panel">
+        <div class="bar">
+          <div class="pill"><span class="dot"></span> Flask 실시간 채팅</div>
+          <div class="actions">
+            <button class="btn" id="btnFocus">Focus</button>
+          </div>
+        </div>
+
+        <div class="chatBody">
+          <!-- Nickname TOP (한 번 설정) -->
+          <div class="nameBox">
+            <input id="name" placeholder="닉네임 (한 번 설정)" maxlength="30" />
+            <button class="btn primary" id="btnSetName">Set</button>
+            <span class="nameHint">닉네임은 1회 설정</span>
+          </div>
+
+          <!-- Log MIDDLE -->
+          <div id="log"></div>
+
+          <!-- Message BOTTOM -->
+          <div class="composer">
+            <input id="msg" placeholder="메시지 입력…" maxlength="500" />
+            <button id="send">전송</button>
+          </div>
+
+          <div class="tiny">※ join 스팸 방지: connect 때 자동 join 안 함(닉네임 Set 눌러야 join)</div>
+        </div>
+      </aside>
     </div>
-
-    <div class="chatBody">
-      <div id="log" class="chatLog"></div>
-
-      <!-- 닉네임(위) -->
-      <div class="chatNameRow">
-        <input id="name" class="chatInput" placeholder="닉네임 (한 번만 설정)" />
-        <button id="btnSetName" class="btn primary">Set</button>
-      </div>
-      <div class="chatHint" id="nameHint">※ 닉네임은 최초 1회 설정</div>
-
-      <!-- 메시지(아래) -->
-      <div class="chatMsgRow">
-        <input id="msg" class="chatInput" placeholder="메시지 입력..." />
-        <button id="send" class="btn">전송</button>
-      </div>
-    </div>
-  </section>
-</div>
-
-    </div>
-    <!-- ✅ 2열 끝 -->
   </div>
-
 
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
+  /* ===== FEED ===== */
   const feed = document.getElementById("feed");
   const btnAdd = document.getElementById("btnAdd");
   const btnTop = document.getElementById("btnTop");
@@ -518,9 +478,7 @@ b{ color:#a7f3d0; }
     el.innerHTML = `
       <div class="ico">📝</div>
       <div>
-        <p class="title" contenteditable="true" spellcheck="false">
-          여기에 한 줄 입력하고 Enter 치지 말고 그냥 저장해라 ㅋㅋ
-        </p>
+        <p class="title" contenteditable="true" spellcheck="false">여기에 한 줄 입력하고 저장해라 ㅋㅋ</p>
         <div class="meta">
           <span>${yyyy}-${mm}-${dd}</span>
           <span class="tag" contenteditable="true" spellcheck="false">메모</span>
@@ -528,11 +486,10 @@ b{ color:#a7f3d0; }
       </div>
       <div class="time">${hh}:${mi}</div>
     `;
-
     feed.prepend(el);
+
     const title = el.querySelector(".title");
     title.focus();
-    // 커서 끝으로
     const range = document.createRange();
     range.selectNodeContents(title);
     range.collapse(false);
@@ -543,45 +500,25 @@ b{ color:#a7f3d0; }
 
   btnAdd.addEventListener("click", addItem);
   btnTop.addEventListener("click", () => window.scrollTo({top:0, behavior:"smooth"}));
-
   window.addEventListener("keydown", (e) => {
     if(e.target && (e.target.isContentEditable || ["INPUT","TEXTAREA"].includes(e.target.tagName))) return;
     if(e.key.toLowerCase() === "a") addItem();
     if(e.key.toLowerCase() === "t") window.scrollTo({top:0, behavior:"smooth"});
   });
 
-
-  
-
+  /* ===== CHAT ===== */
   const log = document.querySelector("#log");
   const nameEl = document.querySelector("#name");
   const msgEl  = document.querySelector("#msg");
   const sendBtn= document.querySelector("#send");
-  const btnSet = document.querySelector("#btnSetName");
-  const btnFocus = document.querySelector("#btnFocusChat");
-  const nameHint = document.querySelector("#nameHint");
+  const btnSetName = document.querySelector("#btnSetName");
+  const btnFocus = document.querySelector("#btnFocus");
 
-  const sock = io("https://mrdindoin.ddns.net", {
-    path: "/jagannath/socket.io",
-    transports: ["websocket"],
-    withCredentials: true,
-    reconnection: true,
-    reconnectionAttempts: Infinity,
-    reconnectionDelay: 600,
-    reconnectionDelayMax: 3000
-  });
-
-  // 닉네임 상태
-  let myName = localStorage.getItem("lf_chat_name") || "";
-  let joinedOnce = false;
-
-  if (myName) {
-    nameEl.value = myName;
-    nameEl.disabled = true;
-    btnSet.disabled = true;
-    nameHint.textContent = "※ 닉네임 설정됨";
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, m => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[m]));
   }
-
   function add(html){
     const div = document.createElement("div");
     div.className = "msg";
@@ -590,52 +527,94 @@ b{ color:#a7f3d0; }
     log.scrollTop = log.scrollHeight;
   }
 
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, m => ({
-      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-    }[m]));
+  // 저장된 닉네임 복구
+  const savedName = localStorage.getItem("stance_chat_name");
+  if(savedName){
+    nameEl.value = savedName;
+    nameEl.disabled = true;
+    btnSetName.disabled = true;
+    btnSetName.textContent = "Set";
   }
 
-  function doJoinSilently(){
-    if (!myName) return;
-    // 재연결 등으로 connect가 다시 떠도, 클라에서는 1회만 "내 UI 로그"를 찍고
-    // 서버에는 sid 바뀌었을 수 있으니 join은 재전송 가능
-    sock.emit("join", { name: myName });
+  // ✅ 핵심: connect 때 자동 join 하지 말고, 'Set'을 눌렀을 때만 join 1회
+  let hasJoined = false;
+
+  const sock = io("https://mrdindoin.ddns.net", {
+    path: "/jagannath/socket.io",
+    transports: ["websocket"],
+    withCredentials: true,
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 800,
+    reconnectionDelayMax: 2500
+  });
+
+  sock.on("connect", () => {
+    // connect 로그는 너무 스팸 나니 1번만 표시
+    if(!window.__connectedOnce){
+      window.__connectedOnce = true;
+      add(`<div class="sys">• connected</div>`);
+    }
+    // 이미 닉 저장돼있고, join 안했으면 1회 join
+    if(!hasJoined && localStorage.getItem("stance_chat_name")){
+      doJoin(true); // silent join
+    }
+  });
+
+  sock.on("disconnect", () => {
+    // disconnect도 스팸이면 빼고 싶으면 주석 처리
+    add(`<div class="sys">• disconnected</div>`);
+  });
+
+  sock.on("system", (d) => add(`<div class="sys">• ${escapeHtml(d.msg||"")}</div>`));
+  sock.on("chat", (d) => add(`<span class="nick">${escapeHtml(d.name||"anon")}</span> : ${escapeHtml(d.msg||"")}`));
+
+  function doJoin(silent=false){
+    if(hasJoined) return;
+    const name = (nameEl.value || "anon").trim().slice(0,30);
+    if(!name){
+      if(!silent) add(`<div class="sys">• 닉네임을 입력해줘</div>`);
+      return;
+    }
+    hasJoined = true;
+    sock.emit("join", {name});
+    if(!silent) add(`<div class="sys">• 닉네임 설정: ${escapeHtml(name)}</div>`);
   }
 
-  btnSet.addEventListener("click", () => {
-    const v = (nameEl.value || "").trim().slice(0, 30);
-    if (!v) {
-      add(`<div class="sys">• 닉네임부터 입력해줘</div>`);
+  btnSetName.addEventListener("click", () => {
+    const name = (nameEl.value || "").trim().slice(0,30);
+    if(!name){
+      add(`<div class="sys">• 닉네임을 먼저 입력해줘</div>`);
       nameEl.focus();
       return;
     }
-    myName = v;
-    localStorage.setItem("lf_chat_name", myName);
-
+    localStorage.setItem("stance_chat_name", name);
     nameEl.disabled = true;
-    btnSet.disabled = true;
-    nameHint.textContent = "※ 닉네임 설정됨";
-
-    // 여기서 딱 1번만 join 로그를 남기고
-    if (!joinedOnce) {
-      add(`<div class="sys">• 닉네임 설정: ${escapeHtml(myName)}</div>`);
-      joinedOnce = true;
-    }
-
-    doJoinSilently();
+    btnSetName.disabled = true;
+    doJoin(false);
     msgEl.focus();
   });
 
+  nameEl.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter") btnSetName.click();
+  });
+
   function send(){
-    if (!myName) {
-      add(`<div class="sys">• 닉네임을 먼저 Set 해줘</div>`);
+    const name = (localStorage.getItem("stance_chat_name") || nameEl.value || "anon").trim().slice(0,30);
+    const msg  = (msgEl.value || "").trim().slice(0,500);
+    if(!msg) return;
+
+    // 닉네임 확정 안했는데 보내려하면 안내
+    if(!localStorage.getItem("stance_chat_name")){
+      add(`<div class="sys">• 닉네임부터 Set 눌러라 ㅋㅋ</div>`);
       nameEl.focus();
       return;
     }
-    const msg = (msgEl.value || "").trim().slice(0, 500);
-    if(!msg) return;
-    sock.emit("chat", { name: myName, msg });
+
+    // 혹시 join 아직이면(새로고침 직후) join 한번 하고 전송
+    if(!hasJoined) doJoin(true);
+
+    sock.emit("chat", {name, msg});
     msgEl.value = "";
     msgEl.focus();
   }
@@ -643,31 +622,10 @@ b{ color:#a7f3d0; }
   sendBtn.addEventListener("click", send);
   msgEl.addEventListener("keydown", (e)=>{ if(e.key==="Enter") send(); });
 
-  btnFocus?.addEventListener("click", ()=> msgEl.focus());
-
-  // ✅ connect/disconnect 로그는 UI에 안 찍음(시끄러움)
-  sock.on("connect", () => {
-    // 닉네임이 이미 설정되어 있으면 조용히 재-join만
-    doJoinSilently();
+  btnFocus.addEventListener("click", () => {
+    if(localStorage.getItem("stance_chat_name")) msgEl.focus();
+    else nameEl.focus();
   });
-
-  // 서버가 보내는 system/join 메시지가 너무 많으면, 여기서 필터링 가능
-  sock.on("system", (d) => {
-    const m = (d.msg || "");
-    // 예: "xxx joined"는 UI에서 숨기고 싶으면 아래 주석 해제
-    // if (m.includes(" joined")) return;
-    add(`<div class="sys">• ${escapeHtml(m)}</div>`);
-  });
-
-  sock.on("chat", (d) => {
-    add(`<b>${escapeHtml(d.name || "anon")}</b> : ${escapeHtml(d.msg || "")}`);
-  });
-
-
-
-
-
-  
 </script>
 </body>
 </html>
