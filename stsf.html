@@ -450,59 +450,60 @@
 
 	/* ====== Mobile ====== */
 	@media (max-width: 980px){
-	  html, body{
-	    height: 100%;
-	    overflow: hidden; /* ✅ 페이지 자체 스크롤 막음 */
+	  /* 동적 주소창 대응: dvh 우선, 없으면 vh */
+	  body{
+	    height: 100dvh;
+	    height: 100vh; /* fallback */
+	    overflow: hidden; /* 페이지 전체 스크롤 막고 */
+	    padding-bottom: var(--safe-b); /* 하단바에 안가리게 */
 	  }
 	
+	  /* 전체 레이아웃을 "헤더 + 지도(고정) + 로그(스크롤)" 구조로 */
 	  .hud{
-	    height: 100vh;                 /* ✅ 화면에 딱 고정 */
-	    overflow: hidden;              /* ✅ 바깥 스크롤 차단 */
-	    padding: var(--mob-pad);
-	    padding-top: calc(var(--topbar-h) + 2*var(--mob-pad));
-	    display: grid;
+	    height: calc(100dvh - var(--topbar-h) - var(--safe-t));
+	    height: calc(100vh - var(--topbar-h) - var(--safe-t)); /* fallback */
 	    grid-template-columns: 1fr;
-	    grid-template-rows: var(--mob-map-h) 1fr; /* ✅ 지도 + 로그(남은공간) */
-	    gap: var(--mob-gap);
+	    grid-template-rows: auto 1fr;  /* map / side */
+	    gap: 10px;
+	    padding: 10px;
+	    padding-top: calc(10px + var(--safe-t));
 	  }
 	
-	  .panel{
-	    border-radius: 16px;
-	  }
-	
-	  /* 지도는 그 자리에서 고정 느낌 */
+	  /* 지도는 위에 고정처럼 보이게 */
 	  .mapWrap{
-	    height: var(--mob-map-h);
-	    min-height: 0;
-	  }
-	  .mapWrap .map{
-	    border-radius: 16px;
+	    height: 42dvh;      /* 취향대로 40~55dvh */
+	    height: 42vh;       /* fallback */
+	    min-height: 260px;
 	  }
 	
-	  /* ✅ 오른쪽 패널(로그)만 내부 스크롤 */
+	  /* 미니맵 제거 */
+	  .minimapDock{ display:none !important; }
+	
+	  /* 우측 패널은 남은 공간 꽉 채움 */
 	  .side{
 	    min-height: 0;
-	    overflow: hidden; /* 바깥은 숨기고 */
+	    height: 100%;
+	    display:flex;
+	    flex-direction: column;
 	  }
 	
-	  /* 모바일에서는 “PIN HERE + 로그목록 위주”로 간소화 */
-	  .subtitle{ display:none; }        /* 설명 숨김 */
-	  /* 원하면 필터도 숨김 */
-	  .filters{ display:none; }
-	
-	  .sideHead{
-	    padding: 12px 12px 8px;
-	  }
-	
-	  .filters{
-	    padding: 0 12px 10px;
-	  }
-	
+	  /* 로그 리스트만 스크롤 */
 	  .list{
-	    padding: 0 10px 10px;
-	    overflow: auto;               /* ✅ 여기만 스크롤 */
-	    -webkit-overflow-scrolling: touch;
 	    min-height: 0;
+	    overflow: auto;
+	    padding-bottom: calc(12px + var(--safe-b)); /* 하단바 가림 방지 핵심 */
+	    -webkit-overflow-scrolling: touch;
+	  }
+	
+	  /* 모바일은 상단 pill(날짜/좌표) 숨기고 싶다 했지 */
+	  #todayPill, #coordPill{ display:none !important; }
+	
+	  /* 헤더-지도 간격 줄이기 */
+	  .topbar{
+	    top: 0;
+	    left: 0;
+	    right: 0;
+	    border-radius: 0 0 16px 16px;
 	  }
 	}
 	  
