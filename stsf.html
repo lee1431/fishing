@@ -556,10 +556,12 @@
 		});
 
 		if(!res.ok){
+			console.log("!res");
 		  throw new Error("HTTP " + res.status);
 		}
 
 		LOGS = await res.json();
+		  console.log("",LOGS);
 		render();
 		fitAll(LOGS);
 
