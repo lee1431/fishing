@@ -467,12 +467,14 @@
       <div id="mapMain" class="map"></div>
 	  <div class="crosshair"><div class="dot"></div></div>
 
-
+	<!--
       <div class="minimapDock panel" id="minimapDock" title="미니맵 클릭 → 전체 지도">
         <div class="miniHeader">MINIMAP</div>
         <div class="minimapHint">CLICK</div>
         <div id="mapMini" style="position:absolute; inset:0; border-radius:14px;"></div>
       </div>
+		-->
+		
     </section>
 
     <!-- RIGHT: LOG LIST -->
@@ -585,19 +587,19 @@
     const start = { lat: 36.99, lng: 127.92, zoom: 12 };
 
     const mapMain = L.map("mapMain", { zoomControl:true }).setView([start.lat, start.lng], start.zoom);
-    const mapMini = L.map("mapMini", { zoomControl:false, attributionControl:false, dragging:true, scrollWheelZoom:false, doubleClickZoom:false, boxZoom:false, keyboard:false, tap:false }).setView([start.lat, start.lng], 11);
+    // const mapMini = L.map("mapMini", { zoomControl:false, attributionControl:false, dragging:true, scrollWheelZoom:false, doubleClickZoom:false, boxZoom:false, keyboard:false, tap:false }).setView([start.lat, start.lng], 11);
     const mapOverlay = L.map("mapOverlay", { zoomControl:true }).setView([start.lat, start.lng], 11);
 
     // Tiles (OSM)
     const tile = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
     const attr = "&copy; OpenStreetMap contributors";
     L.tileLayer(tile, { attribution: attr, maxZoom: 19 }).addTo(mapMain);
-    L.tileLayer(tile, { maxZoom: 19 }).addTo(mapMini);
+    // L.tileLayer(tile, { maxZoom: 19 }).addTo(mapMini);
     L.tileLayer(tile, { attribution: attr, maxZoom: 19 }).addTo(mapOverlay);
 
     // ====== Markers store ======
     const markersMain = new Map();
-    const markersMini = new Map();
+    // const markersMini = new Map();
     const markersOverlay = new Map();
 
     function makeIcon(kind){
@@ -637,7 +639,7 @@
       const icon = makeIcon(primary);
 
       const m1 = L.marker([log.lat, log.lng], { icon }).addTo(mapMain);
-      const m2 = L.marker([log.lat, log.lng], { icon }).addTo(mapMini);
+      // const m2 = L.marker([log.lat, log.lng], { icon }).addTo(mapMini);
       const m3 = L.marker([log.lat, log.lng], { icon }).addTo(mapOverlay);
 
       const tip = `<b>${log.title}</b><br>${log.place}<br><span style="opacity:.7">${log.date}</span>`;
@@ -650,22 +652,22 @@
       m3.on("click", onClick);
 
       markersMain.set(log.id, m1);
-      markersMini.set(log.id, m2);
+      // markersMini.set(log.id, m2);
       markersOverlay.set(log.id, m3);
     }
 
     function clearMarkers(){
       for (const m of markersMain.values()) mapMain.removeLayer(m);
-      for (const m of markersMini.values()) mapMini.removeLayer(m);
+      // for (const m of markersMini.values()) mapMini.removeLayer(m);
       for (const m of markersOverlay.values()) mapOverlay.removeLayer(m);
-      markersMain.clear(); markersMini.clear(); markersOverlay.clear();
+      // markersMain.clear(); markersMini.clear(); markersOverlay.clear();
     }
 
     function fitAll(logs){
       if(!logs.length) return;
       const bounds = L.latLngBounds(logs.map(x=>[x.lat,x.lng]));
       mapMain.fitBounds(bounds, { padding:[40,40] });
-      mapMini.fitBounds(bounds, { padding:[20,20] });
+      // mapMini.fitBounds(bounds, { padding:[20,20] });
       mapOverlay.fitBounds(bounds, { padding:[40,40] });
     }
 
@@ -769,7 +771,7 @@
       // pan maps
       if(pan){
         mapMain.flyTo([log.lat, log.lng], Math.max(mapMain.getZoom(), 14), { duration: 0.6 });
-        mapMini.flyTo([log.lat, log.lng], Math.max(mapMini.getZoom(), 12), { duration: 0.4 });
+        // mapMini.flyTo([log.lat, log.lng], Math.max(mapMini.getZoom(), 12), { duration: 0.4 });
         mapOverlay.flyTo([log.lat, log.lng], Math.max(mapOverlay.getZoom(), 13), { duration: 0.6 });
       }
 
@@ -912,7 +914,7 @@
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
         mapMain.flyTo([lat,lng], 15, {duration:0.8});
-        mapMini.flyTo([lat,lng], 13, {duration:0.6});
+        // mapMini.flyTo([lat,lng], 13, {duration:0.6});
         mapOverlay.flyTo([lat,lng], 14, {duration:0.8});
 
         // 현재 위치 표시(임시)
