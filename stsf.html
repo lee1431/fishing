@@ -621,7 +621,19 @@
       });
     }
 
+	function toNum(v){
+	  const n = Number(v);
+	  return Number.isFinite(n) ? n : null;
+	}
+	  
     function addLogMarker(log){
+	  const lat = toNum(log.lat);
+	  const lng = toNum(log.lng);
+	
+	  if(lat === null || lng === null){
+	    console.warn("SKIP marker (bad lat/lng):", log);
+	    return;
+	  }
       const primary = (log.fish && log.fish[0]) ? log.fish[0] : "기록";
       const icon = makeIcon(primary);
 
