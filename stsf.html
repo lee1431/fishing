@@ -794,20 +794,6 @@
       });
     });
 
-    // ====== Minimap overlay open/close ======
-    const overlay = $("#overlay");
-    $("#minimapDock").addEventListener("click", ()=>{
-      overlay.classList.add("on");
-      setTimeout(()=> mapOverlay.invalidateSize(), 50);
-    });
-    $("#overlayClose").addEventListener("click", ()=> overlay.classList.remove("on"));
-    overlay.addEventListener("click", (e)=>{
-      if(e.target === overlay) overlay.classList.remove("on");
-    });
-    window.addEventListener("keydown", (e)=>{
-      if(e.key === "Escape") overlay.classList.remove("on");
-    });
-	
 	
 	// ======= crosshair =========
 	function setCoordPill(latlng){
