@@ -444,24 +444,59 @@
 	  .pill, .btn{ padding:6px 8px; font-size:11px; }
 	}
 
-	  @media (max-width: 980px){
-	  body{ overflow:auto; }          /* 페이지가 스크롤 되게 */
-	  .hud{
-	    height:auto;                  /* 화면 고정 해제 */
-	    min-height:100vh;
-	    grid-template-columns:1fr;
-	    grid-template-rows: 52vh auto; /* 지도는 위에 고정 높이 */
-	    overflow:visible;
-	  }
-	  .mapWrap{ height:52vh; }        /* map panel 높이 확보 */
-	  .map{ position:absolute; inset:0; } /* 그대로 OK */
-	
-	  .side{ min-height:unset; }      /* 데스크탑용 min-height:0 영향 제거 */
-	  .list{
-	    overflow:visible;             /* ✅ 모바일에서 내부 스크롤 끔 */
-	    max-height:none;
-	  }
 
+	@media (max-width: 980px){
+
+  /* 상단바 높이만큼 콘텐츠를 아래로 밀기 */
+  body{ overflow:hidden; }
+
+  .hud{
+    grid-template-columns: 1fr;
+    grid-template-rows: var(--map-h) 1fr;
+    gap: 12px;
+
+    /* topbar가 fixed니까 그 아래부터 시작 */
+    padding-top: calc(var(--topbar-h) + 14px);
+    height: 100vh;
+
+    /* 모바일에서 맵 높이(취향대로 조절) */
+    --map-h: 42vh;
+  }
+
+  /* 지도 패널: 상단에 고정 */
+  .mapWrap{
+    position: sticky;
+    top: calc(var(--topbar-h) + 14px);
+    height: var(--map-h);
+    z-index: 5;
+  }
+
+  /* 지도 div는 부모 높이를 꽉 채움 */
+  .mapWrap .map{
+    position:absolute;
+    inset:0;
+  }
+
+  /* 로그 패널: 남은 영역만 차지 + 여기만 스크롤 */
+  .side{
+    min-height: 0;
+    overflow: hidden;     /* 내부 list가 스크롤 담당 */
+  }
+
+  .list{
+    overflow: auto;
+    min-height: 0;
+    height: 100%;
+    padding-bottom: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 미니맵은 모바일에서 숨기기(걸리적) */
+  .minimapDock{ display:none !important; }
+}
+	  
+
+	  
   </style>
 </head>
 
