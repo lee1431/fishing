@@ -530,14 +530,6 @@
     <section class="panel mapWrap">
       <div id="mapMain" class="map"></div>
 	  <div class="crosshair"><div class="dot"></div></div>
-
-	<!--
-      <div class="minimapDock panel" id="minimapDock" title="미니맵 클릭 → 전체 지도">
-        <div class="miniHeader">MINIMAP</div>
-        <div class="minimapHint">CLICK</div>
-        <div id="mapMini" style="position:absolute; inset:0; border-radius:14px;"></div>
-      </div>
-		-->
 		
     </section>
 
@@ -950,11 +942,10 @@
 	
 
     // ====== Controls ======
-
-	document.querySelector("#btnPicture")
-	  .addEventListener("click", ()=>{
-	    window.open("https://llsshh.com/stsfg.html", "_blank");
-	  });
+	$("#btnPicture").addEventListener("click", ()=>{
+      window.open("https://llsshh.com/stsfg.html", "_blank");
+    });
+	
 	  
     $("#btnFocusAll").addEventListener("click", ()=>{
       const filtered = LOGS.filter(matchesFilter);
