@@ -951,9 +951,10 @@
 
     // ====== Controls ======
 
-	$("#btnPicture").on("click", function(){
-	  window.open("https://llsshh.com/stsfg.html", "_blank");
-	});
+	document.querySelector("#btnPicture")
+	  .addEventListener("click", ()=>{
+	    window.open("https://llsshh.com/stsfg.html", "_blank");
+	  });
 	  
     $("#btnFocusAll").addEventListener("click", ()=>{
       const filtered = LOGS.filter(matchesFilter);
