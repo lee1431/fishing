@@ -520,7 +520,7 @@
     <div class="status">
       <div class="pill" id="todayPill">DATE</div>
 	  <div class="pill" id="coordPill">LAT,LNG</div>
-      <div class="pill" id="countPill">LOGS: 0</div>
+      <div class="btn" id="btnPicture">PICTURE</div>
       <div class="btn" id="btnLocate">LOCATE</div>
     </div>
   </div>
@@ -950,6 +950,11 @@
 	
 
     // ====== Controls ======
+
+	$("#btnPicture").on("click", function(){
+	  window.open("https://llsshh.com/stsfg.html", "_blank");
+	});
+	  
     $("#btnFocusAll").addEventListener("click", ()=>{
       const filtered = LOGS.filter(matchesFilter);
       fitAll(filtered);
