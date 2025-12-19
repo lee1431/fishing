@@ -444,6 +444,24 @@
 	  .pill, .btn{ padding:6px 8px; font-size:11px; }
 	}
 
+	  @media (max-width: 980px){
+	  body{ overflow:auto; }          /* 페이지가 스크롤 되게 */
+	  .hud{
+	    height:auto;                  /* 화면 고정 해제 */
+	    min-height:100vh;
+	    grid-template-columns:1fr;
+	    grid-template-rows: 52vh auto; /* 지도는 위에 고정 높이 */
+	    overflow:visible;
+	  }
+	  .mapWrap{ height:52vh; }        /* map panel 높이 확보 */
+	  .map{ position:absolute; inset:0; } /* 그대로 OK */
+	
+	  .side{ min-height:unset; }      /* 데스크탑용 min-height:0 영향 제거 */
+	  .list{
+	    overflow:visible;             /* ✅ 모바일에서 내부 스크롤 끔 */
+	    max-height:none;
+	  }
+
   </style>
 </head>
 
