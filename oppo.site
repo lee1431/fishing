@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>연패신화 — 인생 실패 스토리</title>
+  <meta name="description" content="정답만 찾지 마라. 길이 맞는지부터 의심하라. 실패와 연패의 로드맵으로 보는 세상 사는 법의 여러 시각." />
+
+  <style>
+    :root{
+      --bg:#0b0c10;
+      --card:#121420;
+      --card2:#0f111a;
+      --text:#e8e8ef;
+      --muted:#a8abbc;
+      --line:#24263a;
+      --accent:#B57CFF; /* 너가 좋아하던 플래닛충주 라인 */
+      --good:#3ddc97;
+      --bad:#ff5c7a;
+      --warn:#ffcc66;
+      --radius:18px;
+      --shadow: 0 10px 35px rgba(0,0,0,.45);
+      --max:1100px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      background: radial-gradient(1000px 700px at 20% -10%, rgba(181,124,255,.22), transparent 60%),
+                  radial-gradient(900px 600px at 90% 10%, rgba(61,220,151,.14), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+    a{color:inherit; text-decoration:none}
+    .wrap{max-width:var(--max); margin:0 auto; padding:22px 18px 90px}
+    .topbar{
+      position:sticky; top:0; z-index:50;
+      backdrop-filter: blur(10px);
+      background: rgba(11,12,16,.72);
+      border-bottom:1px solid rgba(36,38,58,.7);
+    }
+    .topbar .inner{max-width:var(--max); margin:0 auto; padding:12px 18px; display:flex; gap:12px; align-items:center; justify-content:space-between;}
+    .brand{display:flex; gap:10px; align-items:center;}
+    .logo{
+      width:34px; height:34px; border-radius:12px;
+      background: linear-gradient(135deg, rgba(181,124,255,.95), rgba(255,92,122,.75));
+      box-shadow: 0 10px 30px rgba(181,124,255,.22);
+    }
+    .brand .t{display:flex; flex-direction:column; line-height:1.1}
+    .brand .t strong{font-size:14px}
+    .brand .t span{font-size:12px; color:var(--muted)}
+    .nav{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
+    .pill{
+      padding:8px 11px; border-radius:999px;
+      background:rgba(18,20,32,.8);
+      border:1px solid rgba(36,38,58,.9);
+      color:var(--muted);
+      font-size:12px;
+    }
+    .pill:hover{border-color:rgba(181,124,255,.5); color:var(--text)}
+    .cta{
+      padding:9px 12px; border-radius:999px;
+      background:rgba(181,124,255,.13);
+      border:1px solid rgba(181,124,255,.45);
+      color:var(--text);
+      font-weight:600;
+      font-size:12px;
+    }
+
+    header.hero{padding:38px 0 18px}
+    .heroGrid{display:grid; gap:16px; grid-template-columns: 1.2fr .8fr}
+    @media (max-width:920px){ .heroGrid{grid-template-columns:1fr} }
+
+    .hCard{
+      background: linear-gradient(180deg, rgba(18,20,32,.9), rgba(15,17,26,.9));
+      border:1px solid rgba(36,38,58,.95);
+      border-radius:var(--radius);
+      box-shadow: var(--shadow);
+      padding:22px;
+    }
+    h1{margin:0 0 10px; font-size:34px; letter-spacing:-.5px}
+    .sub{color:var(--muted); line-height:1.65; margin:0}
+    .quote{
+      margin-top:16px; padding:14px 14px 14px 16px;
+      border-left:3px solid rgba(181,124,255,.8);
+      background: rgba(181,124,255,.06);
+      border-radius:14px;
+    }
+    .quote p{margin:0; line-height:1.7}
+    .quote .sig{margin-top:10px; font-family:var(--mono); color:rgba(232,232,239,.82); font-size:12px}
+
+    .sideStack{display:flex; flex-direction:column; gap:12px}
+    .statRow{display:flex; gap:10px; flex-wrap:wrap}
+    .stat{
+      flex:1; min-width:160px;
+      background: rgba(18,20,32,.72);
+      border:1px solid rgba(36,38,58,.9);
+      border-radius:16px;
+      padding:12px 12px 10px;
+    }
+    .stat b{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
+    .stat strong{font-size:16px}
+    .badge{
+      display:inline-flex; align-items:center; gap:7px;
+      padding:8px 10px; border-radius:999px;
+      border:1px dashed rgba(36,38,58,.95);
+      background: rgba(18,20,32,.55);
+      color:rgba(232,232,239,.9);
+      font-size:12px;
+    }
+    .dot{width:9px; height:9px; border-radius:99px; background:var(--accent); box-shadow:0 0 0 4px rgba(181,124,255,.14)}
+    .dot.bad{background:var(--bad); box-shadow:0 0 0 4px rgba(255,92,122,.14)}
+    .dot.good{background:var(--good); box-shadow:0 0 0 4px rgba(61,220,151,.14)}
+
+    section{margin-top:22px}
+    .grid{
+      display:grid; gap:14px;
+      grid-template-columns: 1fr 1fr;
+    }
+    @media (max-width:920px){ .grid{grid-template-columns:1fr} }
+
+    .card{
+      background: rgba(18,20,32,.72);
+      border:1px solid rgba(36,38,58,.95);
+      border-radius:var(--radius);
+      padding:18px;
+      box-shadow: 0 10px 28px rgba(0,0,0,.35);
+    }
+    .card h2{margin:0 0 8px; font-size:18px}
+    .muted{color:var(--muted); line-height:1.7; margin:0}
+
+    .toolbar{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      padding:12px; border-radius:16px;
+      background: rgba(18,20,32,.55);
+      border:1px solid rgba(36,38,58,.95);
+    }
+    .input, .select{
+      background: rgba(11,12,16,.65);
+      border:1px solid rgba(36,38,58,.95);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      font-size:13px;
+      outline:none;
+    }
+    .input{min-width:240px; flex:1}
+    .btn{
+      cursor:pointer;
+      background: rgba(181,124,255,.14);
+      border:1px solid rgba(181,124,255,.5);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      font-weight:700;
+      font-size:13px;
+    }
+    .btn:hover{filter:brightness(1.08)}
+
+    .storyList{display:grid; gap:12px; margin-top:12px}
+    .story{
+      border-radius:18px;
+      border:1px solid rgba(36,38,58,.95);
+      background: rgba(15,17,26,.76);
+      padding:16px;
+    }
+    .storyTop{display:flex; gap:10px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap}
+    .tags{display:flex; gap:8px; flex-wrap:wrap}
+    .tag{
+      font-size:12px; padding:6px 10px; border-radius:999px;
+      border:1px solid rgba(36,38,58,.95);
+      background: rgba(18,20,32,.55);
+      color: var(--muted);
+    }
+    .tag.bad{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.08); color:rgba(255,92,122,.95)}
+    .tag.good{border-color: rgba(61,220,151,.35); background: rgba(61,220,151,.08); color:rgba(61,220,151,.95)}
+    .tag.warn{border-color: rgba(255,204,102,.35); background: rgba(255,204,102,.08); color:rgba(255,204,102,.95)}
+    .story h3{margin:10px 0 6px; font-size:16px}
+    .story p{margin:0; color:rgba(232,232,239,.85); line-height:1.7}
+    .story .meta{margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; color:var(--muted); font-size:12px; font-family:var(--mono)}
+    .divider{height:1px; background:rgba(36,38,58,.95); margin:14px 0}
+
+    footer{
+      margin-top:26px;
+      color:rgba(168,171,188,.9);
+      font-size:12px;
+      display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; align-items:center;
+    }
+    .footerNote{opacity:.9; line-height:1.6}
+    .kbd{font-family:var(--mono); border:1px solid rgba(36,38,58,.95); background:rgba(18,20,32,.55); padding:2px 7px; border-radius:8px}
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="inner">
+      <a class="brand" href="#top">
+        <div class="logo" aria-hidden="true"></div>
+        <div class="t">
+          <strong>연패신화</strong>
+          <span>인생 실패 스토리 · 여러 시각의 로드맵</span>
+        </div>
+      </a>
+
+      <nav class="nav">
+        <a class="pill" href="#manifesto">선언문</a>
+        <a class="pill" href="#angles">시각(Angles)</a>
+        <a class="pill" href="#stories">스토리</a>
+        <a class="pill" href="#submit">제보</a>
+        <a class="cta" href="#stories">연패 보러가기 →</a>
+      </nav>
+    </div>
+  </div>
+
+  <main id="top" class="wrap">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="heroGrid">
+        <div class="hCard">
+          <h1>정답만 찾으려 하지 마라.</h1>
+          <p class="sub">
+            이건 5지선다 시험이 아니다. <br/>
+            성공신화만 있는 세상에서, <b>연패신화(실패의 로드맵)</b>로 “사는 방법”을 여러 각도로 보여준다.
+          </p>
+
+          <div class="quote" id="manifesto">
+            <p>
+              <b>그 길이 맞는지부터 의심하라.</b><br/>
+              “그 길로 가야 알 수 있다” 말만 짓거리는 놈들 말 듣지 마라.<br/>
+              그 길로 가는 <b>보편적인 로드맵</b>은 이미 짜여 있다. <b>알아보고 가라.</b>
+            </p>
+            <div class="sig">— 연패신화 선언문 v1</div>
+          </div>
+        </div>
+
+        <div class="sideStack">
+          <div class="hCard">
+            <div class="statRow">
+              <div class="stat">
+                <b>핵심 키워드</b>
+                <strong>사는 방법 · 여러 시각</strong>
+              </div>
+              <div class="stat">
+                <b>모드</b>
+                <strong>Y / N 판단 훈련</strong>
+              </div>
+            </div>
+            <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap">
+              <span class="badge"><span class="dot bad"></span> 연패(실패)에서 배우기</span>
+              <span class="badge"><span class="dot"></span> 로드맵 해부</span>
+              <span class="badge"><span class="dot good"></span> 생존 확률 올리기</span>
+            </div>
+          </div>
+
+          <div class="card" id="angles">
+            <h2>시각(Angles) 구조</h2>
+            <p class="muted">
+              같은 사건도 각도가 다르면 결론이 바뀐다.<br/>
+              “성공/실패”를 결론으로 박지 않고, <b>분기점(선택)</b>과 <b>대가(리스크)</b>를 기록한다.
+            </p>
+            <div class="divider"></div>
+            <p class="muted">
+              예: <span class="tag warn">퇴직금 창업</span> <span class="tag bad">고정비</span> <span class="tag bad">입지</span>
+              <span class="tag warn">가족 변수</span> <span class="tag good">현금흐름</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- TOOLBAR -->
+    <section id="stories">
+      <div class="toolbar" role="search">
+        <input id="q" class="input" placeholder="키워드 검색: 예) 퇴직금, 치킨집, 대출, 월세, 인테리어…" />
+        <select id="filter" class="select">
+          <option value="all">전체</option>
+          <option value="losing">연패(실패) 위주</option>
+          <option value="mixed">혼합(갈림길)</option>
+          <option value="insight">인사이트(요약)</option>
+        </select>
+        <button id="btnRandom" class="btn" type="button">랜덤 연패 뽑기</button>
+      </div>
+
+      <!-- STORY LIST -->
+      <div id="list" class="storyList">
+        <!-- 샘플 카드 1 -->
+        <article class="story" data-type="losing" data-tags="퇴직금,창업,고정비,상권">
+          <div class="storyTop">
+            <div class="tags">
+              <span class="tag warn">퇴직금 창업</span>
+              <span class="tag bad">고정비</span>
+              <span class="tag bad">상권 착각</span>
+            </div>
+            <div class="tag">#001</div>
+          </div>
+          <h3>“치킨집 하면 된다” — 로드맵은 있는데, 함정도 있다</h3>
+          <p>
+            문제는 노력 부족이 아니라 <b>구조</b>였다. <br/>
+            임대료·인건비·원가·배달 플랫폼 수수료… 고정비가 먼저 목을 조른다.
+            ‘다들 하니까’가 아니라 <b>내가 감당 가능한 고정비</b>부터 계산해야 했다.
+          </p>
+          <div class="meta">
+            <span>분기점: 임대료 선택</span>
+            <span>대가: 현금흐름 압박</span>
+            <span>판단: Y / N</span>
+          </div>
+        </article>
+
+        <!-- 샘플 카드 2 -->
+        <article class="story" data-type="mixed" data-tags="대출,월세,저축,선택">
+          <div class="storyTop">
+            <div class="tags">
+              <span class="tag warn">대출</span>
+              <span class="tag">월세</span>
+              <span class="tag good">저축</span>
+            </div>
+            <div class="tag">#002</div>
+          </div>
+          <h3>월세로 가면 손해? 아니, “기회비용”이 갈린다</h3>
+          <p>
+            월세는 손해가 아니라 <b>시간을 사는 비용</b>일 수 있다. <br/>
+            다만 그 시간을 ‘세이브’로 바꾸지 못하면 진짜 손해가 된다.
+            같은 길인데도, 선택이 결과를 만든다.
+          </p>
+          <div class="meta">
+            <span>분기점: 월세/매매</span>
+            <span>대가: 현금 보유 vs 이자</span>
+            <span>판단: Y / N</span>
+          </div>
+        </article>
+
+        <!-- 샘플 카드 3 -->
+        <article class="story" data-type="insight" data-tags="로드맵,의심,정답">
+          <div class="storyTop">
+            <div class="tags">
+              <span class="tag good">인사이트</span>
+              <span class="tag">로드맵</span>
+              <span class="tag warn">의심</span>
+            </div>
+            <div class="tag">#003</div>
+          </div>
+          <h3>“그 길로 가야 안다”는 말의 함정</h3>
+          <p>
+            길은 하나처럼 보여도, 실제로는 <b>입구에서 이미 승패가 갈리는 구조</b>가 많다. <br/>
+            그래서 “가야 안다”가 아니라 <b>가도 되는지부터 의심</b>해야 한다.
+          </p>
+          <div class="meta">
+            <span>분기점: 정보 확인</span>
+            <span>대가: 시간/돈/관계</span>
+            <span>판단: Y / N</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- SUBMIT -->
+    <section id="submit" class="grid" style="margin-top:18px">
+      <div class="card">
+        <h2>제보/연패 추가</h2>
+        <p class="muted">
+          나중에 DB 붙일 거면 이 폼 그대로 백엔드(Flask/Mongo)로 연결하면 됨.
+          지금은 “구조”만 잡아놓자.
+        </p>
+        <div class="divider"></div>
+
+        <form id="form">
+          <label class="muted" for="title">제목</label><br/>
+          <input id="title" class="input" placeholder="예) 퇴직금 창업, 왜 망했나" style="width:100%; margin:8px 0 12px"/>
+
+          <label class="muted" for="tags">태그(쉼표로)</label><br/>
+          <input id="tags" class="input" placeholder="예) 퇴직금,창업,고정비,상권" style="width:100%; margin:8px 0 12px"/>
+
+          <label class="muted" for="body">내용</label><br/>
+          <textarea id="body" class="input" rows="6" placeholder="분기점(선택) / 대가(리스크) / 결과(연패 로그) / 배운 것(인사이트)" style="width:100%; resize:vertical; margin:8px 0 12px"></textarea>
+
+          <button class="btn" type="submit">로컬에 임시 저장(데모)</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>편집 원칙</h2>
+        <p class="muted">
+          1) 성공/실패로 사람을 평가하지 않는다.<br/>
+          2) <b>로드맵(구조)</b>과 <b>분기점(선택)</b>을 기록한다.<br/>
+          3) “정답” 대신 “확률”과 “대가”를 보여준다.<br/>
+          4) 누구나 Y/N을 판단할 수 있게 재료를 깔아준다.
+        </p>
+        <div class="divider"></div>
+        <p class="muted">
+          키워드: <span class="kbd">연패신화</span> <span class="kbd">망나니 인사이트</span> <span class="kbd">사는 방법</span>
+        </p>
+      </div>
+    </section>
+
+    <footer>
+      <div class="footerNote">
+        © <span id="year"></span> 연패신화. “정답만 찾지 마라. 길부터 의심하라.”
+      </div>
+      <div class="footerNote">
+        Prototype: static HTML → (다음) JSON → Flask/Mongo로 확장 가능
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    const $ = (s)=>document.querySelector(s);
+    const $$ = (s)=>Array.from(document.querySelectorAll(s));
+
+    $("#year").textContent = new Date().getFullYear();
+
+    function applyFilter(){
+      const q = ($("#q").value || "").trim().toLowerCase();
+      const f = $("#filter").value;
+
+      $$("#list .story").forEach(card=>{
+        const type = card.dataset.type;
+        const hay = (card.innerText + " " + (card.dataset.tags||"")).toLowerCase();
+
+        const okQ = !q || hay.includes(q);
+        const okF = (f==="all") || (f===type);
+        card.style.display = (okQ && okF) ? "" : "none";
+      });
+    }
+
+    $("#q").addEventListener("input", applyFilter);
+    $("#filter").addEventListener("change", applyFilter);
+
+    $("#btnRandom").addEventListener("click", ()=>{
+      const visible = $$("#list .story").filter(el => el.style.display !== "none");
+      if(!visible.length) return alert("지금 조건에서 보이는 연패가 없음 ㅋㅋ");
+      const pick = visible[Math.floor(Math.random()*visible.length)];
+      pick.scrollIntoView({behavior:"smooth", block:"center"});
+      pick.animate([{transform:"scale(1)"},{transform:"scale(1.02)"},{transform:"scale(1)"}], {duration:420});
+    });
+
+    // 데모: 폼 제출 시 로컬에만 추가 (나중에 서버로 POST 붙이면 됨)
+    $("#form").addEventListener("submit", (e)=>{
+      e.preventDefault();
+      const title = $("#title").value.trim();
+      const tags = $("#tags").value.trim();
+      const body = $("#body").value.trim();
+      if(!title || !body) return alert("제목/내용은 넣어라 ㅋㅋ");
+
+      const article = document.createElement("article");
+      article.className = "story";
+      article.dataset.type = "losing";
+      article.dataset.tags = tags;
+
+      const tagSpans = (tags ? tags.split(",").map(t=>t.trim()).filter(Boolean) : [])
+        .slice(0,6)
+        .map(t=>`<span class="tag warn">${escapeHtml(t)}</span>`)
+        .join("");
+
+      article.innerHTML = `
+        <div class="storyTop">
+          <div class="tags">${tagSpans || '<span class="tag warn">제보</span>'}</div>
+          <div class="tag">#NEW</div>
+        </div>
+        <h3>${escapeHtml(title)}</h3>
+        <p>${escapeHtml(body).replace(/\n/g,"<br/>")}</p>
+        <div class="meta">
+          <span>분기점: (작성)</span>
+          <span>대가: (작성)</span>
+          <span>판단: Y / N</span>
+        </div>
+      `;
+      $("#list").prepend(article);
+
+      $("#title").value = "";
+      $("#tags").value = "";
+      $("#body").value = "";
+      applyFilter();
+      article.scrollIntoView({behavior:"smooth", block:"start"});
+    });
+
+    function escapeHtml(str){
+      return str.replace(/[&<>"']/g, (m)=>({
+        "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
+      }[m]));
+    }
+
+    // 초기 적용
+    applyFilter();
+  </script>
+</body>
+</html>
