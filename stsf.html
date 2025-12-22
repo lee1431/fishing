@@ -940,6 +940,8 @@
 	  try{
 		const saved = await savePinToServer();
 
+		  console.log("saved from server:", saved, typeof saved.lat, typeof saved.lng);
+		  
 		// UI 반영: 서버가 준 log를 LOGS에 넣고 렌더
 		LOGS.push(saved);
 		render();
