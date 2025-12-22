@@ -831,16 +831,26 @@
 
     function selectLog(id, pan){
       selectedId = id;
-      // highlight card
       $$(".card").forEach(c=> c.classList.toggle("on", c.dataset.id===id));
 
       const log = LOGS.find(x=>x.id===id);
       if(!log) return;
 
+		const lat = Number(log.lat);
+		const lng = Number(log.lng);
+		
+		if(!Number.isFinite(lat) || !Number.isFinite(lng)){
+		  console.warn("Invalid lat/lng for log:", log);
+		  return;
+		}
+		
+		mapMain.flyTo([lat, lng], Math.max(mapMain.getZoom(), 14), { duration: 0.6 });
+		mapOverlay.flyTo([lat, lng], Math.max(mapOverlay.getZoom(), 13), { duration: 0.6 });
+
+		
       // pan maps
       if(pan){
         mapMain.flyTo([log.lat, log.lng], Math.max(mapMain.getZoom(), 14), { duration: 0.6 });
-        // mapMini.flyTo([log.lat, log.lng], Math.max(mapMini.getZoom(), 12), { duration: 0.4 });
         mapOverlay.flyTo([log.lat, log.lng], Math.max(mapOverlay.getZoom(), 13), { duration: 0.6 });
       }
 
