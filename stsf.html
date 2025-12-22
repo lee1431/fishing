@@ -959,7 +959,12 @@
 	  try{
 		const saved = await savePinToServer();
 
-		  console.log("saved from server:", saved, typeof saved.lat, typeof saved.lng);
+		saved.lat = Number(saved.lat);
+        saved.lng = Number(saved.lng);
+
+		if(!Number.isFinite(saved.lat) || !Number.isFinite(saved.lng)){
+			throw new Error("server lat/lng invalid");
+		}
 		  
 		// UI 반영: 서버가 준 log를 LOGS에 넣고 렌더
 		LOGS.push(saved);
