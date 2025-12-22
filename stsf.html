@@ -829,6 +829,13 @@
         .replaceAll("'","&#39;");
     }
 
+	  function isValidLatLng(lat, lng){
+		  lat = Number(lat);
+		  lng = Number(lng);
+		  return Number.isFinite(lat) && Number.isFinite(lng) &&
+		         Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
+		}
+
     function selectLog(id, pan){
       selectedId = id;
       $$(".card").forEach(c=> c.classList.toggle("on", c.dataset.id===id));
@@ -839,10 +846,8 @@
 		const lat = Number(log.lat);
 		const lng = Number(log.lng);
 		
-		if(!Number.isFinite(lat) || !Number.isFinite(lng)){
-		  console.warn("Invalid lat/lng for log:", log);
-		  return;
-		}
+		 const lat = Number(log.lat);
+  		 const lng = Number(log.lng);
 		
 		mapMain.flyTo([lat, lng], Math.max(mapMain.getZoom(), 14), { duration: 0.6 });
 		mapOverlay.flyTo([lat, lng], Math.max(mapOverlay.getZoom(), 13), { duration: 0.6 });
@@ -850,8 +855,12 @@
 		
       // pan maps
       if(pan){
-        mapMain.flyTo([log.lat, log.lng], Math.max(mapMain.getZoom(), 14), { duration: 0.6 });
-        mapOverlay.flyTo([log.lat, log.lng], Math.max(mapOverlay.getZoom(), 13), { duration: 0.6 });
+		  if(isValidLatLng(lat, lng)){
+	        mapMain.flyTo([log.lat, log.lng], Math.max(mapMain.getZoom(), 14), { duration: 0.6 });
+	        mapOverlay.flyTo([log.lat, log.lng], Math.max(mapOverlay.getZoom(), 13), { duration: 0.6 });
+		  } else {
+			console.warn("skip flyTo invalid latlng:", log.lat, log.lng, log);
+		  }
       }
 
       // open tooltip (main)
