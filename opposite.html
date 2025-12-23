@@ -492,10 +492,15 @@
         if(!res.ok) throw new Error(await res.text());
         return res.json();
       }
-      
+
+    
+
+    
+    
       $("#form").addEventListener("submit", async (e)=>{
         e.preventDefault();
-      
+
+        const nextIndex = (STORE.items?.length || 0) + 1;
         const title = $("#title").value.trim();
         const body  = $("#body").value.trim();
         const tags  = ($("#tags").value || "").split(",").map(s=>s.trim()).filter(Boolean);
