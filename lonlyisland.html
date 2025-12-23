@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1, user-scalable=no" />
+  <title>Loney Island (White Survivor Out 느낌)</title>
+  <style>
+    :root{
+      --bg:#0b0c10;
+      --ui:#121420cc;
+      --line:#2a2d44;
+      --text:#e8e8ef;
+      --muted:#a8abbc;
+      --accent:#B57CFF;
+      --good:#3ddc97;
+      --bad:#ff5c7a;
+      --warn:#ffcc66;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background: radial-gradient(900px 600px at 30% -10%, rgba(181,124,255,.18), transparent 60%),
+                  radial-gradient(900px 600px at 90% 10%, rgba(61,220,151,.10), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      overflow:hidden;
+      touch-action:none; /* 모바일 드래그/줌 방지 */
+    }
+    #wrap{
+      position:relative;
+      width:100vw;
+      height:100vh;
+    }
+    canvas{
+      width:100%;
+      height:100%;
+      display:block;
+    }
+    .hud{
+      position:absolute;
+      top:12px;
+      left:12px;
+      right:12px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:stretch;
+      pointer-events:none;
+    }
+    .panel{
+      background: var(--ui);
+      border:1px solid rgba(42,45,68,.9);
+      border-radius:14px;
+      padding:10px 12px;
+      pointer-events:auto;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .stat{font-size:12px; color:var(--muted)}
+    .stat b{color:var(--text)}
+    .btn{
+      cursor:pointer;
+      background: rgba(181,124,255,.16);
+      border:1px solid rgba(181,124,255,.55);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      font-weight:800;
+      font-size:12px;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.alt{
+      background: rgba(61,220,151,.14);
+      border:1px solid rgba(61,220,151,.5);
+    }
+    .btn.danger{
+      background: rgba(255,92,122,.12);
+      border:1px solid rgba(255,92,122,.5);
+    }
+
+    /* D-PAD */
+    .dpadWrap{
+      position:absolute;
+      left:50%;
+      bottom:18px;
+      transform:translateX(-50%);
+      width:min(240px, 56vw);
+      height:min(240px, 56vw);
+      pointer-events:auto;
+      display:grid;
+      place-items:center;
+    }
+    .dpad{
+      width:100%;
+      height:100%;
+      border-radius:28px;
+      background: rgba(18,20,32,.55);
+      border:1px solid rgba(42,45,68,.9);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      position:relative;
+      overflow:hidden;
+    }
+    .dpad::before{
+      content:"";
+      position:absolute; inset:10%;
+      border-radius:24px;
+      border:1px dashed rgba(181,124,255,.35);
+      opacity:.9;
+    }
+    .stick{
+      position:absolute;
+      left:50%; top:50%;
+      width:38%;
+      height:38%;
+      transform:translate(-50%,-50%);
+      border-radius:18px;
+      background: rgba(181,124,255,.18);
+      border:1px solid rgba(181,124,255,.6);
+      box-shadow: 0 10px 25px rgba(181,124,255,.15);
+      display:grid;
+      place-items:center;
+      color: rgba(232,232,239,.9);
+      font-weight:900;
+      user-select:none;
+    }
+    .hint{
+      position:absolute;
+      left:50%;
+      bottom:calc(min(240px,56vw) + 26px);
+      transform:translateX(-50%);
+      font-size:12px;
+      color:rgba(168,171,188,.95);
+      background: rgba(18,20,32,.55);
+      border:1px solid rgba(42,45,68,.9);
+      padding:6px 10px;
+      border-radius:999px;
+      backdrop-filter: blur(8px);
+      pointer-events:none;
+      white-space:nowrap;
+    }
+
+    @media (max-width:520px){
+      .hud{top:10px; left:10px; right:10px}
+      .panel{padding:9px 10px}
+    }
+  </style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+
+  <div class="hud">
+    <div class="panel" style="flex:1; min-width:280px">
+      <div class="row" style="justify-content:space-between">
+        <div class="stat">
+          <div>🪵 나무: <b id="wood">0</b> | 🪙 코인: <b id="coin">0</b> | 🧟 처치: <b id="kills">0</b></div>
+          <div style="margin-top:6px">
+            ⚔️ 공격속도(초당): <b id="aps">1.0</b> | 🎯 사거리: <b id="range">95</b> | 💥 공격력: <b id="dmg">1</b>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn alt" id="btnAtk">공격속도 업</button>
+          <button class="btn" id="btnDmg">공격력 업</button>
+          <button class="btn" id="btnRange">사거리 업</button>
+          <button class="btn danger" id="btnReset">리셋</button>
+        </div>
+      </div>
+      <div class="stat" style="margin-top:8px; line-height:1.55">
+        컨셉: “범위만 넓어지는 게임 말고” → <b>공격 횟수(속도)</b>가 체감되게. 대신 업그레이드 비용은 크게 증가.
+        <br/>나무 캐면 코인으로 자동 환전(기본) + 몬스터 잡아도 코인 드랍.
+      </div>
+    </div>
+  </div>
+
+  <div class="hint">D패드: 이동 / PC: WASD·화살표 / 가까이 가면 자동 공격·자동 캐기</div>
+
+  <div class="dpadWrap" id="dpadWrap">
+    <div class="dpad" id="dpad">
+      <div class="stick" id="stick">D</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d");
+
+  const $ = (id) => document.getElementById(id);
+
+  const ui = {
+    wood: $("wood"),
+    coin: $("coin"),
+    kills: $("kills"),
+    aps: $("aps"),
+    range: $("range"),
+    dmg: $("dmg"),
+    btnAtk: $("btnAtk"),
+    btnDmg: $("btnDmg"),
+    btnRange: $("btnRange"),
+    btnReset: $("btnReset"),
+  };
+
+  // --- Resize ---
+  function resize(){
+    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    canvas.width = Math.floor(innerWidth * dpr);
+    canvas.height = Math.floor(innerHeight * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener("resize", resize, {passive:true});
+  resize();
+
+  // --- Game state ---
+  const rnd = (a,b)=>a + Math.random()*(b-a);
+
+  const state = {
+    wood: 0,
+    coin: 0,
+    kills: 0,
+
+    // 업그레이드
+    attackSpeed: 1.0,   // APS (attacks per second)
+    range: 95,          // px
+    damage: 1,
+
+    // 비용 (크게 증가)
+    costAtk: 30,
+    costDmg: 40,
+    costRange: 25,
+
+    // 월드
+    trees: [],
+    mobs: [],
+    drops: [], // coin particles
+
+    // 타이머들
+    attackCooldown: 0,
+    chopCooldown: 0,
+
+    // 화면
+    camX: 0,
+    camY: 0,
+  };
+
+  // 저장/불러오기
+  const KEY = "loney_island_v1";
+  function save(){
+    const s = {
+      wood: state.wood, coin: state.coin, kills: state.kills,
+      attackSpeed: state.attackSpeed, range: state.range, damage: state.damage,
+      costAtk: state.costAtk, costDmg: state.costDmg, costRange: state.costRange
+    };
+    localStorage.setItem(KEY, JSON.stringify(s));
+  }
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(!raw) return;
+      const s = JSON.parse(raw);
+      Object.assign(state, s);
+    }catch{}
+  }
+  load();
+
+  // 엔티티 생성
+  function spawnTree(x,y){
+    state.trees.push({
+      x,y,
+      hp: 8,
+      max: 8,
+      r: 18,
+    });
+  }
+  function spawnMob(x,y){
+    state.mobs.push({
+      x,y,
+      hp: 6 + Math.floor(rnd(0,3)),
+      max: 6,
+      r: 14,
+      spd: rnd(30, 55), // px/sec
+      hitFlash: 0,
+    });
+  }
+
+  // 월드 초기
+  const world = {
+    w: 2400,
+    h: 2400,
+  };
+
+  // 랜덤 배치
+  for(let i=0;i<45;i++){
+    spawnTree(rnd(120, world.w-120), rnd(120, world.h-120));
+  }
+  for(let i=0;i<18;i++){
+    spawnMob(rnd(120, world.w-120), rnd(120, world.h-120));
+  }
+
+  // 플레이어
+  const player = {
+    x: world.w/2,
+    y: world.h/2,
+    r: 16,
+    spd: 150, // px/sec
+    vx: 0,
+    vy: 0,
+    dirX: 1,
+    dirY: 0,
+    hitFlash: 0,
+  };
+
+  // --- Input (keyboard) ---
+  const keys = new Set();
+  window.addEventListener("keydown", (e)=>{
+    const k = e.key.toLowerCase();
+    if(["arrowup","arrowdown","arrowleft","arrowright","w","a","s","d"].includes(k)){
+      e.preventDefault();
+      keys.add(k);
+    }
+  }, {passive:false});
+  window.addEventListener("keyup", (e)=>{
+    keys.delete(e.key.toLowerCase());
+  });
+
+  function getKeyVec(){
+    let x = 0, y = 0;
+    if(keys.has("arrowleft") || keys.has("a")) x -= 1;
+    if(keys.has("arrowright") || keys.has("d")) x += 1;
+    if(keys.has("arrowup") || keys.has("w")) y -= 1;
+    if(keys.has("arrowdown") || keys.has("s")) y += 1;
+    const len = Math.hypot(x,y) || 1;
+    return {x: x/len, y: y/len, active: (x!==0 || y!==0)};
+  }
+
+  // --- D-pad (virtual stick) ---
+  const dpad = $("dpad");
+  const stick = $("stick");
+  let touchId = null;
+  let stickVec = {x:0,y:0,active:false};
+
+  function setStickFromPoint(clientX, clientY){
+    const rect = dpad.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+    const dx = clientX - cx;
+    const dy = clientY - cy;
+    const max = rect.width * 0.28;
+    const len = Math.hypot(dx,dy);
+    const nx = len ? dx/len : 0;
+    const ny = len ? dy/len : 0;
+    const cl = Math.min(max, len);
+    stick.style.transform = `translate(${(-50 + (nx*cl)/(rect.width)*100)}%, ${(-50 + (ny*cl)/(rect.height)*100)}%)`;
+    stickVec = {x:nx, y:ny, active: len>6};
+  }
+  function resetStick(){
+    stick.style.transform = "translate(-50%,-50%)";
+    stickVec = {x:0,y:0,active:false};
+  }
+
+  dpad.addEventListener("pointerdown", (e)=>{
+    e.preventDefault();
+    dpad.setPointerCapture(e.pointerId);
+    touchId = e.pointerId;
+    setStickFromPoint(e.clientX, e.clientY);
+  }, {passive:false});
+
+  dpad.addEventListener("pointermove", (e)=>{
+    if(touchId !== e.pointerId) return;
+    e.preventDefault();
+    setStickFromPoint(e.clientX, e.clientY);
+  }, {passive:false});
+
+  dpad.addEventListener("pointerup", (e)=>{
+    if(touchId !== e.pointerId) return;
+    e.preventDefault();
+    touchId = null;
+    resetStick();
+  }, {passive:false});
+  dpad.addEventListener("pointercancel", ()=>{
+    touchId = null;
+    resetStick();
+  });
+
+  // --- Utility ---
+  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+  function dist(a,b,c,d){ return Math.hypot(a-c, b-d); }
+
+  function findNearestInRange(list, range){
+    let best = null;
+    let bestD = Infinity;
+    for(const it of list){
+      const d = dist(player.x, player.y, it.x, it.y);
+      if(d <= range && d < bestD){
+        bestD = d;
+        best = it;
+      }
+    }
+    return best;
+  }
+
+  // --- Auto actions ---
+  function tryAttack(dt){
+    // 공격속도 중심: cooldown = 1/APS
+    state.attackCooldown -= dt;
+    if(state.attackCooldown > 0) return;
+
+    const target = findNearestInRange(state.mobs, state.range);
+    if(!target) return;
+
+    // 공격 실행
+    state.attackCooldown = 1 / Math.max(0.2, state.attackSpeed);
+    target.hp -= state.damage;
+    target.hitFlash = 0.12;
+
+    // 이펙트 코인 드랍 느낌(작게)
+    state.drops.push({x: target.x, y: target.y, vx: rnd(-40,40), vy: rnd(-70,-30), t: 0.45});
+
+    if(target.hp <= 0){
+      state.kills++;
+      // 코인 드랍
+      const drop = 6 + Math.floor(rnd(0,5));
+      state.coin += drop;
+      // 죽은 몬스터 제거
+      state.mobs = state.mobs.filter(m => m !== target);
+
+      // 리스폰
+      if(state.mobs.length < 24){
+        spawnMob(rnd(120, world.w-120), rnd(120, world.h-120));
+      }
+      save();
+    }
+  }
+
+  function tryChop(dt){
+    state.chopCooldown -= dt;
+    if(state.chopCooldown > 0) return;
+
+    const tree = findNearestInRange(state.trees, 55);
+    if(!tree) return;
+
+    // 자동 캐기: 가까우면 일정 주기로 깎임
+    state.chopCooldown = 0.22; // 체감되게 빠르게
+    tree.hp -= 1;
+
+    if(tree.hp <= 0){
+      // 나무 획득 + 코인 환전
+      const w = 4 + Math.floor(rnd(0,4));
+      state.wood += w;
+      state.coin += w * 2;
+
+      // 나무 제거 & 리스폰
+      state.trees = state.trees.filter(t => t !== tree);
+      spawnTree(rnd(120, world.w-120), rnd(120, world.h-120));
+      save();
+    }
+  }
+
+  // --- Mob AI ---
+  function updateMobs(dt){
+    for(const m of state.mobs){
+      const d = dist(player.x, player.y, m.x, m.y);
+      // 너무 멀면 느슨히 다가옴
+      const chase = d < 520 ? 1 : 0.35;
+      const dx = player.x - m.x;
+      const dy = player.y - m.y;
+      const len = Math.hypot(dx,dy) || 1;
+      const nx = dx/len, ny = dy/len;
+
+      // 플레이어 근처에서 조금 빙글 느낌
+      const wig = (d < 140) ? 0.9 : 0.3;
+      const px = -ny * wig;
+      const py = nx * wig;
+
+      m.x += (nx*chase + px*0.25) * m.spd * dt;
+      m.y += (ny*chase + py*0.25) * m.spd * dt;
+
+      m.x = clamp(m.x, 40, world.w-40);
+      m.y = clamp(m.y, 40, world.h-40);
+
+      m.hitFlash = Math.max(0, m.hitFlash - dt);
+    }
+  }
+
+  // --- Player update ---
+  function updatePlayer(dt){
+    // 입력 벡터 합치기(키보드 + 스틱)
+    const kv = getKeyVec();
+    let x = 0, y = 0;
+    if(kv.active){ x += kv.x; y += kv.y; }
+    if(stickVec.active){ x += stickVec.x; y += stickVec.y; }
+    const len = Math.hypot(x,y);
+
+    if(len > 0.001){
+      x /= len; y /= len;
+      player.vx = x * player.spd;
+      player.vy = y * player.spd;
+      player.dirX = x;
+      player.dirY = y;
+    }else{
+      player.vx = 0; player.vy = 0;
+    }
+
+    player.x += player.vx * dt;
+    player.y += player.vy * dt;
+
+    player.x = clamp(player.x, 30, world.w-30);
+    player.y = clamp(player.y, 30, world.h-30);
+  }
+
+  // --- Particles / drops ---
+  function updateDrops(dt){
+    for(const p of state.drops){
+      p.t -= dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 220 * dt;
+    }
+    state.drops = state.drops.filter(p => p.t > 0);
+  }
+
+  // --- Camera ---
+  function updateCamera(){
+    const vw = innerWidth, vh = innerHeight;
+    state.camX = clamp(player.x - vw/2, 0, world.w - vw);
+    state.camY = clamp(player.y - vh/2, 0, world.h - vh);
+  }
+
+  // --- Render ---
+  function draw(){
+    const vw = innerWidth, vh = innerHeight;
+    ctx.clearRect(0,0,vw,vh);
+
+    // 배경 타일 느낌
+    const ox = -state.camX, oy = -state.camY;
+
+    // 바다/섬 느낌 바닥
+    ctx.fillStyle = "rgba(11,12,16,1)";
+    ctx.fillRect(0,0,vw,vh);
+
+    // 땅 패턴
+    for(let y=0;y<vh;y+=60){
+      for(let x=0;x<vw;x+=60){
+        const gx = x + state.camX;
+        const gy = y + state.camY;
+        const s = (Math.sin(gx*0.01)+Math.cos(gy*0.01))*0.5;
+        ctx.fillStyle = `rgba(25,28,40,${0.25 + (s*0.08)})`;
+        ctx.beginPath();
+        ctx.arc(x + 18, y + 22, 22, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    // 월드 경계
+    ctx.strokeStyle = "rgba(181,124,255,.25)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(ox, oy, world.w, world.h);
+
+    // 나무
+    for(const t of state.trees){
+      const x = t.x + ox, y = t.y + oy;
+      // 줄기
+      ctx.fillStyle = "rgba(120,90,50,.9)";
+      ctx.fillRect(x-4, y+8, 8, 20);
+      // 잎
+      ctx.fillStyle = "rgba(61,220,151,.25)";
+      ctx.beginPath();
+      ctx.arc(x, y, 18, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(61,220,151,.35)";
+      ctx.stroke();
+
+      // HP 바
+      ctx.fillStyle = "rgba(42,45,68,.9)";
+      ctx.fillRect(x-18, y-28, 36, 6);
+      ctx.fillStyle = "rgba(61,220,151,.9)";
+      ctx.fillRect(x-18, y-28, 36*(t.hp/t.max), 6);
+    }
+
+    // 몬스터
+    for(const m of state.mobs){
+      const x = m.x + ox, y = m.y + oy;
+      ctx.fillStyle = m.hitFlash>0 ? "rgba(255,92,122,.95)" : "rgba(255,92,122,.45)";
+      ctx.beginPath();
+      ctx.arc(x, y, m.r, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,92,122,.25)";
+      ctx.stroke();
+
+      // 눈
+      ctx.fillStyle = "rgba(232,232,239,.9)";
+      ctx.beginPath();
+      ctx.arc(x-5, y-3, 2.5, 0, Math.PI*2);
+      ctx.arc(x+5, y-3, 2.5, 0, Math.PI*2);
+      ctx.fill();
+
+      // HP
+      ctx.fillStyle = "rgba(42,45,68,.9)";
+      ctx.fillRect(x-16, y-26, 32, 6);
+      ctx.fillStyle = "rgba(255,204,102,.95)";
+      ctx.fillRect(x-16, y-26, 32*(m.hp/m.max), 6);
+    }
+
+    // 공격 범위(가볍게)
+    ctx.strokeStyle = "rgba(181,124,255,.22)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(player.x + ox, player.y + oy, state.range, 0, Math.PI*2);
+    ctx.stroke();
+
+    // 플레이어
+    const px = player.x + ox, py = player.y + oy;
+    ctx.fillStyle = "rgba(181,124,255,.55)";
+    ctx.beginPath();
+    ctx.arc(px, py, player.r, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(181,124,255,.35)";
+    ctx.stroke();
+
+    // 방향 표시(칼/도끼 느낌)
+    const dx = player.dirX, dy = player.dirY;
+    ctx.strokeStyle = "rgba(232,232,239,.8)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px + dx*24, py + dy*24);
+    ctx.stroke();
+
+    // 코인 파티클
+    for(const p of state.drops){
+      ctx.fillStyle = "rgba(255,204,102,.85)";
+      ctx.beginPath();
+      ctx.arc(p.x + ox, p.y + oy, 3.5, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+
+  // --- UI update ---
+  function refreshUI(){
+    ui.wood.textContent = state.wood;
+    ui.coin.textContent = state.coin;
+    ui.kills.textContent = state.kills;
+
+    ui.aps.textContent = state.attackSpeed.toFixed(1);
+    ui.range.textContent = Math.round(state.range);
+    ui.dmg.textContent = state.damage;
+
+    ui.btnAtk.textContent = `공격속도 업 (🪙${state.costAtk})`;
+    ui.btnDmg.textContent = `공격력 업 (🪙${state.costDmg})`;
+    ui.btnRange.textContent = `사거리 업 (🪙${state.costRange})`;
+  }
+
+  function buy(cost){
+    if(state.coin < cost) return false;
+    state.coin -= cost;
+    return true;
+  }
+
+  // 업그레이드: 공격속도 체감 + 비용 크게 증가
+  ui.btnAtk.addEventListener("click", ()=>{
+    if(!buy(state.costAtk)) return;
+    state.attackSpeed = Math.min(12, state.attackSpeed + 0.4); // 체감: 초당 횟수 증가
+    state.costAtk = Math.floor(state.costAtk * 1.65 + 12);     // 비용 크게 상승
+    save(); refreshUI();
+  });
+
+  ui.btnDmg.addEventListener("click", ()=>{
+    if(!buy(state.costDmg)) return;
+    state.damage += 1;
+    state.costDmg = Math.floor(state.costDmg * 1.75 + 18);
+    save(); refreshUI();
+  });
+
+  ui.btnRange.addEventListener("click", ()=>{
+    if(!buy(state.costRange)) return;
+    state.range = Math.min(220, state.range + 10);
+    state.costRange = Math.floor(state.costRange * 1.55 + 10);
+    save(); refreshUI();
+  });
+
+  ui.btnReset.addEventListener("click", ()=>{
+    localStorage.removeItem(KEY);
+    location.reload();
+  });
+
+  // --- Main loop ---
+  let last = performance.now();
+  function tick(now){
+    const dt = Math.min(0.033, (now - last) / 1000);
+    last = now;
+
+    updatePlayer(dt);
+    updateMobs(dt);
+    tryChop(dt);
+    tryAttack(dt);
+    updateDrops(dt);
+    updateCamera();
+    draw();
+    refreshUI();
+
+    requestAnimationFrame(tick);
+  }
+  refreshUI();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
