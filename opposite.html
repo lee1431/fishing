@@ -559,6 +559,29 @@
       
       // 시작
       loadStories();
+
+
+      $("#btnRandom").addEventListener("click", ()=>{
+        const items = (STORE.items || []);
+        if(items.length === 0) return alert("아직 연패 데이터가 없다 ㅋㅋ");
+      
+        const pick = items[Math.floor(Math.random() * items.length)];
+      
+        // 렌더 다시 하고
+        render();
+      
+        // 해당 카드로 스크롤
+        const cards = $$("#list .story");
+        const idx = items.findIndex(it => it.id === pick.id);
+        if(cards[idx]){
+          cards[idx].scrollIntoView({ behavior:"smooth", block:"center" });
+          cards[idx].style.outline = "2px solid rgba(181,124,255,.8)";
+          setTimeout(()=> cards[idx].style.outline = "", 1200);
+        }
+      });
+
+
+    
     </script>
 
 
