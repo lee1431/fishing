@@ -508,7 +508,7 @@
         const item = {
           id,
           type: "losing",
-          badge: "#NEW",
+          badge: `#${String(nextIndex).padStart(3, "0")}`,
           title,
           body,
           tags,
