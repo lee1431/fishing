@@ -322,6 +322,7 @@
 		if (!res.ok) throw new Error("JSON 로드 실패");
 
 		SITES = await res.json();
+		buildSelect();
 		render(); // 데이터 로드 후 렌더
 	  } catch (err) {
 		console.error("sites.json 불러오기 실패:", err);
@@ -464,8 +465,7 @@
       render();
     });
 
-    // 최초
-    buildSelect();
+    // 최초    
     loadSites();
   </script>
 </body>
