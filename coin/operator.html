@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>Operator</title>
+  <link rel="stylesheet" href="./static/style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <a href="/" class="btn">←</a>
+      <h1>세력용 매매창</h1>
+      <div class="pill" id="pillState">-</div>
+    </header>
+
+    <section class="panel">
+      <h2>종목/상장가</h2>
+      <div class="row">
+        <input id="symbol" placeholder="예: SANGCOIN" />
+        <input id="listPrice" type="number" placeholder="상장가" />
+        <label class="chk"><input id="resetBook" type="checkbox" /> 호가 초기화</label>
+        <button class="btn primary" id="btnSetSymbol">적용</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>세력 주문 생성</h2>
+      <div class="row">
+        <select id="side">
+          <option value="sell">매도(ask)</option>
+          <option value="buy">매수(bid)</option>
+        </select>
+        <input id="price" type="number" placeholder="가격" />
+        <input id="qty" type="number" placeholder="수량" />
+        <button class="btn primary" id="btnPlace">호가 추가</button>
+      </div>
+      <p class="muted">원하는 만큼 여러 레벨 깔고 → 아래 Raw Orders에서 개별 삭제 가능</p>
+    </section>
+
+    <section class="panel">
+      <h2>호가창</h2>
+      <div class="grid2">
+        <div>
+          <h3>매도(asks)</h3>
+          <div id="asks" class="book"></div>
+        </div>
+        <div>
+          <h3>매수(bids)</h3>
+          <div id="bids" class="book"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Raw Orders (개별 삭제)</h2>
+      <div class="grid2">
+        <div>
+          <h3>asks</h3>
+          <div id="rawAsks" class="raw"></div>
+        </div>
+        <div>
+          <h3>bids</h3>
+          <div id="rawBids" class="raw"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="./static/main.js"></script>
+  <script src="./static/operator.js"></script>
+</body>
+</html>
