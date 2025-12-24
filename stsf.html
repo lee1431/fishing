@@ -845,10 +845,7 @@
 
 		const lat = Number(log.lat);
 		const lng = Number(log.lng);
-		
-		 const lat = Number(log.lat);
-  		 const lng = Number(log.lng);
-		
+				
 		mapMain.flyTo([lat, lng], Math.max(mapMain.getZoom(), 14), { duration: 0.6 });
 		mapOverlay.flyTo([lat, lng], Math.max(mapOverlay.getZoom(), 13), { duration: 0.6 });
 
