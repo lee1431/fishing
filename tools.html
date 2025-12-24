@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tools - 유용한 사이트 모음집</title>
+  <meta name="description" content="유용한 사이트 모음집 (카드 형태)" />
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --text:#e8eef6;
+      --muted:#9fb1c5;
+      --line:rgba(255,255,255,.08);
+      --accent:#B57CFF;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(900px 500px at 10% 0%, rgba(181,124,255,.18), transparent 60%),
+        radial-gradient(900px 600px at 90% 10%, rgba(90,180,255,.14), transparent 55%),
+        linear-gradient(180deg, #070a0f, var(--bg));
+      min-height:100vh;
+    }
+
+    header{
+      position:sticky; top:0; z-index:5;
+      backdrop-filter: blur(10px);
+      background: rgba(11,15,20,.72);
+      border-bottom: 1px solid var(--line);
+    }
+    .wrap{max-width:1100px; margin:0 auto; padding:18px 16px;}
+    .top{
+      display:flex; gap:12px; align-items:center; justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .title{
+      display:flex; gap:12px; align-items:center;
+    }
+    .logo{
+      width:40px; height:40px; border-radius:14px;
+      background: linear-gradient(135deg, rgba(181,124,255,.9), rgba(181,124,255,.15));
+      box-shadow: 0 10px 30px rgba(181,124,255,.18);
+      border: 1px solid rgba(181,124,255,.35);
+      display:grid; place-items:center;
+      font-weight:800;
+    }
+    h1{font-size:18px; margin:0; letter-spacing:-.3px}
+    .sub{margin:2px 0 0; color:var(--muted); font-size:12px}
+
+    .controls{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    }
+    .input, select{
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 12px;
+      outline:none;
+    }
+    .input{min-width:240px;}
+    select{min-width:160px;}
+    .btn{
+      cursor:pointer;
+      border: 1px solid rgba(181,124,255,.35);
+      background: rgba(181,124,255,.12);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      transition: .15s transform ease, .15s background ease;
+      user-select:none;
+    }
+    .btn:hover{transform: translateY(-1px); background: rgba(181,124,255,.18);}
+
+    main{padding: 18px 0 60px;}
+    .section-head{
+      display:flex; justify-content:space-between; align-items:flex-end;
+      gap:12px; flex-wrap:wrap;
+      margin: 18px 0 12px;
+    }
+    .section-title{font-size:14px; margin:0; color:var(--muted);}
+    .count{font-size:12px; color:var(--muted)}
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:12px;
+    }
+    @media (max-width: 920px){ .grid{grid-template-columns: repeat(2, 1fr);} }
+    @media (max-width: 560px){ .grid{grid-template-columns: 1fr;} .input{min-width: 100%;} select{min-width: 100%;} }
+
+    /* ====== Legend Bar ====== */
+    .legend{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      padding:10px 12px;
+      margin:10px 0 14px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(10,12,20,.35);
+      border-radius:14px;
+      backdrop-filter: blur(8px);
+    }
+    .legend .item{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      cursor:pointer;
+      user-select:none;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.03);
+      transition: .18s ease;
+      font-size:13px;
+      opacity:.9;
+    }
+    .legend .item:hover{transform: translateY(-1px); opacity:1;}
+    .legend .dot{
+      width:10px; height:10px;
+      border-radius:50%;
+    }
+    .legend .item.active{
+      outline: 1px solid rgba(255,255,255,.15);
+      box-shadow: 0 0 18px rgba(255,255,255,.06);
+      opacity:1;
+    }
+
+    /* ====== Card category glow / focus ====== */
+    .card{
+      position:relative;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(12,14,26,.62);
+      border-radius: 16px;
+      overflow:hidden;
+      transition: .18s ease;
+      box-shadow: var(--shadow);
+      padding: 14px 14px 12px;
+    }
+    /* 카드 상단 색 라인 */
+    .card::before{
+      content:"";
+      position:absolute; inset:0 0 auto 0;
+      height:3px;
+      background: var(--cat, #6b7280);
+      opacity:.9;
+      pointer-events:none;
+    }
+    /* 좌측 라인(살짝) */
+    .card::after{
+      content:"";
+      position:absolute;
+      left:0; top:0;
+      width:4px; height:100%;
+      background: var(--cat, transparent);
+      opacity:.55;
+      pointer-events:none;
+    }
+
+    /* Hover glow: 카테고리 색상으로 */
+    .card:hover{
+      transform: translateY(-2px);
+      border-color: color-mix(in srgb, var(--cat) 35%, rgba(255,255,255,.08));
+      box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--cat) 20%, transparent),
+        0 10px 40px color-mix(in srgb, var(--cat) 18%, transparent),
+        0 0 22px color-mix(in srgb, var(--cat) 30%, transparent);
+    }
+
+    /* 선택 카테고리만 강조 */
+    .card.dim{
+      opacity:.35;
+      filter: grayscale(.35);
+      transform:none !important;
+      box-shadow: var(--shadow);
+    }
+    .card.focus{
+      opacity:1;
+      box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--cat) 25%, transparent),
+        0 14px 60px color-mix(in srgb, var(--cat) 22%, transparent),
+        0 0 26px color-mix(in srgb, var(--cat) 40%, transparent);
+    }
+
+    .card-top{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+      margin-bottom:10px;
+    }
+    .name{
+      font-weight:800; letter-spacing:-.3px; margin:0; font-size:15px;
+    }
+    .desc{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:12.5px;
+      line-height:1.35;
+      min-height: 34px;
+    }
+
+    .badge{
+      font-size:11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      white-space:nowrap;
+      height: fit-content;
+      border:1px solid color-mix(in srgb, var(--cat) 45%, rgba(255,255,255,.12));
+      background: color-mix(in srgb, var(--cat) 18%, rgba(0,0,0,.35));
+      color: #fff;
+    }
+
+    .card-actions{
+      display:flex; gap:8px; align-items:center; justify-content:space-between;
+      margin-top:12px;
+      padding-top:10px;
+      border-top:1px solid var(--line);
+    }
+    .open{
+      text-decoration:none;
+      display:inline-flex; align-items:center; gap:8px;
+      color: var(--text);
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--line);
+      padding: 9px 10px;
+      border-radius: 14px;
+      transition:.15s transform ease, .15s border ease;
+      font-size:12px;
+    }
+    .open:hover{transform: translateY(-1px); border-color: color-mix(in srgb, var(--cat) 35%, rgba(255,255,255,.10));}
+
+    .hint{font-size:11px; color: var(--muted); opacity:.9;}
+    .tags{display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;}
+    .tag{
+      font-size:11px;
+      color: var(--muted);
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+      padding: 3px 7px;
+      border-radius: 999px;
+    }
+
+    footer{
+      border-top:1px solid var(--line);
+      color: var(--muted);
+      font-size:12px;
+      padding: 18px 0 30px;
+      margin-top:18px;
+    }
+    code.k{
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 11px;
+      color: var(--text);
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="wrap">
+      <div class="top">
+        <div class="title">
+          <div class="logo">T</div>
+          <div>
+            <h1>유용한 사이트 모음집</h1>
+            <p class="sub">카드 형태 / 검색 + 카테고리 필터</p>
+          </div>
+        </div>
+
+        <div class="controls">
+          <input id="q" class="input" type="search" placeholder="검색: 이름/설명/태그" />
+          <select id="cat">
+            <option value="all">전체 카테고리</option>
+          </select>
+          <button id="reset" class="btn" type="button">초기화</button>
+        </div>
+      </div>
+
+      <!-- ✅ 상단 카테고리 색 범례 바 -->
+      <div id="legendBar" class="legend"></div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+      <div class="section-head">
+        <p class="section-title">목록</p>
+        <div class="count"><span id="count">0</span>개</div>
+      </div>
+
+      <!-- ✅ grid id로 통일 -->
+      <div id="grid" class="grid"></div>
+
+      <footer>
+        <div class="wrap" style="padding:0">
+          <div>© 2025 Stance — Tool Tip Site Project</div>
+          <div style="margin-top:8px">
+            <code class="k">유용하면 500원.</code>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </main>
+
+  <script>
+    // =========================
+    // 1) 목록
+    // =========================
+    let SITES = [];	
+	
+	async function loadSites(){
+	  try {
+		const res = await fetch("https://llsshh.com/data/sites.json");
+		if (!res.ok) throw new Error("JSON 로드 실패");
+
+		SITES = await res.json();
+		render(); // 데이터 로드 후 렌더
+	  } catch (err) {
+		console.error("sites.json 불러오기 실패:", err);
+	  }
+	}
+
+    const CATEGORY_COLORS = {
+      "개발": "#4F8BFF",
+      "공공": "#9AA4B2",
+      "금융": "#FFD166",
+      "디자인": "#FF4FD8",
+      "리소스": "#FF8A3D",
+      "생산성": "#39D98A",
+      "생활": "#7CFFB2",
+      "서버": "#4DB6FF",
+      "유틸": "#A78BFA",
+      "투자": "#FF4D6D",
+      "포털": "#22D3EE",
+      "AI": "#B57CFF",
+      "기타": "#6B7280",
+    };
+
+    // =========================
+    // 2) DOM
+    // =========================
+    const $grid = document.querySelector("#grid");
+    const $q = document.querySelector("#q");
+    const $cat = document.querySelector("#cat");
+    const $legend = document.querySelector("#legendBar");
+    const $count = document.querySelector("#count");
+    const $reset = document.querySelector("#reset");
+
+    // =========================
+    // 3) 유틸
+    // =========================
+    function match(site, q){
+      if(!q) return true;
+      const t = (site.name + " " + (site.desc||"") + " " + (site.tags||[]).join(" ")).toLowerCase();
+      return t.includes(q.toLowerCase());
+    }
+
+    function getCategories(){
+      // SITES 기반으로 유니크 카테고리 생성
+      const set = new Set(SITES.map(s => s.cat || "기타"));
+      return [...set].sort((a,b)=>a.localeCompare(b, "ko"));
+    }
+
+    function buildSelect(){
+      const cats = getCategories();
+      $cat.innerHTML = `<option value="all">전체 카테고리</option>` +
+        cats.map(c => `<option value="${c}">${c}</option>`).join("");
+    }
+
+    function buildLegend(){
+      const cats = getCategories();
+      const current = $cat.value;
+
+      $legend.innerHTML = `
+        <div class="item ${current==="all" ? "active":""}" data-cat="all">
+          <span class="dot" style="background:#fff; opacity:.35;"></span>
+          전체
+        </div>
+        ${cats.map(c => {
+          const col = CATEGORY_COLORS[c] || CATEGORY_COLORS["기타"];
+          return `
+            <div class="item ${current===c ? "active":""}" data-cat="${c}">
+              <span class="dot" style="
+                background:${col};
+                box-shadow: 0 0 16px color-mix(in srgb, ${col} 40%, transparent);
+              "></span>
+              ${c}
+            </div>
+          `;
+        }).join("")}
+      `;
+
+      $legend.querySelectorAll(".item").forEach(el=>{
+        el.addEventListener("click", ()=>{
+          $cat.value = el.dataset.cat;
+          render();
+        });
+      });
+    }
+	
+	
+	
+
+    // =========================
+    // 4) 렌더
+    // =========================
+    function render(){
+      const q = $q.value.trim();
+      const cat = $cat.value;
+
+      const filtered = SITES
+        .filter(s => match(s, q))
+        .filter(s => (cat === "all") ? true : ((s.cat || "기타") === cat));
+
+      $grid.innerHTML = filtered.map(s => {
+        const c = s.cat || "기타";
+        const color = CATEGORY_COLORS[c] || CATEGORY_COLORS["기타"];
+
+        const emphasisClass =
+          (cat === "all") ? "" :
+          (c === cat ? "focus" : "dim");
+
+        return `
+          <article class="card ${emphasisClass}" style="--cat:${color}">
+            <div class="card-top">
+              <div>
+                <h3 class="name">${s.name}</h3>
+                <p class="desc">${s.desc || ""}</p>
+              </div>
+              <span class="badge">${c}</span>
+            </div>
+
+            <div class="card-actions">
+              <a class="open" href="${s.url}" target="_blank" rel="noopener">열기 ↗</a>
+              <div class="tags">
+                ${(s.tags||[]).slice(0,4).map(t=>`<span class="tag">#${t}</span>`).join("")}
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      $count.textContent = String(filtered.length);
+
+      buildLegend();
+    }
+
+    // =========================
+    // 5) 이벤트
+    // =========================
+    $q.addEventListener("input", render);
+    $cat.addEventListener("change", render);
+    $reset.addEventListener("click", ()=>{
+      $q.value = "";
+      $cat.value = "all";
+      render();
+    });
+
+    // 최초
+    buildSelect();
+    loadSites();
+  </script>
+</body>
+</html>
