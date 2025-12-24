@@ -48,6 +48,6 @@
 	{ "name": "Notion", "url": "https://www.notion.so", "desc": "문서, 메모, 데이터베이스를 통합 관리하는 협업 도구", "cat": "생산성", "tags": ["memo","docs"] },
 	{ "name": "Miro", "url": "https://miro.com", "desc": "온라인 화이트보드로 아이디어를 시각화할 수 있는 사이트", "cat": "생산성", "tags": ["brainstorm","board"] },
 	{ "name": "Todoist", "url": "https://todoist.com", "desc": "할 일을 체계적으로 관리할 수 있는 태스크 관리 도구", "cat": "생산성", "tags": ["todo","task"] },
-	{ "name": "Clockify", "url": "https://clockify.me", "desc": "작업 시간을 기록하고 분석할 수 있는 타임 트래킹 도구", "cat": "생산성", "tags": ["time","tracking"] },
+	{ "name": "Clockify", "url": "https://clockify.me", "desc": "작업 시간을 기록하고 분석할 수 있는 타임 트래킹 도구", "cat": "생산성", "tags": ["time","tracking"] }
 	
 ]
