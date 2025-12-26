@@ -9,6 +9,7 @@
 	{ "name": "Unsplash", "url": "https://unsplash.com", "desc": "무료 고퀄 사진 리소스", "cat": "리소스", "tags": ["photo","free"] },
 	{ "name": "TradingView", "url": "https://www.tradingview.com", "desc": "차트/지표/알림 등 시장 분석 도구", "cat": "투자", "tags": ["chart","indicator"] },
 	{ "name": "CoinMarketCap", "url": "https://coinmarketcap.com", "desc": "코인 시가총액/가격/거래소 정보", "cat": "투자", "tags": ["crypto","marketcap"] },
+	{ "name": "빗썸", "url": "https://www.bithumb.com", "desc": "당신의 안전한 금융 파트너, 빗썸", "cat": "투자", "tags": ["crypto","황썸"] },
 	{ "name": "Cloudflare", "url": "https://www.cloudflare.com", "desc": "DNS/SSL/CDN/WAF로 서버 앞단 보안·가속", "cat": "서버", "tags": ["dns","ssl","cdn"] },
 	{ "name": "Uptime Kuma", "url": "https://github.com/louislam/uptime-kuma", "desc": "서비스 상태 모니터링(자가 호스팅) 도구", "cat": "서버", "tags": ["monitoring","self-host"] },
 	{ "name": "정부24", "url": "https://www.gov.kr", "desc": "각종 민원 신청과 행정 서비스를 한 곳에서 이용할 수 있는 정부 포털", "cat": "공공", "tags": ["민원","정부"] },
