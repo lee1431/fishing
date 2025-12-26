@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>직장생활 플로우차트: 얼마 벌면 몇 년?</title>
+  <meta name="description" content="입력값에 따라 목표 자산까지 몇 년이 걸리는지 실시간 계산 + 차트 시각화" />
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --card:#101826;
+      --card2:#0e1522;
+      --text:#e8eef6;
+      --muted:#9fb1c5;
+      --line:rgba(255,255,255,.08);
+      --accent:#B57CFF;
+      --good:#4ade80;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 12px 30px rgba(0,0,0,.45);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(900px 520px at 14% 12%, rgba(181,124,255,.18), transparent 60%),
+        radial-gradient(800px 520px at 90% 26%, rgba(99,102,241,.13), transparent 60%),
+        radial-gradient(700px 520px at 40% 92%, rgba(16,185,129,.10), transparent 60%),
+        var(--bg);
+      min-height:100vh;
+    }
+    a{color:inherit}
+    .wrap{
+      max-width:1200px;
+      margin:0 auto;
+      padding:24px 16px 40px;
+    }
+    .top{
+      display:flex;
+      gap:14px;
+      align-items:flex-end;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      margin-bottom:16px;
+    }
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    h1{
+      margin:0;
+      font-size:22px;
+      letter-spacing:-.3px;
+      line-height:1.15;
+    }
+    .sub{
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      border-radius:999px;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .dot{
+      width:8px;height:8px;border-radius:50%;
+      background:var(--accent);
+      box-shadow:0 0 18px rgba(181,124,255,.7);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 420px 1fr;
+      gap:14px;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:14px 14px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid var(--line);
+      background:rgba(0,0,0,.15);
+    }
+    .card .hd b{
+      font-size:14px;
+      letter-spacing:-.2px;
+    }
+    .card .bd{ padding:14px; }
+
+    .form{
+      display:grid;
+      gap:10px;
+    }
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 520px){
+      .row{grid-template-columns:1fr}
+    }
+    label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin:0 0 6px;
+    }
+    .field{
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px 10px;
+    }
+    input[type="text"], input[type="number"]{
+      width:100%;
+      border:0;
+      outline:none;
+      background:transparent;
+      color:var(--text);
+      font-size:14px;
+      padding:0;
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
+    .hint{
+      margin-top:6px;
+      font-size:11px;
+      color:var(--muted);
+    }
+    .switch{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--muted);
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
+      transition:.15s ease;
+    }
+    .pill input{display:none}
+    .pill.active{
+      color:var(--text);
+      border-color:rgba(181,124,255,.55);
+      background:rgba(181,124,255,.12);
+      box-shadow:0 0 0 2px rgba(181,124,255,.08) inset;
+    }
+
+    .kpis{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:10px;
+    }
+    @media (max-width: 520px){
+      .kpis{grid-template-columns:1fr}
+    }
+    .kpi{
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+    }
+    .kpi .t{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .kpi .v{
+      font-size:18px;
+      letter-spacing:-.2px;
+      font-weight:700;
+      display:flex;
+      align-items:baseline;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .kpi .v small{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:500;
+    }
+    .accent{ color:var(--accent); }
+    .good{ color:var(--good); }
+    .warn{ color:var(--warn); }
+    .bad{ color:var(--bad); }
+
+    .flow{
+      display:grid;
+      gap:10px;
+      margin-top:10px;
+    }
+    .step{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      background:rgba(0,0,0,.14);
+      position:relative;
+      overflow:hidden;
+    }
+    .step:before{
+      content:"";
+      position:absolute;
+      inset:-60px -60px auto auto;
+      width:140px;height:140px;
+      border-radius:50%;
+      background:rgba(181,124,255,.10);
+      filter:blur(2px);
+    }
+    .step .st{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:8px;
+    }
+    .step .st b{ font-size:13px; }
+    .step .st span{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .step .desc{
+      font-size:13px;
+      line-height:1.45;
+      color:var(--text);
+    }
+    .mini{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:6px;
+      line-height:1.35;
+    }
+
+    .chartWrap{
+      display:grid;
+      gap:14px;
+    }
+    .chartBox{
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:rgba(0,0,0,.12);
+    }
+
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border-radius:16px;
+      border:1px solid var(--line);
+    }
+    thead th{
+      text-align:left;
+      font-size:12px;
+      color:var(--muted);
+      padding:10px 10px;
+      background:rgba(255,255,255,.03);
+      border-bottom:1px solid var(--line);
+    }
+    tbody td{
+      font-size:13px;
+      padding:10px 10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      color:var(--text);
+    }
+    tbody tr:last-child td{ border-bottom:0; }
+    .right{ text-align:right; }
+    .footerNote{
+      margin-top:10px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.45;
+    }
+
+    .btnRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:6px;
+    }
+    .btn{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      border-radius:14px;
+      padding:10px 12px;
+      font-size:13px;
+      cursor:pointer;
+      transition:.15s ease;
+      user-select:none;
+    }
+    .btn:hover{
+      border-color:rgba(181,124,255,.55);
+      box-shadow:0 0 0 2px rgba(181,124,255,.08) inset;
+    }
+	
+	#assetChart{
+	  height: 280px !important;
+	  max-height: 280px;
+	}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="title">
+        <h1>직장생활 플로우차트: <span class="accent">얼마를 벌면</span> <span class="accent">몇 년</span> 일해야 되나</h1>
+        <div class="sub">
+          월 소득/지출/저축률/수익률/목표자산을 넣으면, 목표까지 걸리는 기간과 자산 성장 곡선을 바로 보여준다.
+        </div>
+      </div>
+      <div class="badge"><span class="dot"></span> 실시간 계산 · 천원단위 콤마 · 차트</div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT: Inputs -->
+      <section class="card">
+        <div class="hd">
+          <b>입력 (인생 변수들)</b>
+          <span class="sub">바꾸는 즉시 반영</span>
+        </div>
+        <div class="bd">
+          <div class="form">
+            <div class="row">
+              <div class="field">
+                <label>현재 나이</label>
+                <input id="ageNow" type="number" min="0" value="28" />
+                <div class="hint">예: 28</div>
+              </div>
+              <div class="field">
+                <label>목표 나이(상한)</label>
+                <input id="ageCap" type="number" min="0" value="80" />
+                <div class="hint">계산이 끝나지 않으면 여기까지 시뮬</div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label>시작 자산(현재 보유)</label>
+                <input id="startAsset" type="text" inputmode="numeric" value="0" />
+                <div class="hint">예: 26,000,000</div>
+              </div>
+              <div class="field">
+                <label>목표 자산</label>
+                <input id="targetAsset" type="text" inputmode="numeric" value="500,000,000" />
+                <div class="hint">예: 500,000,000 (5억)</div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label>월 총수입(세후 가정)</label>
+                <input id="incomeMonthly" type="text" inputmode="numeric" value="2,500,000" />
+                <div class="hint">예: 2,500,000</div>
+              </div>
+              <div class="field">
+                <label>월 고정지출(생활비 등)</label>
+                <input id="expenseMonthly" type="text" inputmode="numeric" value="1,700,000" />
+                <div class="hint">예: 1,700,000</div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label>연 수익률(복리, %)</label>
+                <input id="returnRate" type="number" step="0.1" value="3.0" />
+                <div class="hint">예: 0~7% (보수적으로 3%)</div>
+              </div>
+              <div class="field">
+                <label>월 저축 추가/감소(옵션)</label>
+                <input id="extraSave" type="text" inputmode="numeric" value="0" />
+                <div class="hint">예: 부업/변동비 절감 +300,000</div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>연 소득 상승률(%)</label>
+              <input id="incomeGrow" type="number" step="0.1" value="2.0" />
+              <div class="hint">매년 월수입이 이 비율로 오른다고 가정(보수적으로 0~3%)</div>
+            </div>
+
+            <div class="field">
+              <label>저축 방식</label>
+              <div class="switch" id="modeSwitch">
+                <label class="pill active" data-mode="auto">
+                  <input type="radio" name="mode" checked />
+                  자동저축(월수입-월지출)
+                </label>
+                <label class="pill" data-mode="fixed">
+                  <input type="radio" name="mode" />
+                  고정저축(직접 입력)
+                </label>
+              </div>
+              <div class="hint">자동저축: “버는 만큼 남기는 구조” / 고정저축: 월저축액을 딱 고정</div>
+            </div>
+
+            <div class="row" id="fixedSaveRow" style="display:none;">
+              <div class="field" style="grid-column:1 / -1;">
+                <label>고정 월저축액</label>
+                <input id="fixedSave" type="text" inputmode="numeric" value="800,000" />
+                <div class="hint">고정저축 모드에서만 사용됨</div>
+              </div>
+            </div>
+
+            <div class="btnRow">
+              <button class="btn" id="preset1">프리셋: 월 250/170 · 3% · 5억</button>
+              <button class="btn" id="preset2">프리셋: 월 350/220 · 4% · 5억</button>
+              <button class="btn" id="preset3">프리셋: 월 250/170 · 0% · 5억</button>
+            </div>
+
+            <div class="footerNote">
+              ※ 현실은 변수(실직/부양/대출/집값/물가)가 많다. 이건 “감 잡는 도구”로 쓰면 된다.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: Outputs -->
+      <section class="card">
+        <div class="hd">
+          <b>결과 (플로우차트 출력)</b>
+          <span class="sub" id="statusText">계산 중…</span>
+        </div>
+        <div class="bd">
+          <div class="kpis">
+            <div class="kpi">
+              <div class="t">목표까지 걸리는 기간</div>
+              <div class="v" id="kpiYears">-</div>
+            </div>
+            <div class="kpi">
+              <div class="t">현재 기준 월저축액</div>
+              <div class="v" id="kpiSave">- <small>(자동/고정 반영)</small></div>
+            </div>
+            <div class="kpi">
+              <div class="t">목표 달성 예상 나이</div>
+              <div class="v" id="kpiAge">-</div>
+            </div>
+            <div class="kpi">
+              <div class="t">예상 총 납입(원금) / 복리 기여</div>
+              <div class="v" id="kpiSplit">-</div>
+            </div>
+          </div>
+
+          <div class="flow" id="flowSteps">
+            <!-- steps injected -->
+          </div>
+
+          <div class="chartWrap">
+            <div class="chartBox">
+              <b style="font-size:13px;">자산 성장 곡선</b>
+              <div class="sub" style="margin-top:6px;">x축=나이, y축=자산(원). 목표선 포함.</div>
+              <canvas id="assetChart"></canvas>
+            </div>
+
+            <div class="chartBox">
+              <b style="font-size:13px;">마일스톤(목표의 25% / 50% / 75% / 100%)</b>
+              <div class="sub" style="margin-top:6px;">몇 살에 어느 정도 도달하는지.</div>
+              <div style="margin-top:10px; overflow:auto;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>마일스톤</th>
+                      <th class="right">자산</th>
+                      <th class="right">예상 나이</th>
+                      <th class="right">경과(년)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="milestoneBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    // ---------- Utils ----------
+    const $ = (id) => document.getElementById(id);
+
+    function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+    function parseMoney(str){
+      if (typeof str !== "string") return Number(str) || 0;
+      const cleaned = str.replace(/[^\d\-]/g,'');
+      const n = parseInt(cleaned, 10);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function formatMoney(n){
+      n = Math.round(Number(n) || 0);
+      const sign = n < 0 ? "-" : "";
+      n = Math.abs(n);
+      return sign + n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    function formatKRW(n){
+      return formatMoney(n) + "원";
+    }
+
+    function setCommaInput(el){
+      const v = parseMoney(el.value);
+      el.value = formatMoney(v);
+    }
+
+    function yearlyToMonthlyRate(yearlyPercent){
+      // (1+r_y)^(1/12)-1
+      const ry = (Number(yearlyPercent) || 0) / 100;
+      return Math.pow(1 + ry, 1/12) - 1;
+    }
+
+    // ---------- Mode Switch ----------
+    let mode = "auto"; // auto or fixed
+    const pills = Array.from(document.querySelectorAll("#modeSwitch .pill"));
+    pills.forEach(p => {
+      p.addEventListener("click", () => {
+        pills.forEach(x => x.classList.remove("active"));
+        p.classList.add("active");
+        mode = p.dataset.mode;
+        $("fixedSaveRow").style.display = (mode === "fixed") ? "grid" : "none";
+        computeAndRender();
+      });
+    });
+
+    // ---------- Inputs: Comma formatting ----------
+    const commaInputs = ["startAsset","targetAsset","incomeMonthly","expenseMonthly","extraSave","fixedSave"];
+    commaInputs.forEach(id=>{
+      const el = $(id);
+      el.addEventListener("input", () => {
+        // caret-friendly-ish: keep it simple
+        const pos = el.selectionStart;
+        const beforeLen = el.value.length;
+        setCommaInput(el);
+        const afterLen = el.value.length;
+        const diff = afterLen - beforeLen;
+        try{ el.setSelectionRange(pos + diff, pos + diff); }catch(e){}
+        computeAndRender();
+      });
+      el.addEventListener("blur", ()=> setCommaInput(el));
+      // init
+      setCommaInput(el);
+    });
+
+    ["ageNow","ageCap","returnRate","incomeGrow"].forEach(id=>{
+      $(id).addEventListener("input", computeAndRender);
+    });
+
+    // ---------- Presets ----------
+    $("preset1").addEventListener("click", ()=>{
+      $("incomeMonthly").value = "2,500,000";
+      $("expenseMonthly").value = "1,700,000";
+      $("returnRate").value = "3.0";
+      $("targetAsset").value = "500,000,000";
+      $("extraSave").value = "0";
+      setCommaInput($("incomeMonthly")); setCommaInput($("expenseMonthly")); setCommaInput($("targetAsset")); setCommaInput($("extraSave"));
+      computeAndRender();
+    });
+    $("preset2").addEventListener("click", ()=>{
+      $("incomeMonthly").value = "3,500,000";
+      $("expenseMonthly").value = "2,200,000";
+      $("returnRate").value = "4.0";
+      $("targetAsset").value = "500,000,000";
+      $("extraSave").value = "0";
+      setCommaInput($("incomeMonthly")); setCommaInput($("expenseMonthly")); setCommaInput($("targetAsset")); setCommaInput($("extraSave"));
+      computeAndRender();
+    });
+    $("preset3").addEventListener("click", ()=>{
+      $("incomeMonthly").value = "2,500,000";
+      $("expenseMonthly").value = "1,700,000";
+      $("returnRate").value = "0.0";
+      $("targetAsset").value = "500,000,000";
+      $("extraSave").value = "0";
+      setCommaInput($("incomeMonthly")); setCommaInput($("expenseMonthly")); setCommaInput($("targetAsset")); setCommaInput($("extraSave"));
+      computeAndRender();
+    });
+
+    // ---------- Core Simulation ----------
+    function simulate(params){
+      const {
+        ageNow, ageCap,
+        startAsset, targetAsset,
+        incomeMonthly0, expenseMonthly,
+        extraSaveMonthly,
+        fixedSaveMonthly,
+        returnYearlyPct,
+        incomeGrowYearlyPct,
+        mode
+      } = params;
+
+      const monthsMax = Math.max(0, Math.round((ageCap - ageNow) * 12));
+      const rM = yearlyToMonthlyRate(returnYearlyPct);
+      const gY = (incomeGrowYearlyPct || 0) / 100;
+
+      let asset = startAsset;
+      let incomeM = incomeMonthly0;
+
+      let reachedMonth = null;
+      let totalContrib = 0;
+      let totalInterest = 0;
+
+      const seriesAge = [];
+      const seriesAsset = [];
+
+      // milestones
+      const milestones = [0.25, 0.5, 0.75, 1.0].map(x => ({p:x, value: targetAsset * x, hitMonth:null}));
+
+      function currentSave(){
+        if (mode === "fixed") return fixedSaveMonthly + extraSaveMonthly;
+        return (incomeM - expenseMonthly) + extraSaveMonthly;
+      }
+
+      // record at start
+      seriesAge.push(ageNow);
+      seriesAsset.push(asset);
+
+      for (let m=1; m<=monthsMax; m++){
+        // income grows yearly (every 12 months)
+        if (m % 12 === 1 && m !== 1){
+          incomeM *= (1 + gY);
+        }
+
+        const saveM = currentSave();
+        const contrib = Math.max(0, saveM); // if negative, assume 0 saving (생존이 우선)
+        totalContrib += contrib;
+
+        // apply contribution
+        asset += contrib;
+
+        // apply interest monthly
+        const before = asset;
+        asset *= (1 + rM);
+        const interest = asset - before;
+        totalInterest += interest;
+
+        const age = ageNow + m/12;
+        // record monthly (but chart can be heavy; keep monthly is okay)
+        seriesAge.push(age);
+        seriesAsset.push(asset);
+
+        // milestones
+        milestones.forEach(ms=>{
+          if (ms.hitMonth === null && asset >= ms.value){
+            ms.hitMonth = m;
+          }
+        });
+
+        if (reachedMonth === null && asset >= targetAsset){
+          reachedMonth = m;
+          break;
+        }
+      }
+
+      // if reached, truncate series to reachedMonth
+      if (reachedMonth !== null){
+        const idx = reachedMonth; // because we included start at index 0
+        seriesAge.length = idx + 1;
+        seriesAsset.length = idx + 1;
+      }
+
+      const result = {
+        reachedMonth,
+        yearsNeeded: reachedMonth !== null ? reachedMonth/12 : null,
+        ageAtGoal: reachedMonth !== null ? ageNow + reachedMonth/12 : null,
+        seriesAge, seriesAsset,
+        totalContrib,
+        totalInterest,
+        milestones
+      };
+      return result;
+    }
+
+    // ---------- Render ----------
+    let chart = null;
+
+    function renderChart(seriesAge, seriesAsset, targetAsset){
+      const labels = seriesAge.map(a => a.toFixed(2));
+      const data = seriesAsset.map(v => Math.round(v));
+
+      const targetLine = new Array(data.length).fill(Math.round(targetAsset));
+
+      const ctx = $("assetChart").getContext("2d");
+      if (chart) chart.destroy();
+
+      chart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "자산(원)",
+              data,
+              tension: 0.25,
+              pointRadius: 0,
+              borderWidth: 2
+            },
+            {
+              label: "목표선",
+              data: targetLine,
+              tension: 0,
+              pointRadius: 0,
+              borderDash: [6,6],
+              borderWidth: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: "rgba(232,238,246,.85)" } },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `${ctx.dataset.label}: ${formatKRW(ctx.parsed.y)}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: "rgba(159,177,197,.85)",
+                maxTicksLimit: 10
+              },
+              grid: { color: "rgba(255,255,255,.06)" }
+            },
+            y: {
+              ticks: {
+                color: "rgba(159,177,197,.85)",
+                callback: (v)=> {
+                  // show in "만/억" rough
+                  const n = Number(v);
+                  if (n >= 100000000) return (n/100000000).toFixed(1) + "억";
+                  if (n >= 10000) return (n/10000).toFixed(0) + "만";
+                  return v;
+                }
+              },
+              grid: { color: "rgba(255,255,255,.06)" }
+            }
+          }
+        }
+      });
+    }
+
+    function stepCard(title, right, desc, tone=""){
+      const toneCls = tone ? ` ${tone}` : "";
+      return `
+        <div class="step">
+          <div class="st">
+            <b>${title}</b>
+            <span class="${toneCls}">${right}</span>
+          </div>
+          <div class="desc">${desc}</div>
+        </div>
+      `;
+    }
+
+    function computeAndRender(){
+      // read values
+      const ageNow = clamp(parseInt($("ageNow").value || "0", 10), 0, 120);
+      const ageCap = clamp(parseInt($("ageCap").value || "0", 10), ageNow, 120);
+
+      const startAsset = Math.max(0, parseMoney($("startAsset").value));
+      const targetAsset = Math.max(0, parseMoney($("targetAsset").value));
+
+      const incomeMonthly0 = Math.max(0, parseMoney($("incomeMonthly").value));
+      const expenseMonthly = Math.max(0, parseMoney($("expenseMonthly").value));
+      const extraSaveMonthly = parseMoney($("extraSave").value); // can be negative
+      const fixedSaveMonthly = Math.max(0, parseMoney($("fixedSave").value));
+
+      const returnYearlyPct = clamp(Number($("returnRate").value || 0), -50, 50);
+      const incomeGrowYearlyPct = clamp(Number($("incomeGrow").value || 0), -50, 50);
+
+      const params = {
+        ageNow, ageCap,
+        startAsset, targetAsset,
+        incomeMonthly0, expenseMonthly,
+        extraSaveMonthly,
+        fixedSaveMonthly,
+        returnYearlyPct,
+        incomeGrowYearlyPct,
+        mode
+      };
+
+      // quick sanity
+      if (targetAsset <= 0){
+        $("statusText").textContent = "목표 자산을 입력해줘.";
+        return;
+      }
+
+      const saveAuto = (incomeMonthly0 - expenseMonthly) + extraSaveMonthly;
+      const saveFixed = fixedSaveMonthly + extraSaveMonthly;
+      const saveNow = (mode === "fixed") ? saveFixed : saveAuto;
+
+      // simulate
+      const sim = simulate(params);
+
+      // KPIs
+      $("kpiSave").innerHTML = `${formatKRW(saveNow)} <small>/월</small>`;
+
+      if (sim.yearsNeeded === null){
+        $("kpiYears").innerHTML = `<span class="bad">도달 실패</span> <small>(목표나이 ${ageCap}세까지)</small>`;
+        $("kpiAge").innerHTML = `<span class="bad">-</span>`;
+        $("statusText").textContent = "목표 나이까지는 목표 자산 도달이 어려움";
+      }else{
+        const y = sim.yearsNeeded;
+        const years = Math.floor(y);
+        const months = Math.round((y - years) * 12);
+        const ageGoal = sim.ageAtGoal;
+
+        let tone = "good";
+        if (y > 20) tone = "warn";
+        if (y > 35) tone = "bad";
+
+        $("kpiYears").innerHTML = `<span class="${tone}">${years}년 ${months}개월</span> <small>(${(y).toFixed(1)}년)</small>`;
+        $("kpiAge").innerHTML = `<span class="${tone}">${ageGoal.toFixed(1)}세</span>`;
+        $("statusText").textContent = `예상 달성: ${ageGoal.toFixed(1)}세 (현재 ${ageNow}세 기준)`;
+      }
+
+      const contrib = sim.totalContrib;
+      const interest = sim.totalInterest;
+      const shareTxt = `${formatKRW(contrib)} / <span class="accent">${formatKRW(interest)}</span>`;
+      $("kpiSplit").innerHTML = `${shareTxt}`;
+
+      // Flow steps
+      const gap = targetAsset - startAsset;
+      const saveDesc = (mode==="fixed")
+        ? `고정저축 모드: (월저축 ${formatKRW(fixedSaveMonthly)}) + 옵션(${formatKRW(extraSaveMonthly)})`
+        : `자동저축 모드: (월수입 ${formatKRW(incomeMonthly0)} - 월지출 ${formatKRW(expenseMonthly)}) + 옵션(${formatKRW(extraSaveMonthly)})`;
+      const saveTone = saveNow <= 0 ? "bad" : (saveNow < 300000 ? "warn" : "good");
+
+      const rr = `${returnYearlyPct.toFixed(1)}%/년`;
+      const gg = `${incomeGrowYearlyPct.toFixed(1)}%/년`;
+
+      let stepsHTML = "";
+      stepsHTML += stepCard(
+        "STEP 1) 현재 상태",
+        `시작자산 ${formatKRW(startAsset)}`,
+        `목표자산 ${formatKRW(targetAsset)} 까지 남은 갭: <span class="accent">${formatKRW(gap)}</span>`
+      );
+      stepsHTML += stepCard(
+        "STEP 2) 저축 엔진",
+        `${formatKRW(saveNow)}/월`,
+        `${saveDesc}<div class="mini">※ 월저축이 음수면(적자) “저축 0원”으로 가정하고 생존부터 하는 것으로 계산함.</div>`,
+        saveTone
+      );
+      stepsHTML += stepCard(
+        "STEP 3) 복리/상승률",
+        `수익률 ${rr} · 소득상승 ${gg}`,
+        `복리는 월 단위로 반영. 소득상승은 매년 월수입에 적용. (둘 다 보수적으로 잡는게 체감이 정확함)`
+      );
+
+      if (sim.yearsNeeded === null){
+        stepsHTML += stepCard(
+          "STEP 4) 결론",
+          "목표 도달 어려움",
+          `현재 설정으론 목표나이 <b>${ageCap}세</b>까지 목표 도달이 안됨.<br>
+           해결 포인트는 3개 중 하나: <b>월저축↑</b>, <b>목표↓</b>, <b>시간(상한)↑</b>.`,
+          "bad"
+        );
+      }else{
+        const y = sim.yearsNeeded;
+        const years = Math.floor(y);
+        const months = Math.round((y - years) * 12);
+        let tone = "good";
+        if (y > 20) tone = "warn";
+        if (y > 35) tone = "bad";
+        stepsHTML += stepCard(
+          "STEP 4) 결론",
+          `${years}년 ${months}개월`,
+          `이 흐름대로 가면 <b>${sim.ageAtGoal.toFixed(1)}세</b>에 목표 도달 예상.<br>
+           원금 납입: <b>${formatKRW(sim.totalContrib)}</b> / 복리 기여: <b class="accent">${formatKRW(sim.totalInterest)}</b>`,
+          tone
+        );
+      }
+
+      $("flowSteps").innerHTML = stepsHTML;
+
+      // milestones table
+      const body = $("milestoneBody");
+      body.innerHTML = "";
+      sim.milestones.forEach(ms=>{
+        const label = `${Math.round(ms.p*100)}%`;
+        const value = ms.value;
+        let ageHit = "-";
+        let years = "-";
+        if (ms.hitMonth !== null){
+          ageHit = (ageNow + ms.hitMonth/12).toFixed(1) + "세";
+          years = (ms.hitMonth/12).toFixed(1) + "년";
+        }
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${label}</td>
+          <td class="right">${formatKRW(value)}</td>
+          <td class="right">${ageHit}</td>
+          <td class="right">${years}</td>
+        `;
+        body.appendChild(tr);
+      });
+
+      // chart
+      renderChart(sim.seriesAge, sim.seriesAsset, targetAsset);
+    }
+
+    // init
+    computeAndRender();
+  </script>
+</body>
+</html>
