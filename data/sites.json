@@ -18,6 +18,7 @@
 	{ "name": "국세청 홈택스", "url": "https://www.hometax.go.kr", "desc": "세금 신고, 납부, 조회를 할 수 있는 국세청 사이트", "cat": "공공", "tags": ["세금","국세청"] },
 	{ "name": "국민신문고", "url": "https://www.epeople.go.kr", "desc": "민원, 제안, 고충 신고를 접수할 수 있는 국민 참여 사이트", "cat": "공공", "tags": ["민원","신고"] },
 	{ "name": "고용노동부", "url": "https://www.moel.go.kr", "desc": "고용·노동 정책과 실업급여 정보를 제공하는 사이트", "cat": "공공", "tags": ["노동","실업급여"] },
+	{ "name": "공공데이터포털", "url": "https://www.data.go.kr", "desc": "대한민국 전체 데이터의 흐름을 제공하는 사이트", "cat": "공공", "tags": ["데이터조회","무료제공"] },
 	{ "name": "국민연금공단", "url": "https://www.nps.or.kr", "desc": "국민연금 가입 내역과 예상 수령액을 확인할 수 있는 사이트", "cat": "공공", "tags": ["연금","복지"] },
 	{ "name": "금융감독원 파인", "url": "https://fine.fss.or.kr", "desc": "금융상품 비교와 금융 소비자 정보를 제공하는 사이트", "cat": "금융", "tags": ["대출","금융"] },
 	{ "name": "뱅크샐러드", "url": "https://www.banksalad.com", "desc": "자산, 대출, 소비 내역을 한 번에 관리할 수 있는 서비스", "cat": "금융", "tags": ["자산관리","가계부"] },
