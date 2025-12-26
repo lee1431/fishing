@@ -7,6 +7,7 @@
 	{ "name": "Coolors", "url": "https://coolors.co", "desc": "컬러 팔레트 생성/정리", "cat": "디자인", "tags": ["color","palette"] },
 	{ "name": "Remove.bg", "url": "https://www.remove.bg", "desc": "이미지 배경 자동 제거", "cat": "디자인", "tags": ["image","bg-remove"] },
 	{ "name": "Unsplash", "url": "https://unsplash.com", "desc": "무료 고퀄 사진 리소스", "cat": "리소스", "tags": ["photo","free"] },
+	{ "name": "Pixabay", "url": "https://pixabay.com", "desc": "놀라운 무료 이미지", "cat": "리소스", "tags": ["photo","free"] },
 	{ "name": "TradingView", "url": "https://www.tradingview.com", "desc": "차트/지표/알림 등 시장 분석 도구", "cat": "투자", "tags": ["chart","indicator"] },
 	{ "name": "CoinMarketCap", "url": "https://coinmarketcap.com", "desc": "코인 시가총액/가격/거래소 정보", "cat": "투자", "tags": ["crypto","marketcap"] },
 	{ "name": "빗썸", "url": "https://www.bithumb.com", "desc": "당신의 안전한 금융 파트너, 빗썸", "cat": "투자", "tags": ["crypto","황썸"] },
