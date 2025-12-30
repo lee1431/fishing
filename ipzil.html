@@ -33,7 +33,7 @@
       font-size:14px; line-height:1.25;
     }
     .title{font-weight:800;}
-    .hint{color:var(--ui2); font-size:12px;}
+    .hint{color:var(--ui2); font-size:6px;}
     .btns{display:flex; gap:8px; align-items:center;}
     button{
       border:1px solid rgba(0,0,0,.2);
@@ -307,11 +307,12 @@
     if(!isNight){
       ctx.strokeStyle = "#000";
       // 수면 위 찌톱(굵게)
-      line(tipX, tipY, waterX, waterPointY, 4, 1);
+      line(tipX, tipY, waterX, waterPointY, 3, 1);
+	  
 
       // 수면 아래는 "안 보이거나" "아주 흐리게"
       // -> 기본은 아주 흐리게만(원하면 alpha 0으로 만들면 완전 숨김)
-      ctx.strokeStyle = "rgba(0,0,0,0.10)";
+      ctx.strokeStyle = "rgba(0,0,0,0)";
       line(waterX, waterPointY, waterX, waterPointY + Math.round(cssH*0.18), 2, 1);
 
       // 물 반사(아주 약하게)
