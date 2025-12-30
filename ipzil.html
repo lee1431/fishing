@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover" />
+  <title>막대찌 - 예신→본신 (Day/Night)</title>
+  <style>
+    :root{ --ui:#111; --ui2:#666; --accent:#22ff55; }
+    html,body{height:100%;margin:0;}
+    body{
+      display:flex; align-items:center; justify-content:center;
+      background:#fff;
+      overscroll-behavior:none;
+      -webkit-tap-highlight-color: transparent;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", sans-serif;
+    }
+
+    .wrap{
+      width:min(980px, 100vw);
+      padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom));
+      box-sizing:border-box;
+    }
+
+    .hud{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      margin: 0 0 10px;
+      color: var(--ui);
+      user-select:none;
+    }
+    .left{
+      display:flex; flex-direction:column; gap:4px;
+      font-size:14px; line-height:1.25;
+    }
+    .title{font-weight:800;}
+    .hint{color:var(--ui2); font-size:12px;}
+    .btns{display:flex; gap:8px; align-items:center;}
+    button{
+      border:1px solid rgba(0,0,0,.2);
+      background:#fff;
+      padding:10px 12px;
+      border-radius:12px;
+      font-weight:700;
+      cursor:pointer;
+      touch-action: manipulation;
+    }
+    button:active{transform: translateY(1px);}
+
+    .card{
+      border-radius: 18px;
+      overflow:hidden;
+      border:1px solid rgba(0,0,0,.12);
+      background:#fff;
+    }
+    canvas{
+      display:block;
+      width:100%;
+      height:auto;
+      touch-action: manipulation;
+    }
+
+    /* Night UI */
+    body.night{ background:#000; }
+    body.night .hud{ color:#eee; }
+    body.night .hint{ color:#999; }
+    body.night button{
+      background:#111;
+      color:#eee;
+      border-color: rgba(255,255,255,.18);
+    }
+    body.night .card{
+      border-color: rgba(255,255,255,.12);
+      background:#000;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hud">
+      <div class="left">
+        <div class="title">막대찌 예신→본신</div>
+        <div class="hint">탭/클릭: 입질 &nbsp;·&nbsp; R: 리셋 &nbsp;·&nbsp; N: Day/Night 토글</div>
+        <div id="state" class="hint">state: idle</div>
+      </div>
+      <div class="btns">
+        <button id="btnBite">입질</button>
+        <button id="btnToggle">Night</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <canvas id="c"></canvas>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d");
+  const stateEl = document.getElementById("state");
+  const btnBite = document.getElementById("btnBite");
+  const btnToggle = document.getElementById("btnToggle");
+
+  // ---- 반응형 캔버스 ----
+  let W = 900, H = 520, dpr = 1;
+
+  function resizeCanvas(){
+    const card = canvas.parentElement;
+    const rect = card.getBoundingClientRect();
+    const cssW = Math.max(320, Math.floor(rect.width));
+    const cssH = Math.floor(cssW * 0.58); // 화면 비율(원하면 0.55~0.65 조정)
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+
+    canvas.style.width = cssW + "px";
+    canvas.style.height = cssH + "px";
+    canvas.width = Math.floor(cssW * dpr);
+    canvas.height = Math.floor(cssH * dpr);
+
+    W = canvas.width;
+    H = canvas.height;
+
+    // 항상 1:1 좌표계로 쓰기 위해 스케일
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    // 이제부터는 "CSS 픽셀 단위"로 그린다고 생각하면 됨
+  }
+
+  // ---- 씬 파라미터(리사이즈 후 재계산) ----
+  let waterY, bottomY, floatX, baseTipY;
+
+  function recomputeScene(){
+    const cssW = Math.floor(canvas.width / dpr);
+    const cssH = Math.floor(canvas.height / dpr);
+
+    waterY = Math.round(cssH * 0.58);
+    bottomY = Math.round(cssH * 0.90);
+    floatX = Math.round(cssW * 0.62);
+    baseTipY = waterY - 10;
+  }
+
+  // ---- 물리(스프링) ----
+  let y = 0;         // 찌톱 끝 y
+  let v = 0;
+  let targetY = 0;
+
+  const k = 0.018;
+  const damp = 0.88;
+
+  let t = 0;
+  let mode = "idle";
+  let seq = [];
+  let seqIndex = 0;
+  let phaseTimer = 0;
+
+  // Day/Night
+  let isNight = false;
+
+  function setMode(m){
+    mode = m;
+    stateEl.textContent = "state: " + m;
+  }
+
+  function resetAll(){
+    y = baseTipY; v = 0; targetY = baseTipY;
+    seq = []; seqIndex = 0; phaseTimer = 0;
+    setMode("idle");
+  }
+
+  function rand(min,max){ return min + Math.random()*(max-min); }
+  function randInt(min,max){ return Math.floor(rand(min, max+1)); }
+
+  function makeBiteSequence(style){
+    const yeshinCount = randInt(3, 6);
+    const s = [];
+
+    for(let i=0;i<yeshinCount;i++){
+      const amp = rand(2, 10) * (Math.random() < 0.6 ? 1 : -1);
+      const hold = rand(0.08, 0.22);
+      s.push({dur: hold, dy: amp});
+      s.push({dur: rand(0.08, 0.18), dy: 0});
+    }
+
+    if(style === "lift"){
+      const lift = -rand(25, 85);
+      s.push({dur: rand(0.25, 0.55), dy: lift * 0.55});
+      s.push({dur: rand(0.18, 0.35), dy: lift * 0.85});
+      s.push({dur: rand(0.25, 0.55), dy: lift});
+    } else {
+      const sink = rand(20, 75);
+      s.push({dur: rand(0.18, 0.35), dy: sink * 0.45});
+      s.push({dur: rand(0.22, 0.45), dy: sink * 0.8});
+      s.push({dur: rand(0.18, 0.40), dy: sink});
+    }
+
+    s.push({dur: rand(0.6, 1.0), dy: 0});
+    return s;
+  }
+
+  function startBite(){
+    if(mode !== "idle") return;
+    const style = (Math.random() < 0.55) ? "lift" : "sink";
+    seq = makeBiteSequence(style);
+    seqIndex = 0;
+    phaseTimer = 0;
+    setMode("yeshin");
+  }
+
+  function toggleNight(){
+    isNight = !isNight;
+    document.body.classList.toggle("night", isNight);
+    btnToggle.textContent = isNight ? "Day" : "Night";
+  }
+
+  // ---- 드로잉 유틸 ----
+  function line(x1,y1,x2,y2, width=2, alpha=1){
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(x2,y2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ---- 연출: 수면 위/아래 분리 + Night 발광 ----
+  function draw(){
+    const cssW = Math.floor(canvas.width / dpr);
+    const cssH = Math.floor(canvas.height / dpr);
+
+    // 배경
+    ctx.clearRect(0,0,cssW,cssH);
+
+    if(!isNight){
+      // Day: 흰 배경(기본)
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0,0,cssW,cssH);
+
+      // 수면 아래 살짝 톤 다운(원하면 더 진하게)
+      const grad = ctx.createLinearGradient(0, waterY, 0, H);
+		grad.addColorStop(0.0, "#0b1f3a"); // 수면 바로 아래 (짙은 남청)
+		grad.addColorStop(0.5, "#0a2a55"); // 중간
+		grad.addColorStop(1.0, "#06162a"); // 깊은 물
+
+		ctx.fillStyle = grad;
+      ctx.fillRect(0, waterY, cssW, cssH-waterY);
+	  
+	  const rippleAmp = 1.2;        // 흔들림 높이 (px)
+		const rippleSpeed = 0.35;     // 속도 (느릴수록 좋음)
+		const rippleFreq = 0.025;     // 파장 (클수록 잔잔)
+
+		ctx.save();
+		ctx.globalAlpha = isNight ? 0.08 : 0.12;
+
+		ctx.beginPath();
+		ctx.moveTo(0, waterY);
+
+		for (let x = 0; x <= W; x += 12) {
+		  const y =
+			waterY +
+			Math.sin(x * rippleFreq + t * rippleSpeed) * rippleAmp;
+		  ctx.lineTo(x, y);
+		}
+
+		ctx.lineTo(W, waterY + 4);
+		ctx.lineTo(0, waterY + 4);
+		ctx.closePath();
+
+		// Night / Day 색상 차이
+		ctx.fillStyle = isNight
+		  ? "rgba(255,255,255,0.25)"
+		  : "rgba(255,255,255,0.18)";
+
+		ctx.fill();
+		ctx.restore();
+	  
+    } else {
+      // Night: 전체 검정 + 수면 아래 미세한 농도 차
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0,0,cssW,cssH);
+
+      ctx.fillStyle = "rgba(255,255,255,0.02)";
+      ctx.fillRect(0, waterY, cssW, cssH-waterY);
+    }
+
+    // 수면선
+    ctx.strokeStyle = isNight ? "rgba(255,255,255,0.14)" : "#000";
+    line(0, waterY, cssW, waterY, 2, 1);
+
+    // 바닥선(희미)
+    ctx.strokeStyle = isNight ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.35)";
+    line(0, bottomY, cssW, bottomY, 1, 1);
+
+    // ---- 찌(막대찌) ----
+    const tipX = floatX;
+    const tipY = y;
+    const waterX = floatX;
+    const waterPointY = waterY;
+
+    // 찌톱 길이(수면 위)
+    const aboveLen = Math.max(42, Math.round(cssH * 0.15));
+    const topEndY = Math.min(waterPointY - aboveLen, tipY); // tipY가 올라가도 반영
+    // tipY는 "끝"으로 쓰고 있으니, 실제 선은 tipY->waterY
+    // 위쪽이 올라가면 tipY가 작아짐(위로)
+
+    // 1) Day: 수면 위 검은 굵은 선
+    // 2) Night: 기본 선은 거의 안 보이게 + LED/바로 아래 마디만 보이게
+    if(!isNight){
+      ctx.strokeStyle = "#000";
+      // 수면 위 찌톱(굵게)
+      line(tipX, tipY, waterX, waterPointY, 4, 1);
+
+      // 수면 아래는 "안 보이거나" "아주 흐리게"
+      // -> 기본은 아주 흐리게만(원하면 alpha 0으로 만들면 완전 숨김)
+      ctx.strokeStyle = "rgba(0,0,0,0.10)";
+      line(waterX, waterPointY, waterX, waterPointY + Math.round(cssH*0.18), 2, 1);
+
+      // 물 반사(아주 약하게)
+      ctx.strokeStyle = "rgba(0,0,0,0.10)";
+      drawReflection(tipX, tipY, waterX, waterPointY, 0.10);
+    } else {
+      // Night
+      // 찌 본체는 거의 안 보이게
+      ctx.strokeStyle = "rgba(255,255,255,0.05)";
+      line(tipX, tipY, waterX, waterPointY, 3, 1);
+
+      // LED (찌톱 맨 위)
+      const ledY = tipY;
+      drawLED(tipX, ledY);
+
+      // LED 바로 아래 "몇 마디" 아주 흐리게
+      // (2~3마디 정도. 길이/가시성 조절 가능)
+      ctx.strokeStyle = "rgba(34,255,85,0.18)";
+      const faintSeg = Math.round(Math.max(18, cssH*0.04)); // 한 마디 길이 느낌
+      line(tipX, ledY + 2, tipX, ledY + 2 + faintSeg*2.4, 3, 1);
+
+      // Night 수면 아래는 거의 숨김
+      ctx.strokeStyle = "rgba(255,255,255,0.02)";
+      line(waterX, waterPointY, waterX, waterPointY + Math.round(cssH*0.12), 2, 1);
+
+      // 물 반사(LED 반사 아주 약하게)
+      drawLEDReflection(tipX, ledY, waterPointY);
+    }
+
+    // 상태 텍스트(하단)
+    ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, 'Noto Sans KR'";
+    ctx.fillStyle = isNight ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.65)";
+    ctx.fillText(mode.toUpperCase(), 10, cssH - 10);
+  }
+
+  function drawLED(x,y){
+    // LED 본체(선명) + 은은한 글로우
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+
+    // 글로우(큰 원)
+    ctx.fillStyle = "rgba(34,255,85,0.18)";
+    circle(x, y, 18);
+    // 글로우(중간)
+    ctx.fillStyle = "rgba(34,255,85,0.22)";
+    circle(x, y, 10);
+    // 핵심 LED(작고 선명)
+    ctx.fillStyle = "rgba(34,255,85,0.95)";
+    circle(x, y, 3.2);
+
+    ctx.restore();
+  }
+
+  function drawReflection(x1,y1,x2,y2, alpha){
+    // 수면 아래로 내려가는 반사: 수면 기준 대칭 + 점점 사라짐
+    // (찌톱 선을 얇고 흐리게 “복제”)
+    const water = waterY;
+    const ry1 = water + (water - y1);
+    const ry2 = water + (water - y2);
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = ctx.strokeStyle; // 현재 색 유지
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x1, ry1);
+    ctx.lineTo(x2, ry2);
+    ctx.stroke();
+
+    // 아래로 갈수록 더 흐리게(페이드)
+    ctx.globalAlpha = alpha * 0.6;
+    ctx.beginPath();
+    ctx.moveTo(x2, ry2);
+    ctx.lineTo(x2, ry2 + 20);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawLEDReflection(x, ledY, water){
+    // LED 반사: 수면 아래에 아주 약하게 + 길게 퍼짐
+    const ry = water + (water - ledY);
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+
+    // 길게 퍼지는 빛
+    ctx.fillStyle = "rgba(34,255,85,0.05)";
+    roundedRect(x-6, ry-2, 12, 46, 8);
+
+    // 중심점 아주 약하게
+    ctx.fillStyle = "rgba(34,255,85,0.12)";
+    circle(x, ry, 2.6);
+
+    ctx.restore();
+  }
+
+  function circle(x,y,r){
+    ctx.beginPath();
+    ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fill();
+  }
+  function roundedRect(x,y,w,h,r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // ---- 업데이트 루프 ----
+  let last = performance.now();
+  function tick(now){
+    const dt = Math.min(0.033, (now - last) / 1000);
+    last = now;
+    t += dt;
+
+    if(mode === "idle"){
+      const ripple = Math.sin(t*2.1) * 0.6 + Math.sin(t*3.7) * 0.35;
+      targetY = baseTipY + ripple;
+    } else {
+      if(seqIndex < seq.length){
+        phaseTimer += dt;
+        const step = seq[seqIndex];
+        targetY = baseTipY + step.dy;
+
+        const honshinStart = Math.max(0, seq.length - 4);
+        if(seqIndex >= honshinStart) setMode("honshin");
+
+        if(phaseTimer >= step.dur){
+          phaseTimer = 0;
+          seqIndex++;
+          if(seqIndex >= seq.length) setMode("settle");
+        }
+      } else {
+        setMode("idle");
+      }
+    }
+
+    const a = (targetY - y) * k;
+    v = (v + a) * damp;
+    y += v * (dt * 60);
+
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  // ---- 입력 ----
+  window.addEventListener("keydown", (e) => {
+    const key = e.key.toLowerCase();
+    if(e.code === "Space"){ e.preventDefault(); startBite(); }
+    if(key === "r"){ resetAll(); }
+    if(key === "n"){ toggleNight(); }
+  });
+
+  // 모바일 탭
+  canvas.addEventListener("pointerdown", (e) => {
+    // 버튼 눌렀을 때와 충돌 방지용: 캔버스만 입질
+    startBite();
+  }, {passive:true});
+
+  btnBite.addEventListener("click", startBite);
+  btnToggle.addEventListener("click", toggleNight);
+
+  // ---- 시작 ----
+  resizeCanvas();
+  recomputeScene();
+  resetAll();
+  requestAnimationFrame(tick);
+
+  // 리사이즈 대응
+  window.addEventListener("resize", () => {
+    resizeCanvas();
+    recomputeScene();
+    // 기준점 재정렬(현재 움직임 감각 유지 위해 base 기준만 보정)
+    baseTipY = waterY - 10;
+    if(mode === "idle") resetAll();
+  });
+})();
+</script>
+</body>
+</html>
