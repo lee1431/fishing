@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Web Channel Rack (FL 느낌)</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#0f1623;
+      --panel2:#111a2a;
+      --text:#e8eef6;
+      --muted:#9fb1c5;
+      --line:rgba(255,255,255,.08);
+      --accent:#B57CFF;
+      --on:#ff4d6d;
+      --on2:#22ff55;
+      --step:#1a2335;
+      --step2:#26324a;
+      --shadow:0 16px 40px rgba(0,0,0,.45);
+      --radius:18px;
+      --cell:26px;
+      --gap:6px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",Arial,sans-serif;
+      background:
+        radial-gradient(900px 500px at 12% 10%, rgba(181,124,255,.18), transparent 55%),
+        radial-gradient(800px 480px at 90% 20%, rgba(80,200,255,.10), transparent 55%),
+        radial-gradient(900px 650px at 40% 120%, rgba(255,77,109,.10), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+    .app{
+      width:min(1060px, 100%);
+      background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 60%), var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    header{
+      padding:16px 16px 10px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      background:linear-gradient(180deg, rgba(255,255,255,.03), transparent);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:220px;
+    }
+    .dot{
+      width:12px;height:12px;border-radius:4px;
+      background:var(--accent);
+      box-shadow:0 0 0 4px rgba(181,124,255,.18);
+    }
+    .title{
+      line-height:1.1;
+    }
+    .title b{display:block;font-size:14px}
+    .title span{display:block;font-size:12px;color:var(--muted)}
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    .btn{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:14px;
+      cursor:pointer;
+      user-select:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      transition:.15s transform, .15s background;
+    }
+    .btn:hover{background:rgba(255,255,255,.07)}
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{
+      background:rgba(181,124,255,.14);
+      border-color:rgba(181,124,255,.35);
+    }
+    .btn.danger{
+      background:rgba(255,77,109,.12);
+      border-color:rgba(255,77,109,.35);
+    }
+    .pill{
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:8px 10px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      background:rgba(0,0,0,.15);
+      color:var(--muted);
+      font-size:12px;
+    }
+    .pill input[type="range"]{width:140px}
+    .pill input[type="number"]{
+      width:72px;
+      background:transparent;
+      border:1px solid var(--line);
+      color:var(--text);
+      border-radius:10px;
+      padding:6px 8px;
+      outline:none;
+    }
+
+    main{padding:14px 16px 16px}
+    .rack{
+      display:grid;
+      grid-template-columns: 160px 1fr;
+      gap:12px;
+    }
+    .left{
+      background:rgba(0,0,0,.15);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:10px;
+    }
+    .track{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:8px 8px;
+      border-radius:12px;
+      cursor:pointer;
+      user-select:none;
+      color:var(--muted);
+    }
+    .track:hover{background:rgba(255,255,255,.04)}
+    .track.active{
+      background:rgba(181,124,255,.12);
+      color:var(--text);
+      border:1px solid rgba(181,124,255,.22);
+    }
+    .track .name{
+      display:flex;align-items:center;gap:8px;
+      font-size:13px;
+    }
+    .tag{
+      font-size:11px;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--muted);
+      white-space:nowrap;
+    }
+
+    .gridWrap{
+      background:rgba(0,0,0,.15);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      overflow:auto;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(16, var(--cell));
+      gap:var(--gap);
+      align-items:center;
+      justify-content:start;
+      min-width:calc(16 * var(--cell) + 15 * var(--gap));
+    }
+    .row{
+      display:grid;
+      grid-template-columns: 160px 1fr;
+      gap:12px;
+      align-items:center;
+      margin-bottom:10px;
+    }
+    .row:last-child{margin-bottom:0}
+    .rowlabel{
+      font-size:12px;
+      color:var(--muted);
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:8px 10px;
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      border-radius:14px;
+    }
+    .vol{
+      margin-left:auto;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color:var(--muted);
+      font-size:11px;
+    }
+    .vol input{width:80px}
+    .step{
+      width:var(--cell);
+      height:var(--cell);
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.10);
+      background:linear-gradient(180deg, rgba(255,255,255,.04), transparent), var(--step);
+      cursor:pointer;
+      position:relative;
+      outline:none;
+      transition:.08s transform, .08s filter;
+    }
+    .step:hover{filter:brightness(1.12)}
+    .step:active{transform:translateY(1px)}
+    .step.on{
+      background:linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.02)), var(--step2);
+      border-color:rgba(255,255,255,.20);
+      box-shadow:0 0 0 2px rgba(34,255,85,.08) inset;
+    }
+    .step.on::after{
+      content:"";
+      position:absolute; inset:6px;
+      border-radius:6px;
+      background:linear-gradient(180deg, rgba(34,255,85,.95), rgba(34,255,85,.35));
+      opacity:.92;
+    }
+    .step.kick.on::after{background:linear-gradient(180deg, rgba(255,77,109,.95), rgba(255,77,109,.35))}
+    .step.snare.on::after{background:linear-gradient(180deg, rgba(181,124,255,.95), rgba(181,124,255,.35))}
+    .step.hat.on::after{background:linear-gradient(180deg, rgba(80,200,255,.95), rgba(80,200,255,.35))}
+    .step.clap.on::after{background:linear-gradient(180deg, rgba(255,200,80,.95), rgba(255,200,80,.35))}
+
+    .step.playhead{
+      box-shadow:0 0 0 2px rgba(255,255,255,.20) inset, 0 0 0 1px rgba(255,255,255,.10);
+      outline:2px solid rgba(255,255,255,.10);
+    }
+
+    footer{
+      padding:10px 16px 14px;
+      border-top:1px solid var(--line);
+      color:var(--muted);
+      font-size:12px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      background:linear-gradient(0deg, rgba(255,255,255,.02), transparent);
+    }
+    .hint code{
+      padding:2px 6px;border:1px solid var(--line);border-radius:8px;
+      background:rgba(0,0,0,.2); color:var(--text);
+    }
+
+    @media (max-width: 880px){
+      .rack{grid-template-columns:1fr}
+      .brand{min-width:auto}
+      .row{grid-template-columns: 1fr}
+      .rowlabel{justify-content:space-between}
+      .grid{grid-template-columns: repeat(16, 24px)}
+      :root{--cell:24px}
+    }
+  </style>
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9382191250873184"
+     crossorigin="anonymous"></script>
+  
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="dot"></div>
+        <div class="title">
+          <b>WEB Channel Rack</b>
+          <span>FL 느낌 스텝 시퀀서 (pure HTML)</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="btnPlay">▶ Play</button>
+        <button class="btn" id="btnStop">■ Stop</button>
+
+        <div class="pill">
+          <span>BPM</span>
+          <input id="bpm" type="range" min="60" max="200" value="120" />
+          <input id="bpmNum" type="number" min="60" max="240" value="120" />
+        </div>
+
+        <div class="pill">
+          <span>Swing</span>
+          <input id="swing" type="range" min="0" max="60" value="0" />
+          <span id="swingVal">0%</span>
+        </div>
+
+        <button class="btn" id="btnRandom">🎲 Random</button>
+        <button class="btn danger" id="btnClear">🧹 Clear</button>
+      </div>
+    </header>
+
+    <main>
+      <div class="rack">
+        <div class="left" id="trackList"></div>
+
+        <div class="gridWrap" id="gridWrap">
+          <!-- rows injected -->
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="hint">팁: 스텝 클릭으로 on/off, <code>Space</code> 재생/정지, <code>R</code> 랜덤, <code>C</code> 클리어</div>
+      <div id="status">Step: 1 / 16</div>
+    </footer>
+  </div>
+
+<script>
+(() => {
+  // ====== Audio: 간단 드럼 합성 (외부 샘플 없이) ======
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  const ctx = new AudioCtx();
+
+  const master = ctx.createGain();
+  master.gain.value = 0.9;
+  master.connect(ctx.destination);
+
+  const makeNoiseBuffer = (seconds=0.2) => {
+    const sr = ctx.sampleRate;
+    const buffer = ctx.createBuffer(1, Math.floor(sr * seconds), sr);
+    const data = buffer.getChannelData(0);
+    for (let i=0;i<data.length;i++) data[i] = (Math.random()*2-1);
+    return buffer;
+  };
+  const noiseBufShort = makeNoiseBuffer(0.08);
+  const noiseBufMed = makeNoiseBuffer(0.22);
+
+  function kick(t, vol=1){
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(140, t);
+    o.frequency.exponentialRampToValueAtTime(50, t + 0.06);
+    o.frequency.exponentialRampToValueAtTime(35, t + 0.12);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.9 * vol, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    o.connect(g); g.connect(master);
+    o.start(t);
+    o.stop(t + 0.18);
+
+    // 클릭감(짧은 노이즈)
+    const ns = ctx.createBufferSource();
+    const ng = ctx.createGain();
+    ns.buffer = noiseBufShort;
+    ng.gain.setValueAtTime(0.25 * vol, t);
+    ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+    ns.connect(ng); ng.connect(master);
+    ns.start(t);
+    ns.stop(t + 0.05);
+  }
+
+  function snare(t, vol=1){
+    // 노이즈 + 톤
+    const ns = ctx.createBufferSource();
+    const nf = ctx.createBiquadFilter();
+    const ng = ctx.createGain();
+    ns.buffer = noiseBufMed;
+    nf.type = "highpass";
+    nf.frequency.setValueAtTime(800, t);
+    ng.gain.setValueAtTime(0.0001, t);
+    ng.gain.exponentialRampToValueAtTime(0.7 * vol, t + 0.003);
+    ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    ns.connect(nf); nf.connect(ng); ng.connect(master);
+    ns.start(t);
+    ns.stop(t + 0.22);
+
+    const o = ctx.createOscillator();
+    const og = ctx.createGain();
+    o.type = "triangle";
+    o.frequency.setValueAtTime(200, t);
+    og.gain.setValueAtTime(0.0001, t);
+    og.gain.exponentialRampToValueAtTime(0.25 * vol, t + 0.003);
+    og.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+    o.connect(og); og.connect(master);
+    o.start(t); o.stop(t + 0.14);
+  }
+
+  function hat(t, vol=1){
+    const ns = ctx.createBufferSource();
+    const hp = ctx.createBiquadFilter();
+    const g = ctx.createGain();
+    ns.buffer = noiseBufShort;
+    hp.type = "highpass";
+    hp.frequency.setValueAtTime(5000, t);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.35 * vol, t + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    ns.connect(hp); hp.connect(g); g.connect(master);
+    ns.start(t); ns.stop(t + 0.08);
+  }
+
+  function clap(t, vol=1){
+    // 여러 번 터지는 느낌
+    const bursts = [0, 0.012, 0.024];
+    bursts.forEach((dt, i) => {
+      const ns = ctx.createBufferSource();
+      const bp = ctx.createBiquadFilter();
+      const g = ctx.createGain();
+      ns.buffer = noiseBufShort;
+      bp.type = "bandpass";
+      bp.frequency.setValueAtTime(1800, t + dt);
+      bp.Q.setValueAtTime(0.8, t + dt);
+      const peak = (0.35 - i*0.07) * vol;
+      g.gain.setValueAtTime(0.0001, t + dt);
+      g.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak), t + dt + 0.002);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dt + 0.05);
+      ns.connect(bp); bp.connect(g); g.connect(master);
+      ns.start(t + dt); ns.stop(t + dt + 0.07);
+    });
+  }
+
+  const INSTR = [
+    { id:"kick",  name:"Kick",  color:"kick",  play:kick,  vol:0.95 },
+    { id:"snare", name:"Snare", color:"snare", play:snare, vol:0.85 },
+    { id:"hat",   name:"HiHat", color:"hat",   play:hat,   vol:0.70 },
+    { id:"clap",  name:"Clap",  color:"clap",  play:clap,  vol:0.80 },
+  ];
+
+  // ====== Pattern (4 tracks x 16 steps) ======
+  const STEPS = 16;
+  const pattern = Object.fromEntries(INSTR.map(t => [t.id, Array(STEPS).fill(false)]));
+
+  // 기본 예시 패턴
+  pattern.kick[0]=true; pattern.kick[8]=true;
+  pattern.snare[4]=true; pattern.snare[12]=true;
+  for(let i=0;i<STEPS;i+=2) pattern.hat[i]=true;
+  pattern.clap[12]=true;
+
+  // ====== UI 생성 ======
+  const trackListEl = document.getElementById("trackList");
+  const gridWrap = document.getElementById("gridWrap");
+  const statusEl = document.getElementById("status");
+
+  let selected = "snare";
+
+  function renderTrackList(){
+    trackListEl.innerHTML = "";
+    INSTR.forEach(tr => {
+      const el = document.createElement("div");
+      el.className = "track" + (selected===tr.id ? " active":"");
+      el.innerHTML = `
+        <div class="name">
+          <span style="width:10px;height:10px;border-radius:3px;background:var(--accent);display:inline-block;opacity:.8"></span>
+          <b style="font-weight:700;color:inherit">${tr.name}</b>
+        </div>
+        <span class="tag">${tr.id.toUpperCase()}</span>
+      `;
+      el.addEventListener("click", () => {
+        selected = tr.id;
+        renderTrackList();
+        // 스크롤/강조 효과는 생략
+      });
+      trackListEl.appendChild(el);
+    });
+  }
+
+  function renderGrid(){
+    gridWrap.innerHTML = "";
+    INSTR.forEach(tr => {
+      const row = document.createElement("div");
+      row.className = "row";
+
+      const label = document.createElement("div");
+      label.className = "rowlabel";
+      label.innerHTML = `
+        <span><b style="color:var(--text)">${tr.name}</b> <span style="opacity:.7">(${tr.id})</span></span>
+        <span class="vol">VOL <input type="range" min="0" max="120" value="${Math.round(tr.vol*100)}" data-vol="${tr.id}"></span>
+      `;
+
+      const grid = document.createElement("div");
+      grid.className = "grid";
+      for(let s=0;s<STEPS;s++){
+        const cell = document.createElement("button");
+        cell.className = `step ${tr.color}` + (pattern[tr.id][s] ? " on":"");
+        cell.type="button";
+        cell.dataset.track = tr.id;
+        cell.dataset.step = String(s);
+
+        cell.addEventListener("click", () => {
+          pattern[tr.id][s] = !pattern[tr.id][s];
+          cell.classList.toggle("on", pattern[tr.id][s]);
+          // 클릭 프리뷰
+          safeResumeAudio().then(() => {
+            const now = ctx.currentTime + 0.01;
+            tr.play(now, tr.vol);
+          });
+        });
+
+        grid.appendChild(cell);
+      }
+
+      gridWrap.appendChild(row);
+      row.appendChild(label);
+      row.appendChild(grid);
+    });
+
+    // 볼륨 이벤트
+    gridWrap.querySelectorAll('input[type="range"][data-vol]').forEach(sl => {
+      sl.addEventListener("input", (e) => {
+        const id = e.target.dataset.vol;
+        const v = Number(e.target.value)/100;
+        const tr = INSTR.find(x => x.id===id);
+        tr.vol = Math.max(0, Math.min(1.2, v));
+      });
+    });
+  }
+
+  renderTrackList();
+  renderGrid();
+
+  // ====== Transport ======
+  const btnPlay = document.getElementById("btnPlay");
+  const btnStop = document.getElementById("btnStop");
+  const bpm = document.getElementById("bpm");
+  const bpmNum = document.getElementById("bpmNum");
+  const swing = document.getElementById("swing");
+  const swingVal = document.getElementById("swingVal");
+  const btnRandom = document.getElementById("btnRandom");
+  const btnClear = document.getElementById("btnClear");
+
+  let isPlaying = false;
+  let stepIndex = 0;
+  let timer = null;
+
+  function getStepMs(){
+    // 16-step = 1 bar of 4/4 with 16th notes
+    // quarter note = 60/BPM sec => 16th = 1/4 quarter
+    const bpmVal = Number(bpm.value);
+    const secPer16 = (60 / bpmVal) / 4;
+    return secPer16 * 1000;
+  }
+
+  function updateBpmUI(val){
+    bpm.value = String(val);
+    bpmNum.value = String(val);
+  }
+
+  bpm.addEventListener("input", () => updateBpmUI(bpm.value));
+  bpmNum.addEventListener("input", () => {
+    let v = Number(bpmNum.value || 120);
+    v = Math.max(40, Math.min(240, v));
+    updateBpmUI(v);
+  });
+
+  swing.addEventListener("input", () => {
+    swingVal.textContent = swing.value + "%";
+  });
+
+  function clearPlayhead(){
+    gridWrap.querySelectorAll(".step.playhead").forEach(el => el.classList.remove("playhead"));
+  }
+  function setPlayhead(i){
+    clearPlayhead();
+    gridWrap.querySelectorAll(`.step[data-step="${i}"]`).forEach(el => el.classList.add("playhead"));
+    statusEl.textContent = `Step: ${i+1} / ${STEPS}`;
+  }
+
+  async function safeResumeAudio(){
+    if (ctx.state !== "running") {
+      try{ await ctx.resume(); }catch(e){}
+    }
+  }
+
+  function scheduleStep(i){
+    // 스윙: 짝수(1,3,5...) 16분음을 살짝 뒤로 밀기
+    const swingAmt = Number(swing.value) / 100; // 0~0.6
+    const base = ctx.currentTime;
+    const secPer16 = (60 / Number(bpm.value)) / 4;
+    const isOff = (i % 2) === 1;
+    const offset = isOff ? secPer16 * swingAmt * 0.6 : 0; // 느낌만
+    const t = base + 0.02 + offset;
+
+    INSTR.forEach(tr => {
+      if (pattern[tr.id][i]) tr.play(t, tr.vol);
+    });
+  }
+
+  function tick(){
+    setPlayhead(stepIndex);
+    scheduleStep(stepIndex);
+
+    stepIndex = (stepIndex + 1) % STEPS;
+
+    // 다음 tick 간격(스윙에 따라 UI도 맞추려고 약간 변조)
+    const ms = getStepMs();
+    const swingAmt = Number(swing.value)/100;
+    const isOffNext = (stepIndex % 2) === 1;
+    const delay = ms + (isOffNext ? ms * swingAmt * 0.25 : 0);
+    timer = setTimeout(tick, delay);
+  }
+
+  function play(){
+    if (isPlaying) return;
+    isPlaying = true;
+    btnPlay.textContent = "⏸ Pause";
+    safeResumeAudio().then(() => tick());
+  }
+
+  function stop(){
+    isPlaying = false;
+    btnPlay.textContent = "▶ Play";
+    if (timer) { clearTimeout(timer); timer = null; }
+    stepIndex = 0;
+    setPlayhead(0);
+  }
+
+  btnPlay.addEventListener("click", () => {
+    if (!isPlaying) play();
+    else { // pause
+      isPlaying = false;
+      btnPlay.textContent = "▶ Play";
+      if (timer) { clearTimeout(timer); timer = null; }
+      clearPlayhead();
+      statusEl.textContent = `Paused (next: ${stepIndex+1}/${STEPS})`;
+    }
+  });
+  btnStop.addEventListener("click", stop);
+
+  // Random / Clear
+  function randomize(){
+    INSTR.forEach(tr => {
+      for(let i=0;i<STEPS;i++){
+        const p =
+          tr.id==="hat"   ? 0.55 :
+          tr.id==="kick"  ? 0.22 :
+          tr.id==="snare" ? 0.16 :
+          0.10;
+        pattern[tr.id][i] = Math.random() < p;
+      }
+    });
+    // 킥/스네어는 기본 박자 조금 보정
+    pattern.kick[0]=true;
+    pattern.snare[4]=true; pattern.snare[12]=true;
+    renderGrid();
+    setPlayhead(stepIndex);
+  }
+  function clearAll(){
+    INSTR.forEach(tr => pattern[tr.id].fill(false));
+    renderGrid();
+    setPlayhead(stepIndex);
+  }
+
+  btnRandom.addEventListener("click", randomize);
+  btnClear.addEventListener("click", clearAll);
+
+  // Keyboard
+  window.addEventListener("keydown", (e) => {
+    if (e.code === "Space") { e.preventDefault(); btnPlay.click(); }
+    if (e.key.toLowerCase() === "r") randomize();
+    if (e.key.toLowerCase() === "c") clearAll();
+  });
+
+  // 초기 playhead
+  setPlayhead(0);
+
+  // 모바일에서 오디오 잠금 해제 도움
+  window.addEventListener("pointerdown", () => { safeResumeAudio(); }, { once:false });
+
+})();
+</script>
+</body>
+</html>
