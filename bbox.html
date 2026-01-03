@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Web Channel Rack (FL 느낌)</title>
+  <title>WEB Channel Rack + Piano Roll</title>
   <style>
     :root{
       --bg:#0b0f14;
@@ -13,44 +13,52 @@
       --muted:#9fb1c5;
       --line:rgba(255,255,255,.08);
       --accent:#B57CFF;
-      --on:#ff4d6d;
-      --on2:#22ff55;
-      --step:#1a2335;
-      --step2:#26324a;
+
       --shadow:0 16px 40px rgba(0,0,0,.45);
       --radius:18px;
+
       --cell:26px;
       --gap:6px;
+
+      --step:#1a2335;
+      --step2:#26324a;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0}
     body{
-      font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",Arial,sans-serif;
-      background:
-        radial-gradient(900px 500px at 12% 10%, rgba(181,124,255,.18), transparent 55%),
-        radial-gradient(800px 480px at 90% 20%, rgba(80,200,255,.10), transparent 55%),
-        radial-gradient(900px 650px at 40% 120%, rgba(255,77,109,.10), transparent 60%),
-        var(--bg);
-      color:var(--text);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:18px;
-    }
+	  margin:0;
+	  font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",Arial,sans-serif;
+	  color:var(--text);
+	  background:
+		radial-gradient(900px 500px at 12% 10%, rgba(181,124,255,.18), transparent 55%),
+		radial-gradient(800px 480px at 90% 20%, rgba(80,200,255,.10), transparent 55%),
+		radial-gradient(900px 650px at 40% 120%, rgba(255,77,109,.10), transparent 60%),
+		var(--bg);
+
+	  /* 핵심: 가운데 정렬 제거 */
+	  display:block;
+
+	  /* 스크롤 정상화 */
+	  min-height:100vh;
+
+	  /* 상단 여백(모바일 노치까지 대응) */
+	  padding: max(18px, env(safe-area-inset-top)) 18px 18px;
+	}
     .app{
-      width:min(1060px, 100%);
+      width:min(1180px, 100%);
       background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 60%), var(--panel);
       border:1px solid var(--line);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
+	  margin: 0 auto;
       overflow:hidden;
     }
     header{
-      padding:16px 16px 10px;
+      padding:14px 16px 10px;
       border-bottom:1px solid var(--line);
       display:flex;
       gap:12px;
-      align-items:center;
+      align-items:flex-start;
       justify-content:space-between;
       background:linear-gradient(180deg, rgba(255,255,255,.03), transparent);
     }
@@ -58,16 +66,14 @@
       display:flex;
       align-items:center;
       gap:10px;
-      min-width:220px;
+      min-width:240px;
     }
     .dot{
       width:12px;height:12px;border-radius:4px;
       background:var(--accent);
       box-shadow:0 0 0 4px rgba(181,124,255,.18);
     }
-    .title{
-      line-height:1.1;
-    }
+    .title{line-height:1.1}
     .title b{display:block;font-size:14px}
     .title span{display:block;font-size:12px;color:var(--muted)}
     .controls{
@@ -76,6 +82,7 @@
       gap:10px;
       align-items:center;
       justify-content:flex-end;
+      max-width:760px;
     }
     .btn{
       border:1px solid var(--line);
@@ -89,6 +96,7 @@
       align-items:center;
       gap:8px;
       transition:.15s transform, .15s background;
+      white-space:nowrap;
     }
     .btn:hover{background:rgba(255,255,255,.07)}
     .btn:active{transform:translateY(1px)}
@@ -110,10 +118,11 @@
       background:rgba(0,0,0,.15);
       color:var(--muted);
       font-size:12px;
+      white-space:nowrap;
     }
-    .pill input[type="range"]{width:140px}
+    .pill input[type="range"]{width:130px}
     .pill input[type="number"]{
-      width:72px;
+      width:70px;
       background:transparent;
       border:1px solid var(--line);
       color:var(--text);
@@ -121,57 +130,172 @@
       padding:6px 8px;
       outline:none;
     }
-
+    .pill select{
+      background:transparent;
+      border:1px solid var(--line);
+      color:var(--text);
+      border-radius:10px;
+      padding:6px 8px;
+      outline:none;
+    }
     main{padding:14px 16px 16px}
     .rack{
       display:grid;
-      grid-template-columns: 160px 1fr;
+      grid-template-columns: 320px 1fr;
       gap:12px;
+      align-items:start;
     }
     .left{
       background:rgba(0,0,0,.15);
       border:1px solid var(--line);
       border-radius:16px;
       padding:10px;
+      position:sticky;
+      top:12px;
+      max-height:72vh;
+      overflow:auto;
     }
-    .track{
+    .sectionTitle{
+      font-size:12px;
+      color:var(--muted);
+      margin:4px 6px 10px;
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      padding:8px 8px;
-      border-radius:12px;
-      cursor:pointer;
-      user-select:none;
-      color:var(--muted);
     }
-    .track:hover{background:rgba(255,255,255,.04)}
+    .track{
+      border:1px solid transparent;
+      border-radius:14px;
+      padding:10px;
+      margin:8px 0;
+      background:rgba(255,255,255,.02);
+    }
     .track.active{
-      background:rgba(181,124,255,.12);
-      color:var(--text);
-      border:1px solid rgba(181,124,255,.22);
+      border-color:rgba(181,124,255,.22);
+      background:rgba(181,124,255,.08);
     }
-    .track .name{
-      display:flex;align-items:center;gap:8px;
+    .tTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .tName{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+      flex:1;
+    }
+    .tName b{
       font-size:13px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
     }
-    .tag{
+    .chip{
       font-size:11px;
       padding:4px 8px;
       border-radius:999px;
       border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
+      background:rgba(0,0,0,.12);
       color:var(--muted);
-      white-space:nowrap;
+      flex:0 0 auto;
     }
+    .tBtns{
+      display:flex;
+      gap:6px;
+      flex:0 0 auto;
+    }
+    .mini{
+      padding:6px 8px;
+      border-radius:10px;
+      font-size:11px;
+    }
+    .mini.on{
+      border-color:rgba(34,255,85,.35);
+      background:rgba(34,255,85,.10);
+    }
+    .mini.solo.on{
+      border-color:rgba(255,200,80,.40);
+      background:rgba(255,200,80,.10);
+    }
+    .tControls{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:8px;
+      margin-top:10px;
+    }
+    .row2{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .row2 label{
+      font-size:11px;
+      color:var(--muted);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .row2 input[type="range"]{width:160px}
+    .row2 input[type="text"]{
+      flex:1;
+      min-width:140px;
+      background:rgba(0,0,0,.18);
+      border:1px solid var(--line);
+      color:var(--text);
+      border-radius:12px;
+      padding:8px 10px;
+      outline:none;
+    }
+    .row2 input[type="file"]{max-width:100%}
 
-    .gridWrap{
+    .right{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    .panel{
       background:rgba(0,0,0,.15);
       border:1px solid var(--line);
       border-radius:16px;
       padding:12px;
       overflow:auto;
     }
+    .panelHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .panelHead .ttl{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .pageNav{
+      display:flex;
+      gap:6px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .pageBtn{
+      padding:6px 10px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      cursor:pointer;
+      font-size:12px;
+    }
+    .pageBtn.active{
+      background:rgba(181,124,255,.14);
+      border-color:rgba(181,124,255,.35);
+    }
+
     .grid{
       display:grid;
       grid-template-columns: repeat(16, var(--cell));
@@ -180,34 +304,19 @@
       justify-content:start;
       min-width:calc(16 * var(--cell) + 15 * var(--gap));
     }
-    .row{
-      display:grid;
-      grid-template-columns: 160px 1fr;
-      gap:12px;
-      align-items:center;
-      margin-bottom:10px;
-    }
-    .row:last-child{margin-bottom:0}
     .rowlabel{
-      font-size:12px;
-      color:var(--muted);
       display:flex;
       align-items:center;
+      justify-content:space-between;
       gap:10px;
       padding:8px 10px;
       background:rgba(255,255,255,.03);
       border:1px solid var(--line);
       border-radius:14px;
-    }
-    .vol{
-      margin-left:auto;
-      display:flex;
-      align-items:center;
-      gap:8px;
+      margin-bottom:8px;
+      font-size:12px;
       color:var(--muted);
-      font-size:11px;
     }
-    .vol input{width:80px}
     .step{
       width:var(--cell);
       height:var(--cell);
@@ -233,14 +342,49 @@
       background:linear-gradient(180deg, rgba(34,255,85,.95), rgba(34,255,85,.35));
       opacity:.92;
     }
-    .step.kick.on::after{background:linear-gradient(180deg, rgba(255,77,109,.95), rgba(255,77,109,.35))}
-    .step.snare.on::after{background:linear-gradient(180deg, rgba(181,124,255,.95), rgba(181,124,255,.35))}
-    .step.hat.on::after{background:linear-gradient(180deg, rgba(80,200,255,.95), rgba(80,200,255,.35))}
-    .step.clap.on::after{background:linear-gradient(180deg, rgba(255,200,80,.95), rgba(255,200,80,.35))}
-
     .step.playhead{
       box-shadow:0 0 0 2px rgba(255,255,255,.20) inset, 0 0 0 1px rgba(255,255,255,.10);
       outline:2px solid rgba(255,255,255,.10);
+    }
+
+    /* piano roll */
+    .pianoWrap{overflow:auto}
+    .piano{
+      display:grid;
+      grid-template-columns: 90px repeat(16, var(--cell));
+      gap:var(--gap);
+      align-items:center;
+      justify-content:start;
+      min-width:calc(90px + 16 * var(--cell) + 15 * var(--gap));
+    }
+    .key{
+      height:22px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--muted);
+      font-size:11px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 10px;
+    }
+    .pstep{
+      width:var(--cell);
+      height:22px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.16);
+      cursor:pointer;
+      position:relative;
+    }
+    .pstep.on{
+      background:rgba(181,124,255,.18);
+      border-color:rgba(181,124,255,.35);
+    }
+    .pstep.playhead{
+      outline:2px solid rgba(255,255,255,.10);
+      box-shadow:0 0 0 2px rgba(255,255,255,.15) inset;
     }
 
     footer{
@@ -260,19 +404,56 @@
       background:rgba(0,0,0,.2); color:var(--text);
     }
 
-    @media (max-width: 880px){
+    /* modal */
+    .modalBack{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:50;
+    }
+    .modal{
+      width:min(920px, 100%);
+      background:var(--panel2);
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .modalHead{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .modalHead b{font-size:13px}
+    .modalBody{padding:12px 14px; display:grid; gap:10px}
+    textarea{
+      width:100%;
+      min-height:260px;
+      resize:vertical;
+      background:rgba(0,0,0,.18);
+      border:1px solid var(--line);
+      border-radius:14px;
+      color:var(--text);
+      padding:12px;
+      outline:none;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:12px;
+      line-height:1.35;
+    }
+
+    @media (max-width: 980px){
       .rack{grid-template-columns:1fr}
-      .brand{min-width:auto}
-      .row{grid-template-columns: 1fr}
-      .rowlabel{justify-content:space-between}
-      .grid{grid-template-columns: repeat(16, 24px)}
+      .left{position:relative; max-height:none}
       :root{--cell:24px}
+      .piano{grid-template-columns: 86px repeat(16, var(--cell))}
     }
   </style>
-
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9382191250873184"
-     crossorigin="anonymous"></script>
-  
 </head>
 <body>
   <div class="app">
@@ -280,8 +461,8 @@
       <div class="brand">
         <div class="dot"></div>
         <div class="title">
-          <b>WEB Channel Rack</b>
-          <span>FL 느낌 스텝 시퀀서 (pure HTML)</span>
+          <b>WEB Channel Rack + Piano Roll</b>
+          <span>16/32/64 steps · page view · mute/solo · sample load · JSON save/load</span>
         </div>
       </div>
 
@@ -292,7 +473,7 @@
         <div class="pill">
           <span>BPM</span>
           <input id="bpm" type="range" min="60" max="200" value="120" />
-          <input id="bpmNum" type="number" min="60" max="240" value="120" />
+          <input id="bpmNum" type="number" min="40" max="240" value="120" />
         </div>
 
         <div class="pill">
@@ -301,36 +482,124 @@
           <span id="swingVal">0%</span>
         </div>
 
+        <div class="pill">
+          <span>Steps</span>
+          <select id="stepsSel">
+            <option value="16">16</option>
+            <option value="32">32</option>
+            <option value="64">64</option>
+          </select>
+        </div>
+
         <button class="btn" id="btnRandom">🎲 Random</button>
         <button class="btn danger" id="btnClear">🧹 Clear</button>
+
+        <button class="btn" id="btnIO">💾 Save/Load</button>
       </div>
     </header>
 
     <main>
       <div class="rack">
-        <div class="left" id="trackList"></div>
+        <div class="left">
+          <div class="sectionTitle">
+            <span>Channels</span>
+            <span style="opacity:.8">Mute/Solo/Name/Sample</span>
+          </div>
+          <div id="trackList"></div>
+        </div>
 
-        <div class="gridWrap" id="gridWrap">
-          <!-- rows injected -->
+        <div class="right">
+          <div class="panel">
+            <div class="panelHead">
+              <div class="ttl" id="stepperTitle">Drum Rack (Page 1/1)</div>
+              <div class="pageNav" id="pageNav"></div>
+            </div>
+
+            <div class="rowlabel">
+              <span>드럼 스텝(클릭 on/off) · 현재 페이지는 16스텝만 표시</span>
+              <span id="status">Step: 1 / 16</span>
+            </div>
+
+            <div id="drumRows"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panelHead">
+              <div class="ttl">Piano Roll (Melody)</div>
+              <div class="pill">
+                <span>Oct</span>
+                <select id="octSel">
+                  <option value="3">3</option>
+                  <option value="4" selected>4</option>
+                  <option value="5">5</option>
+                </select>
+                <span style="opacity:.75">2옥타브</span>
+              </div>
+            </div>
+
+            <div class="rowlabel">
+              <span>피아노롤: 한 스텝당 1노트(덮어쓰기). 셀 클릭하면 토글 + 즉시 프리뷰</span>
+              <span style="opacity:.85">키보드: <b style="color:var(--text)">Space</b> 재생 · <b style="color:var(--text)">R</b> 랜덤 · <b style="color:var(--text)">C</b> 클리어</span>
+            </div>
+
+            <div class="pianoWrap">
+              <div id="pianoGrid"></div>
+            </div>
+          </div>
         </div>
       </div>
     </main>
 
     <footer>
-      <div class="hint">팁: 스텝 클릭으로 on/off, <code>Space</code> 재생/정지, <code>R</code> 랜덤, <code>C</code> 클리어</div>
-      <div id="status">Step: 1 / 16</div>
+      <div class="hint">팁: <code>Save/Load</code>에서 JSON 복사/붙여넣기 or 파일로 저장/불러오기 가능</div>
+      <div style="opacity:.85">샘플 업로드: Kick/Snare/Hat/Clap 각각 WAV/MP3 가능 (없으면 내장 합성드럼)</div>
     </footer>
+  </div>
+
+  <!-- IO MODAL -->
+  <div class="modalBack" id="modalBack">
+    <div class="modal">
+      <div class="modalHead">
+        <b>Pattern Save / Load (JSON)</b>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn mini" id="btnCopy">📋 Copy</button>
+          <button class="btn mini" id="btnDownload">⬇ Download .json</button>
+          <label class="btn mini" style="cursor:pointer">
+            ⬆ Load .json <input type="file" id="fileLoadJson" accept="application/json" style="display:none">
+          </label>
+          <button class="btn mini danger" id="btnCloseModal">닫기</button>
+        </div>
+      </div>
+      <div class="modalBody">
+        <textarea id="ioText" spellcheck="false"></textarea>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center">
+          <div style="color:var(--muted);font-size:12px">
+            붙여넣고 <b style="color:var(--text)">Apply</b> 누르면 즉시 반영됨 (샘플 오디오는 JSON에 포함 안 함)
+          </div>
+          <button class="btn primary" id="btnApply">✅ Apply</button>
+        </div>
+      </div>
+    </div>
   </div>
 
 <script>
 (() => {
-  // ====== Audio: 간단 드럼 합성 (외부 샘플 없이) ======
+  // =========================
+  // Audio
+  // =========================
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
   const ctx = new AudioCtx();
 
   const master = ctx.createGain();
   master.gain.value = 0.9;
   master.connect(ctx.destination);
+
+  async function safeResumeAudio(){
+    if (ctx.state !== "running") {
+      try{ await ctx.resume(); }catch(e){}
+    }
+  }
+  window.addEventListener("pointerdown", () => { safeResumeAudio(); }, { passive:true });
 
   const makeNoiseBuffer = (seconds=0.2) => {
     const sr = ctx.sampleRate;
@@ -340,9 +609,10 @@
     return buffer;
   };
   const noiseBufShort = makeNoiseBuffer(0.08);
-  const noiseBufMed = makeNoiseBuffer(0.22);
+  const noiseBufMed   = makeNoiseBuffer(0.22);
 
-  function kick(t, vol=1){
+  // fallback synth drums
+  function kickSynth(t, vol=1){
     const o = ctx.createOscillator();
     const g = ctx.createGain();
     o.type = "sine";
@@ -356,7 +626,6 @@
     o.start(t);
     o.stop(t + 0.18);
 
-    // 클릭감(짧은 노이즈)
     const ns = ctx.createBufferSource();
     const ng = ctx.createGain();
     ns.buffer = noiseBufShort;
@@ -367,8 +636,7 @@
     ns.stop(t + 0.05);
   }
 
-  function snare(t, vol=1){
-    // 노이즈 + 톤
+  function snareSynth(t, vol=1){
     const ns = ctx.createBufferSource();
     const nf = ctx.createBiquadFilter();
     const ng = ctx.createGain();
@@ -393,7 +661,7 @@
     o.start(t); o.stop(t + 0.14);
   }
 
-  function hat(t, vol=1){
+  function hatSynth(t, vol=1){
     const ns = ctx.createBufferSource();
     const hp = ctx.createBiquadFilter();
     const g = ctx.createGain();
@@ -407,8 +675,7 @@
     ns.start(t); ns.stop(t + 0.08);
   }
 
-  function clap(t, vol=1){
-    // 여러 번 터지는 느낌
+  function clapSynth(t, vol=1){
     const bursts = [0, 0.012, 0.024];
     bursts.forEach((dt, i) => {
       const ns = ctx.createBufferSource();
@@ -427,136 +694,744 @@
     });
   }
 
-  const INSTR = [
-    { id:"kick",  name:"Kick",  color:"kick",  play:kick,  vol:0.95 },
-    { id:"snare", name:"Snare", color:"snare", play:snare, vol:0.85 },
-    { id:"hat",   name:"HiHat", color:"hat",   play:hat,   vol:0.70 },
-    { id:"clap",  name:"Clap",  color:"clap",  play:clap,  vol:0.80 },
+  function playSample(buffer, t, vol=1){
+    if (!buffer) return false;
+    const src = ctx.createBufferSource();
+    const g = ctx.createGain();
+    src.buffer = buffer;
+    g.gain.setValueAtTime(Math.max(0, vol), t);
+    src.connect(g); g.connect(master);
+    src.start(t);
+    return true;
+  }
+
+  // Melody synth (simple mono per step)
+  function midiToHz(m){
+    return 440 * Math.pow(2, (m - 69) / 12);
+  }
+  function melodySynth(t, midi, vol=0.7, len=0.12){
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    const f = midiToHz(midi);
+
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(f, t);
+
+    // ADSR-ish
+    const a = 0.008, d = 0.06, s = 0.35, r = 0.06;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + a);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, vol * s), t + a + d);
+    g.gain.setValueAtTime(Math.max(0.0001, vol * s), t + len);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + len + r);
+
+    // gentle filter
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(Math.min(12000, f * 6), t);
+    lp.Q.setValueAtTime(0.7, t);
+
+    o.connect(lp); lp.connect(g); g.connect(master);
+    o.start(t);
+    o.stop(t + len + r + 0.02);
+  }
+
+  // =========================
+  // Data Model
+  // =========================
+  const TRACKS = [
+    { id:"kick",  type:"drum", name:"Kick",  vol:0.95, muted:false, solo:false, sampleBuffer:null, synth: kickSynth },
+    { id:"snare", type:"drum", name:"Snare", vol:0.85, muted:false, solo:false, sampleBuffer:null, synth: snareSynth },
+    { id:"hat",   type:"drum", name:"HiHat", vol:0.70, muted:false, solo:false, sampleBuffer:null, synth: hatSynth },
+    { id:"clap",  type:"drum", name:"Clap",  vol:0.80, muted:false, solo:false, sampleBuffer:null, synth: clapSynth },
+    { id:"melody",type:"midi", name:"Melody",vol:0.70, muted:false, solo:false }
   ];
 
-  // ====== Pattern (4 tracks x 16 steps) ======
-  const STEPS = 16;
-  const pattern = Object.fromEntries(INSTR.map(t => [t.id, Array(STEPS).fill(false)]));
+  let stepsLen = 16;         // 16/32/64
+  let page = 0;              // page index (0..pages-1), each page shows 16 steps
+  const PAGE_SIZE = 16;
 
-  // 기본 예시 패턴
+  // drum patterns: boolean arrays
+  // melody: int|null per step (midi)
+  const pattern = {
+    kick:   [],
+    snare:  [],
+    hat:    [],
+    clap:   [],
+    melody: []
+  };
+
+  function ensurePatternLength(newLen){
+    for (const tr of TRACKS){
+      const id = tr.id;
+      const arr = pattern[id];
+      const isMidi = tr.type === "midi";
+      if (arr.length < newLen){
+        const add = newLen - arr.length;
+        for (let i=0;i<add;i++) arr.push(isMidi ? null : false);
+      } else if (arr.length > newLen){
+        arr.length = newLen;
+      }
+    }
+  }
+
+  // default init
+  stepsLen = 16;
+  ensurePatternLength(stepsLen);
+  // basic groove
   pattern.kick[0]=true; pattern.kick[8]=true;
   pattern.snare[4]=true; pattern.snare[12]=true;
-  for(let i=0;i<STEPS;i+=2) pattern.hat[i]=true;
+  for(let i=0;i<stepsLen;i+=2) pattern.hat[i]=true;
   pattern.clap[12]=true;
+  // melody example
+  pattern.melody[0]=60; pattern.melody[4]=62; pattern.melody[8]=67; pattern.melody[12]=65;
 
-  // ====== UI 생성 ======
+  // =========================
+  // UI Refs
+  // =========================
   const trackListEl = document.getElementById("trackList");
-  const gridWrap = document.getElementById("gridWrap");
-  const statusEl = document.getElementById("status");
+  const drumRowsEl  = document.getElementById("drumRows");
+  const pageNavEl   = document.getElementById("pageNav");
+  const stepperTitle= document.getElementById("stepperTitle");
+  const statusEl    = document.getElementById("status");
 
-  let selected = "snare";
-
-  function renderTrackList(){
-    trackListEl.innerHTML = "";
-    INSTR.forEach(tr => {
-      const el = document.createElement("div");
-      el.className = "track" + (selected===tr.id ? " active":"");
-      el.innerHTML = `
-        <div class="name">
-          <span style="width:10px;height:10px;border-radius:3px;background:var(--accent);display:inline-block;opacity:.8"></span>
-          <b style="font-weight:700;color:inherit">${tr.name}</b>
-        </div>
-        <span class="tag">${tr.id.toUpperCase()}</span>
-      `;
-      el.addEventListener("click", () => {
-        selected = tr.id;
-        renderTrackList();
-        // 스크롤/강조 효과는 생략
-      });
-      trackListEl.appendChild(el);
-    });
-  }
-
-  function renderGrid(){
-    gridWrap.innerHTML = "";
-    INSTR.forEach(tr => {
-      const row = document.createElement("div");
-      row.className = "row";
-
-      const label = document.createElement("div");
-      label.className = "rowlabel";
-      label.innerHTML = `
-        <span><b style="color:var(--text)">${tr.name}</b> <span style="opacity:.7">(${tr.id})</span></span>
-        <span class="vol">VOL <input type="range" min="0" max="120" value="${Math.round(tr.vol*100)}" data-vol="${tr.id}"></span>
-      `;
-
-      const grid = document.createElement("div");
-      grid.className = "grid";
-      for(let s=0;s<STEPS;s++){
-        const cell = document.createElement("button");
-        cell.className = `step ${tr.color}` + (pattern[tr.id][s] ? " on":"");
-        cell.type="button";
-        cell.dataset.track = tr.id;
-        cell.dataset.step = String(s);
-
-        cell.addEventListener("click", () => {
-          pattern[tr.id][s] = !pattern[tr.id][s];
-          cell.classList.toggle("on", pattern[tr.id][s]);
-          // 클릭 프리뷰
-          safeResumeAudio().then(() => {
-            const now = ctx.currentTime + 0.01;
-            tr.play(now, tr.vol);
-          });
-        });
-
-        grid.appendChild(cell);
-      }
-
-      gridWrap.appendChild(row);
-      row.appendChild(label);
-      row.appendChild(grid);
-    });
-
-    // 볼륨 이벤트
-    gridWrap.querySelectorAll('input[type="range"][data-vol]').forEach(sl => {
-      sl.addEventListener("input", (e) => {
-        const id = e.target.dataset.vol;
-        const v = Number(e.target.value)/100;
-        const tr = INSTR.find(x => x.id===id);
-        tr.vol = Math.max(0, Math.min(1.2, v));
-      });
-    });
-  }
-
-  renderTrackList();
-  renderGrid();
-
-  // ====== Transport ======
   const btnPlay = document.getElementById("btnPlay");
   const btnStop = document.getElementById("btnStop");
+
   const bpm = document.getElementById("bpm");
   const bpmNum = document.getElementById("bpmNum");
+
   const swing = document.getElementById("swing");
   const swingVal = document.getElementById("swingVal");
+
+  const stepsSel = document.getElementById("stepsSel");
   const btnRandom = document.getElementById("btnRandom");
   const btnClear = document.getElementById("btnClear");
 
-  let isPlaying = false;
-  let stepIndex = 0;
-  let timer = null;
+  const btnIO = document.getElementById("btnIO");
+  const modalBack = document.getElementById("modalBack");
+  const ioText = document.getElementById("ioText");
+  const btnCloseModal = document.getElementById("btnCloseModal");
+  const btnApply = document.getElementById("btnApply");
+  const btnCopy = document.getElementById("btnCopy");
+  const btnDownload = document.getElementById("btnDownload");
+  const fileLoadJson = document.getElementById("fileLoadJson");
 
-  function getStepMs(){
-    // 16-step = 1 bar of 4/4 with 16th notes
-    // quarter note = 60/BPM sec => 16th = 1/4 quarter
-    const bpmVal = Number(bpm.value);
-    const secPer16 = (60 / bpmVal) / 4;
-    return secPer16 * 1000;
+  const pianoGridEl = document.getElementById("pianoGrid");
+  const octSel = document.getElementById("octSel");
+
+  // =========================
+  // Helpers
+  // =========================
+  function pagesCount(){ return Math.max(1, Math.ceil(stepsLen / PAGE_SIZE)); }
+  function pageStart(){ return page * PAGE_SIZE; }
+  function pageEnd(){ return Math.min(stepsLen, pageStart() + PAGE_SIZE); }
+
+  function hasAnySolo(){
+    return TRACKS.some(t => t.solo);
   }
+  function isTrackAudible(tr){
+    if (tr.muted) return false;
+    const soloing = hasAnySolo();
+    if (!soloing) return true;
+    return tr.solo;
+  }
+
+  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
 
   function updateBpmUI(val){
     bpm.value = String(val);
     bpmNum.value = String(val);
   }
 
+  // =========================
+  // Render: Track List (Mute/Solo/Name/Vol/Sample)
+  // =========================
+  function renderTrackList(){
+    trackListEl.innerHTML = "";
+
+    TRACKS.forEach(tr => {
+      const wrap = document.createElement("div");
+      wrap.className = "track";
+
+      const top = document.createElement("div");
+      top.className = "tTop";
+
+      const left = document.createElement("div");
+      left.className = "tName";
+      left.innerHTML = `
+        <span class="chip">${tr.type.toUpperCase()}</span>
+        <b title="${tr.name}">${tr.name}</b>
+      `;
+
+      const btns = document.createElement("div");
+      btns.className = "tBtns";
+
+      const muteBtn = document.createElement("button");
+      muteBtn.className = "btn mini" + (tr.muted ? " on" : "");
+      muteBtn.textContent = tr.muted ? "Muted" : "Mute";
+      muteBtn.addEventListener("click", () => {
+        tr.muted = !tr.muted;
+        renderTrackList();
+      });
+
+      const soloBtn = document.createElement("button");
+      soloBtn.className = "btn mini solo" + (tr.solo ? " on" : "");
+      soloBtn.textContent = tr.solo ? "Soloed" : "Solo";
+      soloBtn.addEventListener("click", () => {
+        tr.solo = !tr.solo;
+        renderTrackList();
+      });
+
+      btns.appendChild(muteBtn);
+      btns.appendChild(soloBtn);
+
+      top.appendChild(left);
+      top.appendChild(btns);
+
+      const controls = document.createElement("div");
+      controls.className = "tControls";
+
+      // rename + volume
+      const rowA = document.createElement("div");
+      rowA.className = "row2";
+      rowA.innerHTML = `
+        <label>NAME</label>
+        <input type="text" value="${tr.name}" data-name="${tr.id}">
+        <label>VOL</label>
+        <input type="range" min="0" max="120" value="${Math.round(tr.vol*100)}" data-vol="${tr.id}">
+      `;
+
+      // sample loader for drums
+      const rowB = document.createElement("div");
+      rowB.className = "row2";
+      if (tr.type === "drum") {
+        rowB.innerHTML = `
+          <label>Sample</label>
+          <input type="file" accept="audio/*" data-sample="${tr.id}">
+          <span style="color:var(--muted);font-size:11px">
+            ${tr.sampleBuffer ? "Loaded ✅" : "None (Synth fallback)"}
+          </span>
+        `;
+      } else {
+        rowB.innerHTML = `
+          <span style="color:var(--muted);font-size:11px">
+            Melody는 내장 신스로 재생됩니다.
+          </span>
+        `;
+      }
+
+      controls.appendChild(rowA);
+      controls.appendChild(rowB);
+
+      wrap.appendChild(top);
+      wrap.appendChild(controls);
+
+      trackListEl.appendChild(wrap);
+    });
+
+    // bind rename
+    trackListEl.querySelectorAll('input[type="text"][data-name]').forEach(inp => {
+      inp.addEventListener("input", (e) => {
+        const id = e.target.dataset.name;
+        const tr = TRACKS.find(t => t.id === id);
+        tr.name = e.target.value || id;
+        // top label 즉시 갱신
+        renderAllPanels(false);
+      });
+    });
+
+    // bind vol
+    trackListEl.querySelectorAll('input[type="range"][data-vol]').forEach(inp => {
+      inp.addEventListener("input", (e) => {
+        const id = e.target.dataset.vol;
+        const tr = TRACKS.find(t => t.id === id);
+        tr.vol = clamp(Number(e.target.value)/100, 0, 1.2);
+      });
+    });
+
+    // bind sample load
+    trackListEl.querySelectorAll('input[type="file"][data-sample]').forEach(inp => {
+      inp.addEventListener("change", async (e) => {
+        const id = e.target.dataset.sample;
+        const tr = TRACKS.find(t => t.id === id);
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        await safeResumeAudio();
+        try{
+          const arrBuf = await file.arrayBuffer();
+          const audioBuf = await ctx.decodeAudioData(arrBuf.slice(0));
+          tr.sampleBuffer = audioBuf;
+          renderTrackList();
+        }catch(err){
+          console.error(err);
+          alert("오디오 디코딩 실패! 다른 파일(WAV/MP3)을 시도해봐요.");
+        }
+      });
+    });
+  }
+
+  // =========================
+  // Render: Page Nav
+  // =========================
+  function renderPageNav(){
+    const pcount = pagesCount();
+    page = clamp(page, 0, pcount - 1);
+
+    pageNavEl.innerHTML = "";
+    for(let i=0;i<pcount;i++){
+      const b = document.createElement("button");
+      b.className = "pageBtn" + (i===page ? " active":"");
+      b.textContent = `Page ${i+1}`;
+      b.addEventListener("click", () => {
+        page = i;
+        renderAllPanels(false);
+      });
+      pageNavEl.appendChild(b);
+    }
+    stepperTitle.textContent = `Drum Rack (Page ${page+1}/${pcount})`;
+  }
+
+  // =========================
+  // Render: Drum Grid (current page only)
+  // =========================
+  function renderDrumGrid(){
+    drumRowsEl.innerHTML = "";
+    const start = pageStart();
+    const end = pageEnd();
+
+    const drumTracks = TRACKS.filter(t => t.type==="drum");
+
+    drumTracks.forEach(tr => {
+      const rowLabel = document.createElement("div");
+      rowLabel.className = "rowlabel";
+      rowLabel.innerHTML = `
+        <span><b style="color:var(--text)">${tr.name}</b> <span style="opacity:.75">(${tr.id})</span></span>
+        <span style="opacity:.85">${isTrackAudible(tr) ? "🔊 audible" : "🔇 muted/unsoloed"}</span>
+      `;
+
+      const grid = document.createElement("div");
+      grid.className = "grid";
+
+      for(let s=start; s<end; s++){
+        const cell = document.createElement("button");
+        cell.className = "step" + (pattern[tr.id][s] ? " on":"");
+        cell.type="button";
+        cell.dataset.track = tr.id;
+        cell.dataset.step = String(s);
+
+        cell.addEventListener("click", async () => {
+          pattern[tr.id][s] = !pattern[tr.id][s];
+          cell.classList.toggle("on", pattern[tr.id][s]);
+
+          // click preview
+          await safeResumeAudio();
+          const now = ctx.currentTime + 0.01;
+          if (!isTrackAudible(tr)) return;
+          if (tr.sampleBuffer) playSample(tr.sampleBuffer, now, tr.vol);
+          else tr.synth(now, tr.vol);
+        });
+
+        grid.appendChild(cell);
+      }
+
+      drumRowsEl.appendChild(rowLabel);
+      drumRowsEl.appendChild(grid);
+    });
+  }
+
+  // =========================
+  // Render: Piano Roll (current page only)
+  // 2 octaves, 12 semitones each = 24 rows
+  // Each step holds at most one midi note. Clicking sets that step's note to clicked pitch.
+  // Clicking an already-selected pitch on that step clears it.
+  // =========================
+  function noteName(midi){
+    const names = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+    const n = names[midi % 12];
+    const o = Math.floor(midi/12) - 1;
+    return `${n}${o}`;
+  }
+
+  function buildPitches(){
+    const baseOct = Number(octSel.value); // e.g. 4
+    const baseMidi = (baseOct + 1) * 12;  // C of that octave
+    // 2 octaves: from C(baseOct) to B(baseOct+1)
+    const pitches = [];
+    for(let i=0;i<24;i++){
+      pitches.push(baseMidi + (23 - i)); // top is higher pitch
+    }
+    return pitches;
+  }
+
+  function renderPianoRoll(){
+    const start = pageStart();
+    const end = pageEnd();
+
+    const pitches = buildPitches();
+
+    const piano = document.createElement("div");
+    piano.className = "piano";
+
+    // build rows
+    pitches.forEach((midi) => {
+      const key = document.createElement("div");
+      key.className = "key";
+      key.innerHTML = `<span>${noteName(midi)}</span><span style="opacity:.7">${midi}</span>`;
+      piano.appendChild(key);
+
+      for(let s=start; s<end; s++){
+        const ps = document.createElement("div");
+        ps.className = "pstep";
+        ps.dataset.step = String(s);
+        ps.dataset.midi = String(midi);
+
+        const cur = pattern.melody[s];
+        if (cur === midi) ps.classList.add("on");
+
+        ps.addEventListener("click", async () => {
+          await safeResumeAudio();
+          const tr = TRACKS.find(t => t.id==="melody");
+          if (!isTrackAudible(tr)) return;
+
+          const curNote = pattern.melody[s];
+          if (curNote === midi){
+            pattern.melody[s] = null;
+            ps.classList.remove("on");
+          } else {
+            // clear other pitch cells in this step (within visible grid only)
+            pattern.melody[s] = midi;
+            // update UI for this step: remove any existing .on in this column (page visible)
+            piano.querySelectorAll(`.pstep[data-step="${s}"]`).forEach(el => el.classList.remove("on"));
+            ps.classList.add("on");
+
+            // preview
+            melodySynth(ctx.currentTime + 0.01, midi, tr.vol, 0.16);
+          }
+        });
+
+        piano.appendChild(ps);
+      }
+    });
+
+    pianoGridEl.innerHTML = "";
+    pianoGridEl.appendChild(piano);
+  }
+
+  // =========================
+  // Playhead highlight
+  // =========================
+  function clearPlayhead(){
+    document.querySelectorAll(".step.playhead, .pstep.playhead").forEach(el => el.classList.remove("playhead"));
+  }
+  function setPlayhead(globalStep){
+    // only highlight if within current page
+    clearPlayhead();
+    statusEl.textContent = `Step: ${globalStep+1} / ${stepsLen}`;
+
+    const start = pageStart();
+    const end = pageEnd();
+    if (globalStep < start || globalStep >= end) return;
+
+    document.querySelectorAll(`.step[data-step="${globalStep}"]`).forEach(el => el.classList.add("playhead"));
+    document.querySelectorAll(`.pstep[data-step="${globalStep}"]`).forEach(el => el.classList.add("playhead"));
+  }
+
+  // =========================
+  // Transport Scheduler (stable)
+  // =========================
+  let isPlaying = false;
+
+  let currentStep = 0;      // 0..stepsLen-1
+  let nextNoteTime = 0;     // AudioContext time
+  let timerID = null;
+
+  const lookahead = 25;     // ms
+  const scheduleAheadTime = 0.12; // sec
+
+  function secondsPer16th(){
+    return (60 / Number(bpm.value)) / 4;
+  }
+
+  function stepTimeOffset(stepIdx){
+    // swing: delay odd 16ths
+    const swingAmt = Number(swing.value) / 100; // 0..0.6
+    const sp16 = secondsPer16th();
+    const isOdd = (stepIdx % 2) === 1;
+    return isOdd ? sp16 * swingAmt * 0.60 : 0;
+  }
+
+  function scheduleStep(stepIdx, t){
+    // drums
+    for (const tr of TRACKS){
+      if (!isTrackAudible(tr)) continue;
+
+      if (tr.type === "drum"){
+        if (pattern[tr.id][stepIdx]){
+          // sample first, fallback synth
+          if (tr.sampleBuffer) playSample(tr.sampleBuffer, t, tr.vol);
+          else tr.synth(t, tr.vol);
+        }
+      } else if (tr.id === "melody"){
+        const midi = pattern.melody[stepIdx];
+        if (typeof midi === "number"){
+          melodySynth(t, midi, tr.vol, Math.min(0.22, secondsPer16th()*0.95));
+        }
+      }
+    }
+  }
+
+  function nextStep(){
+    const sp16 = secondsPer16th();
+    currentStep = (currentStep + 1) % stepsLen;
+    nextNoteTime += sp16 + stepTimeOffset(currentStep);
+  }
+
+  function scheduler(){
+    while (nextNoteTime < ctx.currentTime + scheduleAheadTime){
+      scheduleStep(currentStep, nextNoteTime);
+      // UI playhead: do it close to schedule time
+      const stepToShow = currentStep;
+      const delayMs = Math.max(0, (nextNoteTime - ctx.currentTime) * 1000);
+      setTimeout(() => setPlayhead(stepToShow), delayMs);
+
+      nextStep();
+    }
+  }
+
+  async function play(){
+    if (isPlaying) return;
+    await safeResumeAudio();
+    isPlaying = true;
+    btnPlay.textContent = "⏸ Pause";
+
+    currentStep = currentStep % stepsLen;
+    nextNoteTime = ctx.currentTime + 0.06;
+
+    timerID = setInterval(scheduler, lookahead);
+  }
+
+  function pause(){
+    isPlaying = false;
+    btnPlay.textContent = "▶ Play";
+    if (timerID){ clearInterval(timerID); timerID = null; }
+    clearPlayhead();
+    statusEl.textContent = `Paused (next: ${currentStep+1}/${stepsLen})`;
+  }
+
+  function stop(){
+    isPlaying = false;
+    btnPlay.textContent = "▶ Play";
+    if (timerID){ clearInterval(timerID); timerID = null; }
+    currentStep = 0;
+    clearPlayhead();
+    setPlayhead(0);
+  }
+
+  // =========================
+  // Random / Clear
+  // =========================
+  function randomize(){
+    for (const tr of TRACKS){
+      if (tr.type === "drum"){
+        for(let i=0;i<stepsLen;i++){
+          const p =
+            tr.id==="hat"   ? 0.55 :
+            tr.id==="kick"  ? 0.22 :
+            tr.id==="snare" ? 0.16 :
+            0.10;
+          pattern[tr.id][i] = Math.random() < p;
+        }
+      } else if (tr.id === "melody"){
+        for(let i=0;i<stepsLen;i++){
+          pattern.melody[i] = null;
+        }
+        // 간단한 음계 기반 랜덤 (C major-ish)
+        const scale = [0,2,4,5,7,9,11];
+        const base = ((Number(octSel.value)+1) * 12); // C
+        for(let i=0;i<stepsLen;i++){
+          if (Math.random() < 0.18){
+            const deg = scale[Math.floor(Math.random()*scale.length)];
+            const oct = Math.random() < 0.5 ? 0 : 12;
+            pattern.melody[i] = base + deg + oct;
+          }
+        }
+      }
+    }
+    // 보정
+    pattern.kick[0]=true;
+    pattern.snare[4]=true; if (stepsLen>12) pattern.snare[12]=true;
+    renderAllPanels(false);
+  }
+
+  function clearAll(){
+    for (const tr of TRACKS){
+      if (tr.type === "drum"){
+        pattern[tr.id].fill(false);
+      } else if (tr.id==="melody"){
+        pattern.melody.fill(null);
+      }
+    }
+    renderAllPanels(false);
+  }
+
+  // =========================
+  // Save / Load JSON
+  // =========================
+  function exportState(){
+    // note: sampleBuffer는 파일 바이너리라 JSON에 넣지 않음
+    return {
+      version: 1,
+      stepsLen,
+      bpm: Number(bpm.value),
+      swing: Number(swing.value),
+      pageSize: PAGE_SIZE,
+      tracks: TRACKS.map(t => ({
+        id: t.id,
+        type: t.type,
+        name: t.name,
+        vol: t.vol,
+        muted: t.muted,
+        solo: t.solo,
+        hasSample: !!t.sampleBuffer
+      })),
+      pattern: {
+        kick:  pattern.kick.slice(0),
+        snare: pattern.snare.slice(0),
+        hat:   pattern.hat.slice(0),
+        clap:  pattern.clap.slice(0),
+        melody: pattern.melody.slice(0)
+      }
+    };
+  }
+
+  function applyState(obj){
+    if (!obj || typeof obj !== "object") throw new Error("invalid json");
+    const newLen = Number(obj.stepsLen || 16);
+    stepsLen = [16,32,64].includes(newLen) ? newLen : 16;
+    stepsSel.value = String(stepsLen);
+    ensurePatternLength(stepsLen);
+
+    const nbpm = clamp(Number(obj.bpm || 120), 40, 240);
+    updateBpmUI(nbpm);
+
+    const sw = clamp(Number(obj.swing || 0), 0, 60);
+    swing.value = String(sw);
+    swingVal.textContent = sw + "%";
+
+    // tracks settings
+    if (Array.isArray(obj.tracks)){
+      obj.tracks.forEach(ts => {
+        const tr = TRACKS.find(t => t.id === ts.id);
+        if (!tr) return;
+        if (typeof ts.name === "string") tr.name = ts.name;
+        if (typeof ts.vol === "number") tr.vol = clamp(ts.vol, 0, 1.2);
+        if (typeof ts.muted === "boolean") tr.muted = ts.muted;
+        if (typeof ts.solo === "boolean") tr.solo = ts.solo;
+      });
+    }
+
+    // pattern
+    const p = obj.pattern || {};
+    for (const tr of TRACKS){
+      const id = tr.id;
+      if (id === "melody"){
+        const arr = Array.isArray(p.melody) ? p.melody : null;
+        if (arr){
+          pattern.melody = arr.map(v => (typeof v === "number" ? v : null)).slice(0, stepsLen);
+          ensurePatternLength(stepsLen);
+        }
+      } else {
+        const arr = Array.isArray(p[id]) ? p[id] : null;
+        if (arr){
+          pattern[id] = arr.map(v => !!v).slice(0, stepsLen);
+          ensurePatternLength(stepsLen);
+        }
+      }
+    }
+
+    // page adjust
+    page = clamp(page, 0, pagesCount()-1);
+    currentStep = currentStep % stepsLen;
+
+    renderAllPanels(false);
+  }
+
+  function openIOModal(){
+    ioText.value = JSON.stringify(exportState(), null, 2);
+    modalBack.style.display = "flex";
+  }
+  function closeIOModal(){
+    modalBack.style.display = "none";
+  }
+
+  btnIO.addEventListener("click", openIOModal);
+  btnCloseModal.addEventListener("click", closeIOModal);
+  modalBack.addEventListener("click", (e) => {
+    if (e.target === modalBack) closeIOModal();
+  });
+
+  btnApply.addEventListener("click", () => {
+    try{
+      const obj = JSON.parse(ioText.value);
+      applyState(obj);
+      alert("적용 완료!");
+    }catch(e){
+      alert("JSON 파싱/적용 실패! 콘솔을 확인해봐요.");
+      console.error(e);
+    }
+  });
+
+  btnCopy.addEventListener("click", async () => {
+    try{
+      await navigator.clipboard.writeText(ioText.value);
+      alert("복사 완료!");
+    }catch(e){
+      alert("복사 실패(브라우저 권한) — 텍스트를 직접 선택해서 복사해줘!");
+    }
+  });
+
+  btnDownload.addEventListener("click", () => {
+    const blob = new Blob([ioText.value], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "pattern.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  fileLoadJson.addEventListener("change", async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    try{
+      const text = await file.text();
+      ioText.value = text;
+      const obj = JSON.parse(text);
+      applyState(obj);
+      alert("불러오기 완료!");
+    }catch(err){
+      console.error(err);
+      alert("JSON 파일 불러오기 실패!");
+    }finally{
+      fileLoadJson.value = "";
+    }
+  });
+
+  // =========================
+  // Controls bindings
+  // =========================
+  btnPlay.addEventListener("click", () => {
+    if (!isPlaying) play();
+    else pause();
+  });
+  btnStop.addEventListener("click", stop);
+
   bpm.addEventListener("input", () => updateBpmUI(bpm.value));
   bpmNum.addEventListener("input", () => {
     let v = Number(bpmNum.value || 120);
-    v = Math.max(40, Math.min(240, v));
+    v = clamp(v, 40, 240);
     updateBpmUI(v);
   });
 
@@ -564,115 +1439,52 @@
     swingVal.textContent = swing.value + "%";
   });
 
-  function clearPlayhead(){
-    gridWrap.querySelectorAll(".step.playhead").forEach(el => el.classList.remove("playhead"));
-  }
-  function setPlayhead(i){
-    clearPlayhead();
-    gridWrap.querySelectorAll(`.step[data-step="${i}"]`).forEach(el => el.classList.add("playhead"));
-    statusEl.textContent = `Step: ${i+1} / ${STEPS}`;
-  }
+  stepsSel.addEventListener("change", () => {
+    const v = Number(stepsSel.value);
+    const old = stepsLen;
+    stepsLen = [16,32,64].includes(v) ? v : 16;
+    ensurePatternLength(stepsLen);
 
-  async function safeResumeAudio(){
-    if (ctx.state !== "running") {
-      try{ await ctx.resume(); }catch(e){}
+    // hat: if expanding, keep simple even hats
+    if (stepsLen > old && pattern.hat.every(x=>x===false)){
+      for (let i=0;i<stepsLen;i+=2) pattern.hat[i]=true;
     }
-  }
+    page = clamp(page, 0, pagesCount()-1);
+    currentStep = currentStep % stepsLen;
 
-  function scheduleStep(i){
-    // 스윙: 짝수(1,3,5...) 16분음을 살짝 뒤로 밀기
-    const swingAmt = Number(swing.value) / 100; // 0~0.6
-    const base = ctx.currentTime;
-    const secPer16 = (60 / Number(bpm.value)) / 4;
-    const isOff = (i % 2) === 1;
-    const offset = isOff ? secPer16 * swingAmt * 0.6 : 0; // 느낌만
-    const t = base + 0.02 + offset;
-
-    INSTR.forEach(tr => {
-      if (pattern[tr.id][i]) tr.play(t, tr.vol);
-    });
-  }
-
-  function tick(){
-    setPlayhead(stepIndex);
-    scheduleStep(stepIndex);
-
-    stepIndex = (stepIndex + 1) % STEPS;
-
-    // 다음 tick 간격(스윙에 따라 UI도 맞추려고 약간 변조)
-    const ms = getStepMs();
-    const swingAmt = Number(swing.value)/100;
-    const isOffNext = (stepIndex % 2) === 1;
-    const delay = ms + (isOffNext ? ms * swingAmt * 0.25 : 0);
-    timer = setTimeout(tick, delay);
-  }
-
-  function play(){
-    if (isPlaying) return;
-    isPlaying = true;
-    btnPlay.textContent = "⏸ Pause";
-    safeResumeAudio().then(() => tick());
-  }
-
-  function stop(){
-    isPlaying = false;
-    btnPlay.textContent = "▶ Play";
-    if (timer) { clearTimeout(timer); timer = null; }
-    stepIndex = 0;
-    setPlayhead(0);
-  }
-
-  btnPlay.addEventListener("click", () => {
-    if (!isPlaying) play();
-    else { // pause
-      isPlaying = false;
-      btnPlay.textContent = "▶ Play";
-      if (timer) { clearTimeout(timer); timer = null; }
-      clearPlayhead();
-      statusEl.textContent = `Paused (next: ${stepIndex+1}/${STEPS})`;
-    }
+    renderAllPanels(false);
   });
-  btnStop.addEventListener("click", stop);
-
-  // Random / Clear
-  function randomize(){
-    INSTR.forEach(tr => {
-      for(let i=0;i<STEPS;i++){
-        const p =
-          tr.id==="hat"   ? 0.55 :
-          tr.id==="kick"  ? 0.22 :
-          tr.id==="snare" ? 0.16 :
-          0.10;
-        pattern[tr.id][i] = Math.random() < p;
-      }
-    });
-    // 킥/스네어는 기본 박자 조금 보정
-    pattern.kick[0]=true;
-    pattern.snare[4]=true; pattern.snare[12]=true;
-    renderGrid();
-    setPlayhead(stepIndex);
-  }
-  function clearAll(){
-    INSTR.forEach(tr => pattern[tr.id].fill(false));
-    renderGrid();
-    setPlayhead(stepIndex);
-  }
 
   btnRandom.addEventListener("click", randomize);
   btnClear.addEventListener("click", clearAll);
 
-  // Keyboard
+  octSel.addEventListener("change", () => renderPianoRoll());
+
+  // Keyboard shortcuts
   window.addEventListener("keydown", (e) => {
     if (e.code === "Space") { e.preventDefault(); btnPlay.click(); }
     if (e.key.toLowerCase() === "r") randomize();
     if (e.key.toLowerCase() === "c") clearAll();
+    if (e.key.toLowerCase() === "s" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      openIOModal();
+    }
   });
 
-  // 초기 playhead
-  setPlayhead(0);
+  // =========================
+  // Render all
+  // =========================
+  function renderAllPanels(resetPageNav=true){
+    if (resetPageNav) page = clamp(page, 0, pagesCount()-1);
+    renderTrackList();
+    renderPageNav();
+    renderDrumGrid();
+    renderPianoRoll();
+    setPlayhead(currentStep);
+  }
 
-  // 모바일에서 오디오 잠금 해제 도움
-  window.addEventListener("pointerdown", () => { safeResumeAudio(); }, { once:false });
+  renderAllPanels(true);
+  setPlayhead(0);
 
 })();
 </script>
