@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>3D Virtual Shop (Three.js) MVP</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel: rgba(15,22,35,.82);
+      --line: rgba(255,255,255,.10);
+      --text:#e8eef6;
+      --muted:#9fb1c5;
+      --accent:#B57CFF;
+      --shadow: 0 14px 40px rgba(0,0,0,.45);
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",sans-serif}
+    #app{position:fixed; inset:0; overflow:hidden;}
+    canvas{display:block; width:100%; height:100%}
+
+    /* HUD */
+    .hud{
+      position:fixed; inset:0; pointer-events:none;
+    }
+    .topbar{
+      pointer-events:auto;
+      position:fixed; left:16px; right:16px; top: max(16px, env(safe-area-inset-top));
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      min-width: 220px;
+    }
+    .dot{
+      width:11px;height:11px;border-radius:4px;background:var(--accent);
+      box-shadow: 0 0 0 4px rgba(181,124,255,.18);
+    }
+    .brand b{font-size:13px}
+    .brand span{display:block; font-size:12px; color:var(--muted)}
+    .btns{
+      display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;
+    }
+    button{
+      pointer-events:auto;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding:10px 12px;
+      border-radius:14px;
+      cursor:pointer;
+      user-select:none;
+      transition: .15s transform, .15s background;
+      white-space:nowrap;
+    }
+    button:hover{background: rgba(255,255,255,.09)}
+    button:active{transform: translateY(1px)}
+    button.primary{
+      background: rgba(181,124,255,.16);
+      border-color: rgba(181,124,255,.35);
+    }
+    button.danger{
+      background: rgba(255,77,109,.14);
+      border-color: rgba(255,77,109,.35);
+    }
+
+    /* Right panel */
+    .panel{
+      pointer-events:auto;
+      position:fixed;
+      top: calc(max(16px, env(safe-area-inset-top)) + 64px);
+      right:16px;
+      width: min(380px, calc(100vw - 32px));
+      bottom: 16px;
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    .panel .head{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .panel .head b{font-size:13px}
+    .panel .body{
+      padding:12px 14px;
+      overflow:auto;
+      display:grid;
+      gap:10px;
+    }
+    .k{
+      display:flex; justify-content:space-between; gap:10px;
+      font-size:12px; color:var(--muted);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px 12px;
+      background: rgba(0,0,0,.15);
+    }
+    .k b{color:var(--text); font-weight:700}
+    .desc{
+      font-size:12px; color:var(--muted);
+      line-height:1.45;
+      border:1px dashed rgba(255,255,255,.14);
+      border-radius:14px;
+      padding:10px 12px;
+      background: rgba(0,0,0,.12);
+    }
+    .cart{
+      margin-top:auto;
+      border-top:1px solid var(--line);
+      padding:12px 14px;
+      display:grid;
+      gap:10px;
+      background: rgba(0,0,0,.12);
+    }
+    .cart ul{margin:0;padding:0;list-style:none;display:grid;gap:6px;max-height:140px;overflow:auto}
+    .cart li{
+      display:flex; justify-content:space-between; gap:10px;
+      font-size:12px; color:var(--muted);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:12px;
+      padding:8px 10px;
+      background: rgba(255,255,255,.03);
+    }
+    .hint{
+      pointer-events:auto;
+      position:fixed;
+      left:16px;
+      bottom:16px;
+      max-width:min(520px, calc(100vw - 32px));
+      border:1px solid var(--line);
+      border-radius:16px;
+      background: rgba(15,22,35,.72);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      padding:10px 12px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.4;
+    }
+    code{
+      color:var(--text);
+      background: rgba(0,0,0,.2);
+      border:1px solid rgba(255,255,255,.10);
+      padding:2px 6px;
+      border-radius:10px;
+    }
+    /* crosshair */
+    .cross{
+      position:fixed; left:50%; top:50%;
+      width:10px;height:10px; transform:translate(-50%,-50%);
+      border:1px solid rgba(255,255,255,.35);
+      border-radius:50%;
+      box-shadow: 0 0 0 2px rgba(0,0,0,.25);
+      pointer-events:none;
+      opacity:.85;
+    }
+
+    @media (max-width: 980px){
+      .panel{left:16px; right:16px; width:auto; height: 44vh; bottom:16px;}
+      .hint{display:none}
+    }
+  </style>
+  
+  <script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.159.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.159.0/examples/jsm/"
+  }
+}
+</script>
+  
+  
+</head>
+<body>
+  <div id="app"></div>
+
+  <div class="hud">
+    <div class="topbar">
+      <div class="brand">
+        <div class="dot"></div>
+        <div>
+          <b>3D Virtual Shop</b>
+          <span>WASD 이동 · 마우스 클릭으로 상품 선택 · ESC로 마우스 해제</span>
+        </div>
+      </div>
+      <div class="btns">
+        <button class="primary" id="btnLock">🕹️ 들어가기(마우스 잠금)</button>
+        <button id="btnReset">↺ 리셋</button>
+        <button class="danger" id="btnClearCart">🧹 카트 비우기</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="head">
+        <b id="pTitle">상품 선택</b>
+        <span style="font-size:12px;color:var(--muted)" id="pBadge">click item</span>
+      </div>
+      <div class="body" id="pBody">
+        <div class="desc">
+          매장 안을 돌아다니다가 상품을 클릭해봐.<br/>
+          선택된 상품은 여기 상세로 뜨고, <b style="color:var(--text)">장바구니</b>에 담을 수 있어.
+        </div>
+      </div>
+      <div class="cart">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <b style="font-size:13px">🛒 Cart</b>
+          <span style="font-size:12px;color:var(--muted)" id="cartTotal">총액: 0원</span>
+        </div>
+        <ul id="cartList"></ul>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+          <button id="btnAdd" class="primary" disabled>담기</button>
+          <button id="btnCheckout" disabled>결제(데모)</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="hint">
+      <b style="color:var(--text)">조작</b><br/>
+      <code>W A S D</code> 이동 · <code>Shift</code> 달리기 · <code>Space</code> 점프(간단) · <code>Mouse</code> 시점 · <code>Click</code> 상품 선택<br/>
+      상단 <code>들어가기</code> 누르면 FPS처럼 마우스가 잠김(ESC로 풀기)
+    </div>
+    <div class="cross"></div>
+  </div>
+
+
+
+  <script type="module">
+  
+  import * as THREE from "three";
+  import { PointerLockControls } from "three/addons/controls/PointerLockControls.js";
+  
+    // -----------------------------
+    // Catalog (여기가 "상품 DB" 시작점)
+    // -----------------------------
+    const CATALOG = [
+      { id:"sku-001", name:"루프 플로우 머그컵", price:12900, desc:"가상 매장 1호 굿즈. 따뜻한 감성 머그.", color:"#B57CFF" },
+      { id:"sku-002", name:"에망룬문자 스티커팩", price:7900, desc:"애망룬문자 테마 스티커. 노트북/차량/장비에.", color:"#22ff55" },
+      { id:"sku-003", name:"낚시봇 키링", price:9900, desc:"에망 낚시봇 미니 키링. 금속 느낌.", color:"#50c8ff" },
+      { id:"sku-004", name:"달팽이 철학관 미니북", price:15900, desc:"손바닥 사이즈 감성 미니북 컨셉.", color:"#ffc850" },
+      { id:"sku-005", name:"로컬엔젤스 쿠폰 카드", price:3900, desc:"쿠폰을 카드처럼 소장하는 컨셉.", color:"#ff4d6d" },
+      { id:"sku-006", name:"스탕스 컨테이너 키캡", price:21900, desc:"컨테이너/메이커 감성 키캡.", color:"#9fb1c5" },
+      { id:"sku-007", name:"FishDEX 티셔츠", price:24900, desc:"웹3 수산 직거래 플랫폼 무드.", color:"#7cf1ff" },
+      { id:"sku-008", name:"Retro Korean Fishing 포스터", price:18900, desc:"도트 인트로 감성 포스터.", color:"#d1a3ff" },
+    ];
+
+    // -----------------------------
+    // Basic setup
+    // -----------------------------
+    const app = document.getElementById("app");
+    const renderer = new THREE.WebGLRenderer({ antialias:true });
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    app.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0b0f14);
+
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 200);
+    camera.position.set(0, 1.65, 6);
+
+    // Controls (FPS) 
+    const controls = new PointerLockControls(camera, renderer.domElement);
+
+    // -----------------------------
+    // Lighting
+    // -----------------------------
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x223344, 0.65);
+    scene.add(hemi);
+
+    const key = new THREE.DirectionalLight(0xffffff, 0.9);
+    key.position.set(6, 10, 6);
+    key.castShadow = true;
+    key.shadow.mapSize.set(1024,1024);
+    scene.add(key);
+
+    const fill = new THREE.PointLight(0xB57CFF, 0.9, 18, 2);
+    fill.position.set(0, 3.2, 0);
+    fill.castShadow = true;
+    scene.add(fill);
+
+    // -----------------------------
+    // Shop room
+    // -----------------------------
+    const floorMat = new THREE.MeshStandardMaterial({ color:0x101826, roughness:0.9, metalness:0.05 });
+    const wallMat  = new THREE.MeshStandardMaterial({ color:0x0f1623, roughness:0.95, metalness:0.03 });
+    const trimMat  = new THREE.MeshStandardMaterial({ color:0x17233a, roughness:0.7, metalness:0.1 });
+
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(22, 22), floorMat);
+    floor.rotation.x = -Math.PI/2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // walls (simple box room_attach)
+    const room = new THREE.Group();
+    const wallGeo = new THREE.BoxGeometry(22, 6, 0.35);
+
+    const back = new THREE.Mesh(wallGeo, wallMat);
+    back.position.set(0, 3, -11);
+    back.receiveShadow = true; back.castShadow = true;
+    room.add(back);
+
+    const front = new THREE.Mesh(wallGeo, wallMat);
+    front.position.set(0, 3, 11);
+    room.add(front);
+
+    const sideGeo = new THREE.BoxGeometry(0.35, 6, 22);
+    const left = new THREE.Mesh(sideGeo, wallMat);
+    left.position.set(-11, 3, 0);
+    room.add(left);
+
+    const right = new THREE.Mesh(sideGeo, wallMat);
+    right.position.set(11, 3, 0);
+    room.add(right);
+
+    const ceil = new THREE.Mesh(new THREE.PlaneGeometry(22, 22), trimMat);
+    ceil.rotation.x = Math.PI/2;
+    ceil.position.y = 6;
+    room.add(ceil);
+
+    scene.add(room);
+
+    // Neon sign
+    const sign = new THREE.Mesh(
+      new THREE.BoxGeometry(6.8, 0.7, 0.15),
+      new THREE.MeshStandardMaterial({ color:0x2a2f45, emissive:0x4b2d88, emissiveIntensity: 0.9, roughness:0.5 })
+    );
+    sign.position.set(0, 4.8, -10.75);
+    sign.castShadow = true;
+    scene.add(sign);
+
+    // -----------------------------
+    // Shelves & items
+    // -----------------------------
+    const shelfMat = new THREE.MeshStandardMaterial({ color:0x0f1b2e, roughness:0.75, metalness:0.12 });
+    const shelfTrim= new THREE.MeshStandardMaterial({ color:0x1f2e4a, roughness:0.6, metalness:0.18 });
+
+    function makeShelf(x,z,rotY=0){
+      const g = new THREE.Group();
+      const base = new THREE.Mesh(new THREE.BoxGeometry(6.2, 0.12, 1.2), shelfMat);
+      base.position.set(0, 0.95, 0);
+      base.castShadow = true; base.receiveShadow = true;
+      g.add(base);
+
+      const mid  = new THREE.Mesh(new THREE.BoxGeometry(6.2, 0.12, 1.2), shelfMat);
+      mid.position.set(0, 1.75, 0);
+      mid.castShadow = true; mid.receiveShadow = true;
+      g.add(mid);
+
+      const top  = new THREE.Mesh(new THREE.BoxGeometry(6.2, 0.12, 1.2), shelfMat);
+      top.position.set(0, 2.55, 0);
+      top.castShadow = true; top.receiveShadow = true;
+      g.add(top);
+
+      const back = new THREE.Mesh(new THREE.BoxGeometry(6.2, 2.8, 0.12), shelfTrim);
+      back.position.set(0, 1.55, -0.58);
+      back.castShadow = true; back.receiveShadow = true;
+      g.add(back);
+
+      // legs
+      const legGeo = new THREE.BoxGeometry(0.12, 2.8, 0.12);
+      [[-3.05,1.55,-0.55],[3.05,1.55,-0.55],[-3.05,1.55,0.55],[3.05,1.55,0.55]].forEach(p=>{
+        const leg = new THREE.Mesh(legGeo, shelfTrim);
+        leg.position.set(p[0], p[1], p[2]);
+        leg.castShadow = true;
+        g.add(leg);
+      });
+
+      g.position.set(x,0,z);
+      g.rotation.y = rotY;
+      scene.add(g);
+      return g;
+    }
+
+    const shelves = [
+      makeShelf(-5.8, -5.5,  Math.PI/10),
+      makeShelf( 5.8, -5.5, -Math.PI/10),
+      makeShelf(-5.8,  0.0,  Math.PI/10),
+      makeShelf( 5.8,  0.0, -Math.PI/10),
+    ];
+
+    // Make text label texture (CanvasTexture)
+    function makeLabelTexture(title, price){
+      const c = document.createElement("canvas");
+      c.width = 512; c.height = 256;
+      const g = c.getContext("2d");
+
+      // bg
+      g.fillStyle = "rgba(15,22,35,0.95)";
+      g.fillRect(0,0,c.width,c.height);
+
+      // border
+      g.strokeStyle = "rgba(255,255,255,0.14)";
+      g.lineWidth = 6;
+      g.strokeRect(10,10,c.width-20,c.height-20);
+
+      // title
+      g.fillStyle = "rgba(232,238,246,0.95)";
+      g.font = "700 44px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+      g.fillText(title.slice(0, 13), 32, 92);
+
+      // price
+      g.fillStyle = "rgba(181,124,255,0.95)";
+      g.font = "800 56px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+      g.fillText(price.toLocaleString("ko-KR") + "원", 32, 168);
+
+      // small
+      g.fillStyle = "rgba(159,177,197,0.9)";
+      g.font = "500 22px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+      g.fillText("CLICK TO VIEW", 32, 212);
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      return tex;
+    }
+
+    // item meshes
+    const itemMeshes = []; // for raycast
+    const itemByUUID = new Map();
+
+    function makeItem(product){
+      const color = new THREE.Color(product.color || "#B57CFF");
+      const boxMat = new THREE.MeshStandardMaterial({
+        color,
+        roughness:0.55,
+        metalness:0.18,
+        emissive: color.clone().multiplyScalar(0.12)
+      });
+
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.55, 0.55), boxMat);
+      mesh.castShadow = true;
+
+      const labelTex = makeLabelTexture(product.name, product.price);
+      const labelMat = new THREE.MeshStandardMaterial({
+        map: labelTex,
+        roughness:0.9,
+        metalness:0.0
+      });
+
+      const label = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.35), labelMat);
+      label.position.set(0, 0.42, 0.28);
+      mesh.add(label);
+
+      mesh.userData.product = product;
+
+      itemMeshes.push(mesh);
+      itemByUUID.set(mesh.uuid, product);
+
+      return mesh;
+    }
+
+    // place items on shelves (3 levels x 4 shelves)
+    const placements = [];
+    const levelsY = [1.06, 1.86, 2.66];
+    shelves.forEach((s, si) => {
+      levelsY.forEach((y, li) => {
+        const count = 2; // per level
+        for (let i=0;i<count;i++){
+          placements.push({ shelf:s, y, x: -2.0 + i*4.0, z: 0.1 + (li%2)*0.15 });
+        }
+      });
+    });
+
+    // assign products to placements
+    for (let i=0;i<Math.min(CATALOG.length, placements.length);i++){
+      const p = CATALOG[i];
+      const place = placements[i];
+      const item = makeItem(p);
+
+      // local on shelf
+      item.position.set(place.x, place.y, place.z);
+      item.rotation.y = (Math.random()*0.5 - 0.25);
+
+      place.shelf.add(item);
+    }
+
+    // center aisle spotlight markers (just visuals)
+    const poleMat = new THREE.MeshStandardMaterial({ color:0x101826, roughness:0.7, metalness:0.2 });
+    for (let i=0;i<4;i++){
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,5.2,16), poleMat);
+      pole.position.set(-2.8 + i*1.85, 2.6, 3.8);
+      pole.castShadow = true;
+      scene.add(pole);
+
+      const lamp = new THREE.PointLight(0xB57CFF, 0.45, 6, 2);
+      lamp.position.set(pole.position.x, 5.5, pole.position.z);
+      scene.add(lamp);
+    }
+
+    // -----------------------------
+    // UI Logic (product select + cart)
+    // -----------------------------
+    const pTitle = document.getElementById("pTitle");
+    const pBadge = document.getElementById("pBadge");
+    const pBody  = document.getElementById("pBody");
+    const btnAdd = document.getElementById("btnAdd");
+    const btnCheckout = document.getElementById("btnCheckout");
+    const cartList = document.getElementById("cartList");
+    const cartTotal= document.getElementById("cartTotal");
+    const btnClearCart = document.getElementById("btnClearCart");
+
+    let selectedProduct = null;
+    const cart = [];
+
+    function renderProduct(p){
+      pTitle.textContent = p.name;
+      pBadge.textContent = p.id;
+
+      pBody.innerHTML = `
+        <div class="k"><span>가격</span><b>${p.price.toLocaleString("ko-KR")}원</b></div>
+        <div class="k"><span>배송</span><b>가상배송(데모)</b></div>
+        <div class="k"><span>재고</span><b>${(10 + (p.id.charCodeAt(p.id.length-1)%20))}개</b></div>
+        <div class="desc">${p.desc}</div>
+        <div class="desc" style="border-style:solid">
+          <b style="color:var(--text)">다음 단계 아이디어</b><br/>
+          - 네이버/옥션/아마존 연동은 “결제/재고/배송” API로 붙이고<br/>
+          - 이 3D 매장은 “쇼룸”으로 쓰는 구조가 제일 이쁨 😄
+        </div>
+      `;
+
+      btnAdd.disabled = false;
+      btnCheckout.disabled = cart.length === 0;
+    }
+
+    function renderCart(){
+      cartList.innerHTML = "";
+      let total = 0;
+      cart.forEach((it, idx) => {
+        total += it.price;
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px">${it.name}</span>
+          <span style="display:flex;gap:8px;align-items:center">
+            <b style="color:var(--text)">${it.price.toLocaleString("ko-KR")}원</b>
+            <button style="padding:6px 8px;border-radius:10px" data-rm="${idx}">X</button>
+          </span>
+        `;
+        cartList.appendChild(li);
+      });
+
+      cartTotal.textContent = `총액: ${total.toLocaleString("ko-KR")}원`;
+      btnCheckout.disabled = cart.length === 0;
+
+      cartList.querySelectorAll("button[data-rm]").forEach(b=>{
+        b.addEventListener("click", (e)=>{
+          const i = Number(e.currentTarget.dataset.rm);
+          cart.splice(i,1);
+          renderCart();
+        });
+      });
+    }
+
+    btnAdd.addEventListener("click", () => {
+      if (!selectedProduct) return;
+      cart.push(selectedProduct);
+      renderCart();
+    });
+
+    btnCheckout.addEventListener("click", () => {
+      alert("데모: 결제는 아직! (다음 단계에서 PG/스토어 API 연결하면 됨)");
+    });
+
+    btnClearCart.addEventListener("click", () => {
+      cart.length = 0;
+      renderCart();
+    });
+
+    renderCart();
+
+    // -----------------------------
+    // Raycaster picking
+    // -----------------------------
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    function pickFromCenter(){
+      // crosshair center ray
+      raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
+      const hits = raycaster.intersectObjects(itemMeshes, true);
+      if (!hits.length) return null;
+
+      // find root item mesh that has product
+      for (const h of hits){
+        let o = h.object;
+        while (o && !o.userData.product) o = o.parent;
+        if (o && o.userData.product) return o;
+      }
+      return null;
+    }
+
+    function onClick(){
+      const hitItem = pickFromCenter();
+      if (!hitItem) return;
+      const p = hitItem.userData.product;
+      selectedProduct = p;
+      renderProduct(p);
+
+      // little pop animation flag
+      hitItem.userData.pop = 1.0;
+    }
+    window.addEventListener("click", () => {
+      // pointer lock 상태에서만 클릭 선택
+      if (document.pointerLockElement === renderer.domElement) onClick();
+    });
+
+    // -----------------------------
+    // Movement (simple FPS)
+    // -----------------------------
+    const keys = new Set();
+    window.addEventListener("keydown", e => keys.add(e.code));
+    window.addEventListener("keyup",   e => keys.delete(e.code));
+
+    let velY = 0;
+    let onGround = true;
+
+    function resetPlayer(){
+      camera.position.set(0, 1.65, 6);
+      velY = 0; onGround = true;
+    }
+
+    document.getElementById("btnReset").addEventListener("click", resetPlayer);
+
+    const btnLock = document.getElementById("btnLock");
+    btnLock.addEventListener("click", async () => {
+      // audio unlock 느낌처럼, user gesture로 lock
+      controls.lock();
+    });
+
+    controls.addEventListener("lock", () => {
+      btnLock.textContent = "✅ 매장 안(ESC로 나가기)";
+    });
+    controls.addEventListener("unlock", () => {
+      btnLock.textContent = "🕹️ 들어가기(마우스 잠금)";
+    });
+
+    // -----------------------------
+    // Animate
+    // -----------------------------
+    const clock = new THREE.Clock();
+
+    function animate(){
+      requestAnimationFrame(animate);
+      const dt = Math.min(0.033, clock.getDelta());
+
+      // subtle item idle + pop
+      for (const m of itemMeshes){
+        m.rotation.y += 0.25 * dt * 0.4;
+        if (m.userData.pop){
+          m.userData.pop *= 0.86;
+          const s = 1 + m.userData.pop * 0.12;
+          m.scale.setScalar(s);
+          if (m.userData.pop < 0.02){
+            m.userData.pop = 0;
+            m.scale.setScalar(1);
+          }
+        }
+      }
+
+      if (document.pointerLockElement === renderer.domElement){
+        // move
+        const baseSpeed = keys.has("ShiftLeft") || keys.has("ShiftRight") ? 5.2 : 3.2;
+        const forward = (keys.has("KeyW") ? 1 : 0) - (keys.has("KeyS") ? 1 : 0);
+        const strafe  = (keys.has("KeyD") ? 1 : 0) - (keys.has("KeyA") ? 1 : 0);
+
+        const move = new THREE.Vector3(strafe, 0, forward);
+        if (move.lengthSq() > 0){
+          move.normalize().multiplyScalar(baseSpeed * dt);
+          // move relative to camera yaw
+          const dir = new THREE.Vector3();
+          camera.getWorldDirection(dir);
+          dir.y = 0; dir.normalize();          
+		  const right = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0,1,0)).normalize();
+
+          camera.position.addScaledVector(dir, move.z);
+          camera.position.addScaledVector(right, move.x);
+        }
+
+        // jump + gravity (simple)
+        if (keys.has("Space") && onGround){
+          velY = 4.6;
+          onGround = false;
+        }
+        velY -= 9.8 * dt;
+        camera.position.y += velY * dt;
+
+        // floor clamp
+        const minY = 1.65;
+        if (camera.position.y <= minY){
+          camera.position.y = minY;
+          velY = 0;
+          onGround = true;
+        }
+
+        // room bounds clamp
+        camera.position.x = THREE.MathUtils.clamp(camera.position.x, -9.5, 9.5);
+        camera.position.z = THREE.MathUtils.clamp(camera.position.z, -9.5, 9.5);
+
+        // hover highlight (optional: change emissive)
+        const hit = pickFromCenter();
+        for (const m of itemMeshes){
+          const p = m.userData.product;
+          const color = new THREE.Color(p.color || "#B57CFF");
+          m.material.emissive.copy(color).multiplyScalar(0.10);
+        }
+        if (hit){
+          const p = hit.userData.product;
+          const c = new THREE.Color(p.color || "#B57CFF");
+          hit.material.emissive.copy(c).multiplyScalar(0.35);
+        }
+      }
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Resize
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth/window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
+    });
+
+    resetPlayer();
+  </script>
+</body>
+</html>
