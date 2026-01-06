@@ -734,12 +734,16 @@
     }
 
     function fitAll(logs){
-      if(!logs.length) return;
-      const bounds = L.latLngBounds(logs.map(x=>[x.lat,x.lng]));
-      mapMain.fitBounds(bounds, { padding:[40,40] });
-      // mapMini.fitBounds(bounds, { padding:[20,20] });
-      mapOverlay.fitBounds(bounds, { padding:[40,40] });
-    }
+	  const pts = (logs||[])
+	    .map(x => [Number(x.lat), Number(x.lng)])
+	    .filter(([lat,lng]) => isValidLatLng(lat,lng));
+	
+	  if(!pts.length) return;
+	
+	  const bounds = L.latLngBounds(pts);
+	  mapMain.fitBounds(bounds, { padding:[40,40] });
+	  mapOverlay.fitBounds(bounds, { padding:[40,40] });
+	}
 
     // ====== Render list ======
     let activeFilter = "all";
@@ -837,37 +841,31 @@
 		}
 
     function selectLog(id, pan){
-      selectedId = id;
-      $$(".card").forEach(c=> c.classList.toggle("on", c.dataset.id===id));
+	  selectedId = id;
+	  $$(".card").forEach(c=> c.classList.toggle("on", c.dataset.id===id));
+	
+	  const log = LOGS.find(x=>x.id===id);
+	  if(!log) return;
+	
+	  const lat = Number(log.lat);
+	  const lng = Number(log.lng);
+	
+	  if(pan){
+	    if(isValidLatLng(lat, lng)){
+	      mapMain.flyTo([lat, lng], Math.max(mapMain.getZoom(), 14), { duration: 0.6 });
+	      mapOverlay.flyTo([lat, lng], Math.max(mapOverlay.getZoom(), 13), { duration: 0.6 });
+	    }else{
+	      console.warn("skip flyTo invalid latlng:", log.lat, log.lng, log);
+	    }
+	  }
+	
+	  const m = markersMain.get(id);
+	  if(m) m.openTooltip();
+	
+	  const card = $(`.card[data-id="${CSS.escape(id)}"]`);
+	  if(card) card.scrollIntoView({ block:"nearest", behavior:"smooth" });
+	}
 
-      const log = LOGS.find(x=>x.id===id);
-      if(!log) return;
-
-		const lat = Number(log.lat);
-		const lng = Number(log.lng);
-				
-		mapMain.flyTo([lat, lng], Math.max(mapMain.getZoom(), 14), { duration: 0.6 });
-		mapOverlay.flyTo([lat, lng], Math.max(mapOverlay.getZoom(), 13), { duration: 0.6 });
-
-		
-      // pan maps
-      if(pan){
-		  if(isValidLatLng(lat, lng)){
-	        mapMain.flyTo([log.lat, log.lng], Math.max(mapMain.getZoom(), 14), { duration: 0.6 });
-	        mapOverlay.flyTo([log.lat, log.lng], Math.max(mapOverlay.getZoom(), 13), { duration: 0.6 });
-		  } else {
-			console.warn("skip flyTo invalid latlng:", log.lat, log.lng, log);
-		  }
-      }
-
-      // open tooltip (main)
-      const m = markersMain.get(id);
-      if(m) m.openTooltip();
-
-      // scroll list to card
-      const card = $(`.card[data-id="${CSS.escape(id)}"]`);
-      if(card) card.scrollIntoView({ block:"nearest", behavior:"smooth" });
-    }
 
     // ====== Filter chips ======
     $$("#filters .chip").forEach(chip=>{
@@ -953,25 +951,26 @@
 	}
 
 	$("#pinSave").addEventListener("click", async ()=>{
+	  let saved = null;
 	  try{
-		const saved = await savePinToServer();
-
-		saved.lat = Number(saved.lat);
-        saved.lng = Number(saved.lng);
-
-		if(!Number.isFinite(saved.lat) || !Number.isFinite(saved.lng)){
-			throw new Error("server lat/lng invalid");
-		}
-		  
-		// UI 반영: 서버가 준 log를 LOGS에 넣고 렌더
-		LOGS.push(saved);
-		render();
-		selectLog(saved.id, true);
-		closePinModal();
+	    saved = await savePinToServer();
+	    saved.lat = Number(saved.lat);
+	    saved.lng = Number(saved.lng);
+	    if(!isValidLatLng(saved.lat, saved.lng)) throw new Error("server lat/lng invalid");
+	
+	    LOGS.push(saved);
+	    render();
+	
+	    try { selectLog(saved.id, true); } catch(e){ console.warn("selectLog error:", e); }
+	
 	  }catch(err){
-		console.log("저장 실패: " + err.message);
+	    console.log("저장 실패: " + (err?.message || err));
+	    return;
+	  }finally{
+	    // ✅ “업로드는 됐는데 UI 에러로 모달 안닫힘” 방지
+	    if(saved) closePinModal();
 	  }
-  	});
+	});
   
   
 	
