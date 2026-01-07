@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>LocalFlow Messenger MVP</title>
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#0f1623; --line:rgba(255,255,255,.10);
+      --text:#e8eef6; --muted:#9fb1c5; --accent:#B57CFF;
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif}
+    .wrap{max-width:980px; margin:0 auto; padding:14px; display:grid; gap:12px}
+    .top{display:flex; gap:10px; flex-wrap:wrap; align-items:center; padding:12px; background:rgba(15,22,35,.85); border:1px solid var(--line); border-radius:var(--radius)}
+    input,button{
+      border-radius:14px; border:1px solid var(--line); background:rgba(255,255,255,.04);
+      color:var(--text); padding:10px 12px; outline:none;
+    }
+    input{min-width:160px}
+    button{cursor:pointer}
+    button.primary{background:rgba(181,124,255,.18); border-color:rgba(181,124,255,.35)}
+    .chat{
+      height:min(70vh,720px);
+      background:rgba(15,22,35,.75);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      overflow:auto;
+      padding:12px;
+    }
+    .msg{padding:10px 10px; border-bottom:1px solid rgba(255,255,255,.06)}
+    .meta{font-size:12px; color:var(--muted); display:flex; gap:8px; align-items:center}
+    .name{color:var(--accent); font-weight:700}
+    .text{margin-top:6px; white-space:pre-wrap; line-height:1.35}
+    .send{display:flex; gap:10px; padding:12px; background:rgba(15,22,35,.85); border:1px solid var(--line); border-radius:var(--radius)}
+    .send input#text{flex:1; min-width:0}
+    .status{font-size:12px; color:var(--muted)}
+  </style>
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9382191250873184"
+     crossorigin="anonymous"></script>
+
+  
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <input id="room" placeholder="room (예: tebet)" />
+      <input id="name" placeholder="name (예: 사장님)" />
+      <button class="primary" id="btnJoin">입장</button>
+      <div class="status" id="status">대기중</div>
+    </div>
+
+    <div class="chat" id="chat"></div>
+
+    <div class="send">
+      <input id="text" placeholder="메시지 입력 후 Enter" />
+      <input id="file" type="file" accept="image/*" />
+      <button class="primary" id="btnSend">전송</button>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const $ = (s)=>document.querySelector(s);
+  const chat = $("#chat");
+  const status = $("#status");
+
+  const state = {
+    room: localStorage.getItem("lf_room") || "lobby",
+    name: localStorage.getItem("lf_name") || "익명",
+    es: null,
+  };
+
+  $("#room").value = state.room;
+  $("#name").value = state.name;
+
+  function fmtTime(ts){
+    const d = new Date(ts);
+    const hh = String(d.getHours()).padStart(2,"0");
+    const mm = String(d.getMinutes()).padStart(2,"0");
+    return `${hh}:${mm}`;
+  }
+
+
+ function addMsg(m){
+  const el = document.createElement("div");
+  el.className = "msg";
+
+  const header = `
+    <div class="meta">
+      <span class="name">${escapeHtml(m.name)}</span>
+      <span>${fmtTime(m.ts)}</span>
+      <span style="opacity:.6">#${escapeHtml(m.room)}</span>
+    </div>
+  `;
+
+  let body = "";
+  if(m.type === "image" && m.url){
+    body = `
+      ${m.text ? `<div class="text">${escapeHtml(m.text)}</div>` : ""}
+      <div style="margin-top:8px">
+        <a href="${m.url}" target="_blank" rel="noopener">
+          <img src="${m.url}" style="max-width:100%; border-radius:14px; border:1px solid rgba(255,255,255,.08)" />
+        </a>
+      </div>
+    `;
+  } else {
+    body = `<div class="text">${escapeHtml(m.text || "")}</div>`;
+  }
+
+  el.innerHTML = header + body;
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, (c)=>({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[c]));
+  }
+
+  async function loadHistory(){
+    chat.innerHTML = "";
+    const res = await fetch(`https://localflow.ddns.net/cdn/api/history?room=${encodeURIComponent(state.room)}`);
+    const list = await res.json();
+    list.forEach(addMsg);
+  }
+
+  function connectStream(){
+    if(state.es) state.es.close();
+    status.textContent = "연결중…";
+
+    const url = `https://localflow.ddns.net/cdn/api/stream?room=${encodeURIComponent(state.room)}`;
+    const es = new EventSource(url);
+    state.es = es;
+
+    es.addEventListener("hello", (e)=>{
+      status.textContent = `연결됨 (#${state.room})`;
+    });
+    es.addEventListener("ping", ()=>{ /* keep-alive */ });
+    es.addEventListener("msg", (e)=>{
+      const m = JSON.parse(e.data);
+      addMsg(m);
+    });
+    es.onerror = ()=>{
+      status.textContent = "끊김… 재연결 시도중";
+      try { es.close(); } catch {}
+      setTimeout(connectStream, 1200);
+    };
+  }
+
+  async function join(){
+    state.room = ($("#room").value || "lobby").trim();
+    state.name = ($("#name").value || "익명").trim();
+    localStorage.setItem("lf_room", state.room);
+    localStorage.setItem("lf_name", state.name);
+
+    await loadHistory();
+    connectStream();
+  }
+
+
+async function uploadImage(file){
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("room", state.room);
+
+  const res = await fetch("https://localflow.ddns.net/cdn/cdn/upload", { method:"POST", body: fd });
+  const j = await res.json();
+  if(!j.ok) throw new Error(j.error || "upload_failed");
+  return j.url; // 대표 URL(webp 우선)
+}
+
+async function send(){
+  const text = ($("#text").value || "").trim();
+  const fileInput = $("#file");
+  const file = fileInput.files && fileInput.files[0];
+
+  // 사진이 있으면 먼저 업로드 -> url 받기
+  if(file){
+    $("#btnSend").disabled = true;
+    try{
+      const url = await uploadImage(file);
+      fileInput.value = "";
+
+      // 캡션(text)은 옵션
+      await fetch("https://localflow.ddns.net/cdn/api/send", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ room: state.room, name: state.name, type:"image", url, text })
+      });
+      $("#text").value = "";
+    } finally {
+      $("#btnSend").disabled = false;
+    }
+    return;
+  }
+
+  // 사진 없으면 텍스트만
+  if(!text) return;
+  $("#text").value = "";
+  await fetch("https://localflow.ddns.net/cdn/api/send", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ room: state.room, name: state.name, type:"text", text })
+  });
+}
+
+
+
+  $("#btnJoin").addEventListener("click", join);
+  $("#btnSend").addEventListener("click", send);
+  $("#text").addEventListener("keydown", (e)=>{
+    if(e.key === "Enter") send();
+  });
+
+  // 자동 입장
+  join();
+})();
+</script>
+</body>
+</html>
