@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>45° 외경 면취(C) → X값 계산기</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,"Noto Sans KR",sans-serif;margin:20px;line-height:1.4}
+    .wrap{max-width:720px;margin:auto}
+    h1{font-size:20px;margin:0 0 12px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .card{border:1px solid #ddd;border-radius:12px;padding:14px}
+    label{display:block;font-size:13px;margin:0 0 6px;color:#444}
+    input{width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:10px;font-size:16px}
+    .row{display:flex;gap:10px}
+    button{padding:10px 12px;border:1px solid #333;border-radius:10px;background:#111;color:#fff;font-size:15px;cursor:pointer}
+    button.secondary{background:#fff;color:#111}
+    .out{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#f7f7f7;border-radius:10px;padding:12px;white-space:pre-wrap}
+    .note{font-size:13px;color:#555;margin-top:10px}
+    @media (max-width:640px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>45° 외경 면취(C) → 시작 X값 계산기 (선반 X=지름)</h1>
+
+  <div class="grid">
+    <div class="card">
+      <label>외경 끝점 Xend (지름, 예: 31)</label>
+      <input id="xEnd" type="number" step="0.001" value="31">
+
+      <div style="height:10px"></div>
+
+      <label>면취 C (예: 1.5)</label>
+      <input id="cVal" type="number" step="0.001" value="1.5">
+
+      <div style="height:10px"></div>
+
+      <label>Z 시작점 Zstart (예: 2)</label>
+      <input id="zStart" type="number" step="0.001" value="2">
+
+      <div style="height:10px"></div>
+
+      <label>코너 Z (모서리 위치, 보통 0)</label>
+      <input id="zCorner" type="number" step="0.001" value="0">
+
+      <div style="height:10px"></div>
+
+      <label>오버트래블 overZ (Z를 더 가는 값, 예: 0.5)</label>
+      <input id="overZ" type="number" step="0.001" value="0.5">
+
+      <div style="height:12px"></div>
+
+      <div class="row">
+        <button id="calcBtn">계산</button>
+        <button class="secondary" id="copyBtn">G코드 복사</button>
+      </div>
+
+      <div class="note">
+        ※ 이 계산기는 <b>45° 외경 면취</b> 기준(ΔX=2C)입니다.<br>
+        ※ 실제 가공은 Z0에서 멈추지 말고 overZ 만큼 더 가는 걸 권장.
+      </div>
+    </div>
+
+    <div class="card">
+      <label>결과</label>
+      <div id="result" class="out">값을 입력하고 [계산]을 누르세요.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+
+  function fmt(n){
+    // 불필요한 0 제거
+    const s = (Math.round(n * 1000) / 1000).toFixed(3);
+    return s.replace(/\.?0+$/, '');
+  }
+
+  function calc(){
+    const xEnd   = parseFloat($("xEnd").value || "0");
+    const cVal   = parseFloat($("cVal").value || "0");
+    const zStart = parseFloat($("zStart").value || "0");
+    const zCorner= parseFloat($("zCorner").value || "0");
+    const overZ  = parseFloat($("overZ").value || "0");
+
+    // 45° 외경면취: ΔX(지름)=2C
+    const dX = 2 * cVal;
+    const xStart = xEnd - dX;
+
+    // 이론상 면취 시작 Z는 (코너에서 +C) 지점
+    const zChamferStartIdeal = zCorner + cVal;
+
+    // 실제 끝 Z는 코너를 지나 overZ 만큼 더
+    const zEndReal = zCorner - overZ;
+
+    // Zstart에서 시작하면 공중 구간이 있을 수 있음
+    const airZ = zStart - zChamferStartIdeal; // +면 공중이동, -면 이미 재질 안쪽에서 시작
+
+    const gcode =
+`(45deg OD chamfer)
+G01 X${fmt(xStart)} Z${fmt(zStart)}
+G01 X${fmt(xEnd)} Z${fmt(zEndReal)}  (pass Z${fmt(zCorner)})`;
+
+    $("result").textContent =
+`입력:
+  Xend = ${fmt(xEnd)}
+  C    = ${fmt(cVal)}
+  Zstart = ${fmt(zStart)}
+  Zcorner= ${fmt(zCorner)}
+  overZ  = ${fmt(overZ)}
+
+계산:
+  ΔX(지름) = 2C = ${fmt(dX)}
+  Xstart   = Xend - 2C = ${fmt(xStart)}
+
+Z 참고:
+  면취 시작(이론) Z = Zcorner + C = ${fmt(zChamferStartIdeal)}
+  Zstart → 면취시작(이론) 차이 = ${fmt(airZ)}  (${airZ>0 ? "공중 이동" : airZ<0 ? "재질 안쪽 시작" : "딱 맞음"})
+  실제 끝 Z(권장) = Zcorner - overZ = ${fmt(zEndReal)}
+
+G-code 예시:
+${gcode}`;
+    return gcode;
+  }
+
+  $("calcBtn").addEventListener("click", calc);
+
+  $("copyBtn").addEventListener("click", async () => {
+    const g = calc();
+    try{
+      await navigator.clipboard.writeText(g);
+      $("copyBtn").textContent = "복사됨!";
+      setTimeout(()=> $("copyBtn").textContent = "G코드 복사", 900);
+    }catch(e){
+      alert("클립보드 복사가 막혀있습니다. 결과창에서 직접 복사하세요.");
+    }
+  });
+
+  // 초기 계산
+  calc();
+</script>
+</body>
+</html>
