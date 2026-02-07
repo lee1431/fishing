@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>방치형 아이템 획득 - Get The Item.</title>
+  <style>
+    html, body { height:100%; margin:0; background:#070a10; color:#e8eefc; font-family: ui-monospace, Menlo, Consolas, monospace; }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 18px; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; }
+    .card { background: rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:14px; flex:1; min-width:260px; position:relative; overflow:hidden; }
+    .big { font-size: 22px; }
+    button {
+      background: rgba(49,210,255,.12);
+      color:#e8eefc;
+      border:1px solid rgba(49,210,255,.35);
+      padding:10px 12px; border-radius:14px;
+      cursor:pointer;
+    }
+    button:disabled { opacity:.45; cursor:not-allowed; }
+    .muted { opacity:.7; font-size:12px; }
+    .log { height: 320px; overflow:auto; background: rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:10px; }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.18); margin-left:8px; font-size:12px; opacity:.85; }
+
+    .fx-layer{
+      position:absolute; inset:0;
+      pointer-events:none;
+    }
+
+    .float-text{
+      position:absolute;
+      left: 18px;
+      top: 24px;
+      font-size: 14px;
+      opacity: 0;
+      transform: translateY(8px) scale(0.98);
+      animation: floatUp 680ms ease-out forwards;
+      text-shadow: 0 0 12px rgba(49,210,255,.25);
+      white-space:nowrap;
+    }
+    @keyframes floatUp{
+      0%   { opacity:0; transform: translateY(10px) scale(0.98); filter: blur(.2px); }
+      20%  { opacity:1; }
+      100% { opacity:0; transform: translateY(-26px) scale(1.02); filter: blur(.0px); }
+    }
+
+    .chest-wrap{ display:flex; align-items:center; gap:10px; margin-top:6px; }
+    .chest{
+      width: 58px; height: 46px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      position: relative;
+      transform-origin: 50% 80%;
+    }
+    .chest:before{
+      content:"";
+      position:absolute; left:8px; right:8px; top:9px; height:10px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.09);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .chest:after{
+      content:"";
+      position:absolute; left:18px; right:18px; top:19px; height:18px;
+      border-radius: 10px;
+      background: rgba(49,210,255,.10);
+      border: 1px solid rgba(49,210,255,.22);
+    }
+
+    /* New chest pulse */
+    .chest.pulse{
+      animation: pulse 520ms ease-out;
+    }
+    @keyframes pulse{
+      0% { transform: scale(1); }
+      35% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    /* Open chest */
+    .chest.open{
+      animation: openChest 520ms ease-out;
+    }
+    @keyframes openChest{
+      0% { transform: scale(1) rotate(0deg); }
+      25% { transform: scale(1.06) rotate(-2deg); }
+      55% { transform: scale(1.10) rotate(3deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+
+    /* Spark particles */
+    .spark{
+      position:absolute;
+      width: 6px; height: 6px;
+      border-radius: 999px;
+      opacity: 0;
+      animation: spark 520ms ease-out forwards;
+    }
+    @keyframes spark{
+      0% { opacity:0; transform: translate(0,0) scale(0.9); }
+      15% { opacity:1; }
+      100% { opacity:0; transform: translate(var(--dx), var(--dy)) scale(0.8); }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row">
+    <div class="card" id="goldCard">
+      <div class="big">GOLD: <span id="gold">0</span></div>
+      <div class="muted">초당 골드: <span id="gps">1</span> <span class="pill" id="boostPill" style="display:none;">BOOST x2</span></div>
+      <div style="margin-top:10px" class="row">
+        <button id="buyGps">채집 속도 업 (비용 <span id="gpsCost">20</span>)</button>
+        <button id="boostBtn">부스트 10초 (비용 50)</button>
+      </div>
+
+      <div class="fx-layer" id="goldFx"></div>
+    </div>
+
+    <div class="card" id="chestCard">
+      <div class="big">CHEST: <span id="chest">0</span></div>
+
+      <div class="chest-wrap">
+        <div class="chest" id="chestIcon" aria-hidden="true"></div>
+        <div class="muted">다음 상자까지: <span id="chestEta">--</span>초</div>
+      </div>
+
+      <div style="margin-top:10px" class="row">
+        <button id="openChest">상자 열기</button>
+        <button id="buyChestRate">상자 획득 속도 업 (비용 <span id="chestCost">40</span>)</button>
+      </div>
+      <div class="muted" style="margin-top:8px">
+        드랍: 일반 80% / 레어 18% / 에픽 2%
+      </div>
+
+      <div class="fx-layer" id="chestFx"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <div class="big">획득 로그</div>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const S = {
+    gold: 0,
+    gps: 1,
+    chest: 0,
+    chestInterval: 10,
+    chestTimer: 0,
+    gpsLevel: 1,
+    chestLevel: 1,
+    boostUntil: 0
+  };
+
+  const gpsCost = () => Math.floor(20 * Math.pow(1.35, S.gpsLevel-1));
+  const chestCost = () => Math.floor(40 * Math.pow(1.40, S.chestLevel-1));
+
+  const ITEMS = {
+    common: ["녹슨 못", "마른 나뭇잎", "돌멩이", "구리 조각", "낡은 천"],
+    rare:   ["은빛 톱니", "단단한 가죽", "푸른 수정", "정밀 베어링"],
+    epic:   ["황금 코어", "고대 룬", "심연의 결정"]
+  };
+  function rollRarity(){
+    const r = Math.random();
+    if (r < 0.80) return "common";
+    if (r < 0.98) return "rare";
+    return "epic";
+  }
+  function rollItem(rarity){
+    const arr = ITEMS[rarity];
+    return arr[Math.floor(Math.random()*arr.length)];
+  }
+
+  // ===== UI =====
+  const el = (id)=>document.getElementById(id);
+  const goldEl = el("gold");
+  const gpsEl = el("gps");
+  const chestEl = el("chest");
+  const chestEtaEl = el("chestEta");
+  const logEl = el("log");
+  const gpsCostEl = el("gpsCost");
+  const chestCostEl = el("chestCost");
+  const boostPill = el("boostPill");
+
+  const buyGpsBtn = el("buyGps");
+  const buyChestBtn = el("buyChestRate");
+  const openChestBtn = el("openChest");
+  const boostBtn = el("boostBtn");
+
+  const goldFx = el("goldFx");
+  const chestFx = el("chestFx");
+  const chestIcon = el("chestIcon");
+
+  const fmt = (n)=>Math.floor(n).toLocaleString("ko-KR");
+
+  function addLog(line){
+    const p = document.createElement("div");
+    p.textContent = line;
+    logEl.prepend(p);
+  }
+
+  function isBoosting(){ return performance.now() < S.boostUntil; }
+  function currentGps(){ return S.gps * (isBoosting() ? 2 : 1); }
+
+  function updateUI(){
+    goldEl.textContent = fmt(S.gold);
+    gpsEl.textContent = currentGps().toFixed(1);
+    chestEl.textContent = fmt(S.chest);
+
+    const eta = Math.max(0, S.chestInterval - S.chestTimer);
+    chestEtaEl.textContent = eta.toFixed(1);
+
+    gpsCostEl.textContent = fmt(gpsCost());
+    chestCostEl.textContent = fmt(chestCost());
+
+    buyGpsBtn.disabled = S.gold < gpsCost();
+    buyChestBtn.disabled = S.gold < chestCost();
+    openChestBtn.disabled = S.chest < 1;
+    boostBtn.disabled = S.gold < 50 || isBoosting();
+
+    boostPill.style.display = isBoosting() ? "inline-block" : "none";
+  }
+
+  function popGold(amount, labelPrefix="+"){
+    const d = document.createElement("div");
+    d.className = "float-text";
+    d.textContent = `${labelPrefix}${amount}G`;
+    goldFx.appendChild(d);
+    d.addEventListener("animationend", ()=>d.remove(), {once:true});
+  }
+
+  function chestPulse(){
+    chestIcon.classList.remove("pulse");
+    void chestIcon.offsetWidth; // reflow for restart animation
+    chestIcon.classList.add("pulse");
+  }
+
+  function chestOpenFX(){
+    chestIcon.classList.remove("open");
+    void chestIcon.offsetWidth;
+    chestIcon.classList.add("open");
+
+    const rect = chestIcon.getBoundingClientRect();
+    const host = chestFx.getBoundingClientRect();
+
+    const cx = rect.left - host.left + rect.width*0.55;
+    const cy = rect.top  - host.top  + rect.height*0.35;
+
+    const n = 12;
+    for (let i=0;i<n;i++){
+      const s = document.createElement("div");
+      s.className = "spark";
+      const ang = Math.random()*Math.PI*2;
+      const dist = 30 + Math.random()*40;
+      const dx = Math.cos(ang)*dist;
+      const dy = Math.sin(ang)*dist;
+
+      s.style.left = `${cx}px`;
+      s.style.top  = `${cy}px`;
+      s.style.setProperty("--dx", `${dx}px`);
+      s.style.setProperty("--dy", `${dy}px`);
+
+      s.style.background = "rgba(49,210,255,.85)";
+      s.style.boxShadow = "0 0 14px rgba(49,210,255,.35)";
+
+      chestFx.appendChild(s);
+      s.addEventListener("animationend", ()=>s.remove(), {once:true});
+    }
+  }
+
+  buyGpsBtn.onclick = () => {
+    const c = gpsCost();
+    if (S.gold < c) return;
+    S.gold -= c;
+    S.gpsLevel += 1;
+    S.gps = S.gps + 0.8;
+    addLog(`채집 속도 업! (Lv.${S.gpsLevel})`);
+    popGold(c, "-");
+    updateUI();
+  };
+
+  buyChestBtn.onclick = () => {
+    const c = chestCost();
+    if (S.gold < c) return;
+    S.gold -= c;
+    S.chestLevel += 1;
+    S.chestInterval = Math.max(2.5, S.chestInterval * 0.88);
+    addLog(`상자 획득 속도 업! (Lv.${S.chestLevel})`);
+    popGold(c, "-");
+    updateUI();
+  };
+
+  boostBtn.onclick = () => {
+    if (S.gold < 50 || isBoosting()) return;
+    S.gold -= 50;
+    S.boostUntil = performance.now() + 10_000;
+    addLog(`부스트 시작! (10초 x2)`);
+    popGold(50, "-");
+    updateUI();
+  };
+
+  openChestBtn.onclick = () => {
+    if (S.chest < 1) return;
+    S.chest -= 1;
+
+    chestOpenFX();
+
+    const rarity = rollRarity();
+    const item = rollItem(rarity);
+
+    const bonus = rarity === "common" ? 3 : rarity === "rare" ? 12 : 50;
+    S.gold += bonus;
+
+    const tag = rarity === "common" ? "일반" : rarity === "rare" ? "레어" : "에픽";
+    addLog(`상자 OPEN → [${tag}] ${item} (+${bonus}G)`);
+
+    popGold(bonus, "+");
+
+    if (rarity !== "common"){
+      const rect = chestIcon.getBoundingClientRect();
+      const host = chestFx.getBoundingClientRect();
+      const cx = rect.left - host.left + rect.width*0.55;
+      const cy = rect.top  - host.top  + rect.height*0.35;
+
+      const s = document.createElement("div");
+      s.className = "spark";
+      s.style.left = `${cx}px`;
+      s.style.top  = `${cy}px`;
+      s.style.setProperty("--dx", `${(Math.random()*2-1)*10}px`);
+      s.style.setProperty("--dy", `${-80}px`);
+      if (rarity === "rare"){
+        s.style.background = "rgba(255,255,255,.9)";
+        s.style.boxShadow = "0 0 18px rgba(255,255,255,.35)";
+      } else {
+        s.style.background = "rgba(255,223,107,.95)";
+        s.style.boxShadow = "0 0 22px rgba(255,223,107,.35)";
+      }
+      chestFx.appendChild(s);
+      s.addEventListener("animationend", ()=>s.remove(), {once:true});
+    }
+
+    updateUI();
+  };
+
+  let last = performance.now();
+  let goldCarry = 0;
+  function tick(now){
+    const dt = Math.min(0.05, (now - last)/1000);
+    last = now;
+
+    const g = currentGps() * dt;
+    S.gold += g;
+    goldCarry += g;
+
+    if (goldCarry >= 0.8){
+      const amt = Math.floor(goldCarry);
+      if (amt >= 1) popGold(amt, "+");
+      goldCarry -= amt;
+    }
+
+    S.chestTimer += dt;
+    if (S.chestTimer >= S.chestInterval){
+      const k = Math.floor(S.chestTimer / S.chestInterval);
+      S.chest += k;
+      S.chestTimer -= k * S.chestInterval;
+      addLog(`상자 획득! (+${k})`);
+
+      chestPulse();
+    }
+
+    updateUI();
+    requestAnimationFrame(tick);
+  }
+
+  updateUI();
+  addLog("시작. 시간이 흐르면 골드/상자가 자동으로 쌓인다.");
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
