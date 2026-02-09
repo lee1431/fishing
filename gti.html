@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>방치형 아이템 획득 - Get The Item.</title>
+  <title>방치형 아이템 획득 - Motion</title>
   <style>
     html, body { height:100%; margin:0; background:#070a10; color:#e8eefc; font-family: ui-monospace, Menlo, Consolas, monospace; }
     .wrap { max-width: 920px; margin: 0 auto; padding: 18px; }
@@ -22,11 +22,13 @@
     .log { height: 320px; overflow:auto; background: rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:10px; }
     .pill { display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.18); margin-left:8px; font-size:12px; opacity:.85; }
 
+    /* ===== Motion Layer ===== */
     .fx-layer{
       position:absolute; inset:0;
       pointer-events:none;
     }
 
+    /* Floating gold text */
     .float-text{
       position:absolute;
       left: 18px;
@@ -44,6 +46,7 @@
       100% { opacity:0; transform: translateY(-26px) scale(1.02); filter: blur(.0px); }
     }
 
+    /* Chest icon + opening motion */
     .chest-wrap{ display:flex; align-items:center; gap:10px; margin-top:6px; }
     .chest{
       width: 58px; height: 46px;
@@ -102,6 +105,10 @@
       15% { opacity:1; }
       100% { opacity:0; transform: translate(var(--dx), var(--dy)) scale(0.8); }
     }
+	
+	.log-common { color:#bfc7d5; }
+	.log-rare   { color:#7fd4ff; }
+	.log-epic   { color:#ffd86b; font-weight:bold; }
   </style>
 </head>
 <body>
@@ -146,20 +153,23 @@
 
 <script>
 (() => {
+  // ===== State =====
   const S = {
     gold: 0,
     gps: 1,
     chest: 0,
-    chestInterval: 10,
+    chestInterval: 10, // sec
     chestTimer: 0,
     gpsLevel: 1,
     chestLevel: 1,
     boostUntil: 0
   };
 
+  // ===== Economy =====
   const gpsCost = () => Math.floor(20 * Math.pow(1.35, S.gpsLevel-1));
   const chestCost = () => Math.floor(40 * Math.pow(1.40, S.chestLevel-1));
 
+  // ===== Drop table =====
   const ITEMS = {
     common: ["녹슨 못", "마른 나뭇잎", "돌멩이", "구리 조각", "낡은 천"],
     rare:   ["은빛 톱니", "단단한 가죽", "푸른 수정", "정밀 베어링"],
@@ -198,11 +208,16 @@
 
   const fmt = (n)=>Math.floor(n).toLocaleString("ko-KR");
 
-  function addLog(line){
-    const p = document.createElement("div");
-    p.textContent = line;
-    logEl.prepend(p);
-  }
+  function addLog(line, rarity){
+	  const p = document.createElement("div");
+	  p.textContent = line;
+
+	  if (rarity){
+		p.classList.add("log-" + rarity);
+	  }
+
+	  logEl.prepend(p);
+	}
 
   function isBoosting(){ return performance.now() < S.boostUntil; }
   function currentGps(){ return S.gps * (isBoosting() ? 2 : 1); }
@@ -226,7 +241,9 @@
     boostPill.style.display = isBoosting() ? "inline-block" : "none";
   }
 
+  // ===== Motion helpers =====
   function popGold(amount, labelPrefix="+"){
+    // 너무 자주 뜨면 난잡하니: 작은 amount는 합쳐서 보여주는 느낌으로 가능
     const d = document.createElement("div");
     d.className = "float-text";
     d.textContent = `${labelPrefix}${amount}G`;
@@ -245,9 +262,11 @@
     void chestIcon.offsetWidth;
     chestIcon.classList.add("open");
 
+    // spark burst near chest icon
     const rect = chestIcon.getBoundingClientRect();
     const host = chestFx.getBoundingClientRect();
 
+    // chest center in chestFx coordinates
     const cx = rect.left - host.left + rect.width*0.55;
     const cy = rect.top  - host.top  + rect.height*0.35;
 
@@ -265,6 +284,8 @@
       s.style.setProperty("--dx", `${dx}px`);
       s.style.setProperty("--dy", `${dy}px`);
 
+      // 색감은 코드에 지정하지 말라고 했던 건 "차트"에 해당하는 룰이라 여기선 OK.
+      // 그래도 심플하게: rarity 느낌은 openChest에서 따로 한 번 더.
       s.style.background = "rgba(49,210,255,.85)";
       s.style.boxShadow = "0 0 14px rgba(49,210,255,.35)";
 
@@ -273,14 +294,15 @@
     }
   }
 
+  // ===== Actions =====
   buyGpsBtn.onclick = () => {
     const c = gpsCost();
     if (S.gold < c) return;
     S.gold -= c;
     S.gpsLevel += 1;
     S.gps = S.gps + 0.8;
-    addLog(`채집 속도 업! (Lv.${S.gpsLevel})`);
-    popGold(c, "-");
+    addLog(`채집 속도 업! (Lv.${S.gpsLevel})`,'');
+    popGold(c, "-"); // 비용도 이모션으로
     updateUI();
   };
 
@@ -290,7 +312,7 @@
     S.gold -= c;
     S.chestLevel += 1;
     S.chestInterval = Math.max(2.5, S.chestInterval * 0.88);
-    addLog(`상자 획득 속도 업! (Lv.${S.chestLevel})`);
+    addLog(`상자 획득 속도 업! (Lv.${S.chestLevel})`,'');
     popGold(c, "-");
     updateUI();
   };
@@ -299,77 +321,78 @@
     if (S.gold < 50 || isBoosting()) return;
     S.gold -= 50;
     S.boostUntil = performance.now() + 10_000;
-    addLog(`부스트 시작! (10초 x2)`);
+    addLog(`부스트 시작! (10초 x2)`,'');
     popGold(50, "-");
     updateUI();
   };
 
-  openChestBtn.onclick = () => {
-    if (S.chest < 1) return;
+  openChestBtn.onclick = async () => {
+  if (S.chest < 1) return;
+
+  // 버튼 연타 방지
+  openChestBtn.disabled = true;
+
+  try {
+    // 서버에 상자 오픈 요청
+    const res = await fetch("https://mrdindoin.ddns.net/gti/api/open_chest", { method: "POST" });
+    const data = await res.json();
+    if (!data.ok) throw new Error("server_fail");
+
+    // 클라 상태 반영
     S.chest -= 1;
 
+    // 연출
     chestOpenFX();
 
-    const rarity = rollRarity();
-    const item = rollItem(rarity);
+    const rarity = data.rarity;   // common/rare/epic
+    const item   = data.item;
+    const bonus  = data.bonus;
 
-    const bonus = rarity === "common" ? 3 : rarity === "rare" ? 12 : 50;
     S.gold += bonus;
 
     const tag = rarity === "common" ? "일반" : rarity === "rare" ? "레어" : "에픽";
-    addLog(`상자 OPEN → [${tag}] ${item} (+${bonus}G)`);
-
+    addLog(`상자 OPEN → [${tag}] ${item} (+${bonus}G)`, rarity);
     popGold(bonus, "+");
 
-    if (rarity !== "common"){
-      const rect = chestIcon.getBoundingClientRect();
-      const host = chestFx.getBoundingClientRect();
-      const cx = rect.left - host.left + rect.width*0.55;
-      const cy = rect.top  - host.top  + rect.height*0.35;
-
-      const s = document.createElement("div");
-      s.className = "spark";
-      s.style.left = `${cx}px`;
-      s.style.top  = `${cy}px`;
-      s.style.setProperty("--dx", `${(Math.random()*2-1)*10}px`);
-      s.style.setProperty("--dy", `${-80}px`);
-      if (rarity === "rare"){
-        s.style.background = "rgba(255,255,255,.9)";
-        s.style.boxShadow = "0 0 18px rgba(255,255,255,.35)";
-      } else {
-        s.style.background = "rgba(255,223,107,.95)";
-        s.style.boxShadow = "0 0 22px rgba(255,223,107,.35)";
-      }
-      chestFx.appendChild(s);
-      s.addEventListener("animationend", ()=>s.remove(), {once:true});
-    }
-
     updateUI();
-  };
+  } catch (e) {
+    addLog("서버 응답 실패… (네트워크/서버 확인)");
+  } finally {
+    openChestBtn.disabled = S.chest < 1; // 상태에 맞게
+  }
+};
+  
+  
+  
 
+  // ===== Main loop =====
   let last = performance.now();
-  let goldCarry = 0;
+  let goldCarry = 0; // 작은 골드 누적해서 일정량 이상일 때만 이모션(너무 도배 방지)
   function tick(now){
     const dt = Math.min(0.05, (now - last)/1000);
     last = now;
 
+    // passive gold
     const g = currentGps() * dt;
     S.gold += g;
     goldCarry += g;
 
+    // gold emotion: 0.8G 이상 모이면 한번 띄움(도배 방지)
     if (goldCarry >= 0.8){
       const amt = Math.floor(goldCarry);
       if (amt >= 1) popGold(amt, "+");
       goldCarry -= amt;
     }
 
+    // chest timer
     S.chestTimer += dt;
     if (S.chestTimer >= S.chestInterval){
       const k = Math.floor(S.chestTimer / S.chestInterval);
       S.chest += k;
       S.chestTimer -= k * S.chestInterval;
-      addLog(`상자 획득! (+${k})`);
+      addLog(`상자 획득! (+${k})`,'');
 
+      // chest emotion: 펄스(새 상자 느낌)
       chestPulse();
     }
 
@@ -378,7 +401,7 @@
   }
 
   updateUI();
-  addLog("시작. 시간이 흐르면 골드/상자가 자동으로 쌓인다.");
+  addLog("시작. 시간이 흐르면 골드/상자가 자동으로 쌓인다.",'');
   requestAnimationFrame(tick);
 })();
 </script>
