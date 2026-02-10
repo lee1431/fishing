@@ -348,14 +348,16 @@
     // 연출
     chestOpenFX();
 
-    const rarity = data.rarity;   // common/rare/epic
-    const item   = data.item;
-    const bonus  = data.bonus;
-
-    S.gold += bonus;
-
-    const tag = rarity === "common" ? "일반" : rarity === "rare" ? "레어" : "에픽";
-    addLog(`상자 OPEN → [${tag}] ${item} (+${bonus}G)`, rarity);
+    const rarity = data.rarity;         // i0 ~ i6
+	const itemName = data.item_name || data.item; // 표시용 우선
+	const bonus  = data.bonus;
+	
+	S.gold += bonus;
+	
+	const tagMap = { i0:"신화", i1:"전설", i2:"영웅", i3:"레어", i4:"고급", i5:"일반", i6:"잡템" };
+	const tag = tagMap[rarity] || rarity;
+	
+	addLog(`상자 OPEN → [${tag}] ${itemName} (+${bonus}G)`, rarity);
     popGold(bonus, "+");
 
     updateUI();
