@@ -3,417 +3,703 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>방치형 아이템 획득 - Motion</title>
+  <title>방치형 아이템 획득 - Motion (Log + Inventory)</title>
   <style>
-    html, body { height:100%; margin:0; background:#070a10; color:#e8eefc; font-family: ui-monospace, Menlo, Consolas, monospace; }
-    .wrap { max-width: 920px; margin: 0 auto; padding: 18px; }
-    .row { display:flex; gap:12px; flex-wrap:wrap; }
-    .card { background: rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:14px; flex:1; min-width:260px; position:relative; overflow:hidden; }
-    .big { font-size: 22px; }
-    button {
-      background: rgba(49,210,255,.12);
-      color:#e8eefc;
-      border:1px solid rgba(49,210,255,.35);
-      padding:10px 12px; border-radius:14px;
+    :root{
+      --bg:#070a10; --fg:#e8eefc;
+      --card:rgba(255,255,255,.04);
+      --line:rgba(255,255,255,.10);
+      --line2:rgba(255,255,255,.08);
+      --btn:rgba(49,210,255,.12);
+      --btnLine:rgba(49,210,255,.30);
+    }
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:ui-monospace,Menlo,Consolas,monospace;}
+    .wrap{max-width:980px;margin:0 auto;padding:18px;}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:stretch;}
+    .card{
+      background:var(--card);
+      border:1px solid var(--line2);
+      border-radius:16px;
+      padding:14px;
+      flex:1;
+      min-width:280px;
+      position:relative;
+      overflow:hidden;
+      box-shadow: 0 10px 50px rgba(0,0,0,.35);
+    }
+    .big{font-size:22px;font-weight:700;letter-spacing:.2px;}
+    .muted{opacity:.75;font-size:12px;}
+    .btn{
+      background:var(--btn);
+      color:var(--fg);
+      border:1px solid var(--btnLine);
+      border-radius:12px;
+      padding:9px 12px;
+      cursor:pointer;
+      user-select:none;
+      transition:.12s transform ease;
+    }
+    .btn:active{transform:scale(.98);}
+    .btn:disabled{opacity:.45;cursor:not-allowed;}
+    .btn2{
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .statline{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:8px}
+    .pill{padding:2px 8px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(0,0,0,.18);font-size:12px;opacity:.9}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+
+    /* log */
+    .logbox{
+      margin-top:10px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.18);
+      border-radius:12px;
+      padding:10px;
+      height:320px;
+      overflow:auto;
+      white-space:pre-wrap;
+      line-height:1.35;
+      font-size:13px;
+    }
+    .logbox b{font-weight:800}
+    .log-green{color:#88ffb3}
+    .log-cyan{color:#7fe7ff}
+    .log-gray{color:rgba(232,238,252,.85)}
+    .log-warn{color:#ffd27f}
+
+    /* inventory */
+    .inv-card{margin-top:12px;}
+    .inv-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+    .inv-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+    .inv-controls input,.inv-controls select{
+      background:rgba(255,255,255,.04);
+      color:var(--fg);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:10px;
+      padding:8px 10px;
+      outline:none;
+      min-width:180px;
+    }
+    .inv-controls select{min-width:140px}
+    .inv-grid{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns:repeat(7,minmax(0,1fr));
+      gap:10px;
+    }
+    @media (max-width: 980px){
+      .inv-grid{grid-template-columns:repeat(4,minmax(0,1fr));}
+    }
+    @media (max-width: 560px){
+      .inv-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    }
+
+    .inv-slot{
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      padding:10px;
+      min-height:76px;
+      position:relative;
+      overflow:hidden;
       cursor:pointer;
     }
-    button:disabled { opacity:.45; cursor:not-allowed; }
-    .muted { opacity:.7; font-size:12px; }
-    .log { height: 320px; overflow:auto; background: rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:10px; }
-    .pill { display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.18); margin-left:8px; font-size:12px; opacity:.85; }
-
-    /* ===== Motion Layer ===== */
-    .fx-layer{
-      position:absolute; inset:0;
-      pointer-events:none;
+    .inv-slot:hover{border-color:rgba(255,255,255,.20)}
+    .inv-tag{font-size:12px;opacity:.86;margin-bottom:6px;}
+    .inv-name{font-size:13px;line-height:1.25;word-break:keep-all;}
+    .inv-count{
+      position:absolute;right:10px;bottom:8px;
+      font-size:12px;opacity:.95;
+      padding:2px 7px;border-radius:999px;
+      background:rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.10);
     }
 
-    /* Floating gold text */
-    .float-text{
-      position:absolute;
-      left: 18px;
-      top: 24px;
-      font-size: 14px;
-      opacity: 0;
-      transform: translateY(8px) scale(0.98);
-      animation: floatUp 680ms ease-out forwards;
-      text-shadow: 0 0 12px rgba(49,210,255,.25);
-      white-space:nowrap;
-    }
-    @keyframes floatUp{
-      0%   { opacity:0; transform: translateY(10px) scale(0.98); filter: blur(.2px); }
-      20%  { opacity:1; }
-      100% { opacity:0; transform: translateY(-26px) scale(1.02); filter: blur(.0px); }
-    }
+    /* rarity border tint */
+    .r-i0{border-color:rgba(255,220,120,.40);}
+    .r-i1{border-color:rgba(180,210,255,.40);}
+    .r-i2{border-color:rgba(190,255,210,.32);}
+    .r-i3{border-color:rgba(255,255,255,.18);}
+    .r-i4{border-color:rgba(255,160,220,.28);}
+    .r-i5{border-color:rgba(255,120,120,.28);}
+    .r-i6{border-color:rgba(140,140,140,.24);}
 
-    /* Chest icon + opening motion */
-    .chest-wrap{ display:flex; align-items:center; gap:10px; margin-top:6px; }
-    .chest{
-      width: 58px; height: 46px;
-      border-radius: 14px;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.12);
-      position: relative;
-      transform-origin: 50% 80%;
+    /* modal */
+    .modal-bg{
+      position:fixed;inset:0;background:rgba(0,0,0,.55);
+      display:none;align-items:center;justify-content:center;padding:14px;
     }
-    .chest:before{
-      content:"";
-      position:absolute; left:8px; right:8px; top:9px; height:10px;
-      border-radius: 10px;
-      background: rgba(255,255,255,.09);
-      border: 1px solid rgba(255,255,255,.10);
+    .modal{
+      width:min(520px, 96vw);
+      background:rgba(12,14,20,.92);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:18px;
+      padding:14px;
+      box-shadow:0 18px 90px rgba(0,0,0,.6);
     }
-    .chest:after{
-      content:"";
-      position:absolute; left:18px; right:18px; top:19px; height:18px;
-      border-radius: 10px;
-      background: rgba(49,210,255,.10);
-      border: 1px solid rgba(49,210,255,.22);
-    }
-
-    /* New chest pulse */
-    .chest.pulse{
-      animation: pulse 520ms ease-out;
-    }
-    @keyframes pulse{
-      0% { transform: scale(1); }
-      35% { transform: scale(1.08); }
-      100% { transform: scale(1); }
-    }
-
-    /* Open chest */
-    .chest.open{
-      animation: openChest 520ms ease-out;
-    }
-    @keyframes openChest{
-      0% { transform: scale(1) rotate(0deg); }
-      25% { transform: scale(1.06) rotate(-2deg); }
-      55% { transform: scale(1.10) rotate(3deg); }
-      100% { transform: scale(1) rotate(0deg); }
-    }
-
-    /* Spark particles */
-    .spark{
-      position:absolute;
-      width: 6px; height: 6px;
-      border-radius: 999px;
-      opacity: 0;
-      animation: spark 520ms ease-out forwards;
-    }
-    @keyframes spark{
-      0% { opacity:0; transform: translate(0,0) scale(0.9); }
-      15% { opacity:1; }
-      100% { opacity:0; transform: translate(var(--dx), var(--dy)) scale(0.8); }
-    }
-	
-	.log-i0 { color:#ffd86b; font-weight:700; } /* 최고 */
-	.log-i1 { color:#ffb86b; }
-	.log-i2 { color:#7fd4ff; }
-	.log-i3 { color:#6ad66a; }
-	.log-i4 { color:#9fa8ff; }
-	.log-i5 { color:#c7c7c7; }
-	.log-i6 { color:#6f7785; } /* 최하 */
+    .modal-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+    .modal .big{font-size:18px}
+    .modal .meta{opacity:.8;font-size:12px;margin-top:6px;line-height:1.4}
+    .modal .modal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .xbtn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:7px 10px;cursor:pointer;color:var(--fg)}
   </style>
 </head>
-
-	<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9382191250873184"
-     crossorigin="anonymous"></script>
-	
 <body>
-<div class="wrap">
-  <div class="row">
-    <div class="card" id="goldCard">
-      <div class="big">GOLD: <span id="gold">0</span></div>
-      <div class="muted">초당 골드: <span id="gps">1</span> <span class="pill" id="boostPill" style="display:none;">BOOST x2</span></div>
-      <div style="margin-top:10px" class="row">
-        <button id="buyGps">채집 속도 업 (비용 <span id="gpsCost">20</span>)</button>
-        <button id="boostBtn">부스트 10초 (비용 50)</button>
+  <div class="wrap">
+    <div class="row">
+      <div class="card">
+        <div class="big">GOLD: <span id="gold">0</span></div>
+        <div class="muted">초당 골드: <span id="gps">0</span></div>
+
+        <div class="actions">
+          <button class="btn" id="btnUpGold">채집 속도 업 (비용 <span id="costGoldUp">36</span>)</button>
+          <button class="btn" id="btnBoost">부스트 10초 (비용 <span id="costBoost">50</span>)</button>
+        </div>
+
+        <div class="statline">
+          <span class="pill">채집 Lv. <span id="goldLv">1</span></span>
+          <span class="pill">부스트: <span id="boostState">OFF</span></span>
+        </div>
       </div>
 
-      <div class="fx-layer" id="goldFx"></div>
+      <div class="card">
+        <div class="big">CHEST: <span id="chest">0</span></div>
+        <div class="muted">다음 상자까지: <span id="nextChest">--</span></div>
+
+        <div class="actions">
+          <button class="btn" id="btnOpen">상자 열기</button>
+          <button class="btn btn2" id="btnUpChest">상자 획득 속도 업 (비용 <span id="costChestUp">109</span>)</button>
+        </div>
+
+        <div class="statline">
+          <span class="pill">상자 Lv. <span id="chestLv">1</span></span>
+          <span class="pill">드랍: 일반 80% / 레어 18% / 에픽 2%</span>
+        </div>
+      </div>
     </div>
 
-    <div class="card" id="chestCard">
-      <div class="big">CHEST: <span id="chest">0</span></div>
+    <div class="card" style="margin-top:12px;">
+      <div class="big">획득 로그</div>
+      <div class="muted">상자/업그레이드/골드 이벤트가 여기에 쌓임</div>
+      <div id="log" class="logbox"></div>
+    </div>
 
-      <div class="chest-wrap">
-        <div class="chest" id="chestIcon" aria-hidden="true"></div>
-        <div class="muted">다음 상자까지: <span id="chestEta">--</span>초</div>
+    <!-- Inventory -->
+    <div class="card inv-card">
+      <div class="inv-head">
+        <div class="big">인벤토리</div>
+        <div class="inv-controls">
+          <input id="invSearch" placeholder="검색 (예: 육포, 도토리…)" />
+          <select id="invSort">
+            <option value="recent">최근 획득순</option>
+            <option value="rarity">등급순</option>
+            <option value="count">개수순</option>
+            <option value="name">이름순</option>
+          </select>
+          <button class="btn btn2" id="invExport">백업</button>
+          <button class="btn btn2" id="invImport">복원</button>
+          <button class="btn" id="invClear">초기화</button>
+        </div>
       </div>
-
-      <div style="margin-top:10px" class="row">
-        <button id="openChest">상자 열기</button>
-        <button id="buyChestRate">상자 획득 속도 업 (비용 <span id="chestCost">40</span>)</button>
-      </div>
-      <div class="muted" style="margin-top:8px">
-        드랍: 일반 80% / 레어 18% / 에픽 2%
-      </div>
-
-      <div class="fx-layer" id="chestFx"></div>
+      <div id="invGrid" class="inv-grid"></div>
     </div>
   </div>
 
-  <div class="card" style="margin-top:12px">
-    <div class="big">획득 로그</div>
-    <div class="log" id="log"></div>
+  <!-- modal -->
+  <div class="modal-bg" id="modalBg">
+    <div class="modal">
+      <div class="modal-top">
+        <div>
+          <div class="big" id="mTitle">아이템</div>
+          <div class="meta" id="mMeta"></div>
+        </div>
+        <button class="xbtn" id="mClose">닫기</button>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn2" id="mMinus1">-1</button>
+        <button class="btn btn2" id="mPlus1">+1</button>
+        <button class="btn" id="mDelete">삭제</button>
+      </div>
+    </div>
   </div>
-</div>
 
 <script>
-(() => {
-  // ===== State =====
-  const S = {
-    gold: 0,
-    gps: 1,
-    chest: 0,
-    chestInterval: 10, // sec
-    chestTimer: 0,
-    gpsLevel: 1,
-    chestLevel: 1,
-    boostUntil: 0
-  };
+/* ===========================
+   설정 (서버 붙일 때 여기만)
+=========================== */
+const USE_SERVER = true;                       // true로 바꾸면 서버 호출
+const SERVER_OPEN_URL = "https://mrdindoin.ddns.net/gti/api/open_chest";            // 너 서버 endpoint로 변경
 
-  // ===== Economy =====
-  const gpsCost = () => Math.floor(20 * Math.pow(1.35, S.gpsLevel-1));
-  const chestCost = () => Math.floor(40 * Math.pow(1.40, S.chestLevel-1));
+/* ===========================
+   상태
+=========================== */
+const state = {
+  gold: 0,
+  goldLv: 1,
+  gpsBase: 2.6,
+  boost: { on:false, until:0 },
 
-  // ===== Drop table =====
-  const ITEMS = {
-    common: ["녹슨 못", "마른 나뭇잎", "돌멩이", "구리 조각", "낡은 천"],
-    rare:   ["은빛 톱니", "단단한 가죽", "푸른 수정", "정밀 베어링"],
-    epic:   ["황금 코어", "고대 룬", "심연의 결정"]
-  };
-  function rollRarity(){
-    const r = Math.random();
-    if (r < 0.80) return "common";
-    if (r < 0.98) return "rare";
-    return "epic";
-  }
-  function rollItem(rarity){
-    const arr = ITEMS[rarity];
-    return arr[Math.floor(Math.random()*arr.length)];
-  }
-
-  // ===== UI =====
-  const el = (id)=>document.getElementById(id);
-  const goldEl = el("gold");
-  const gpsEl = el("gps");
-  const chestEl = el("chest");
-  const chestEtaEl = el("chestEta");
-  const logEl = el("log");
-  const gpsCostEl = el("gpsCost");
-  const chestCostEl = el("chestCost");
-  const boostPill = el("boostPill");
-
-  const buyGpsBtn = el("buyGps");
-  const buyChestBtn = el("buyChestRate");
-  const openChestBtn = el("openChest");
-  const boostBtn = el("boostBtn");
-
-  const goldFx = el("goldFx");
-  const chestFx = el("chestFx");
-  const chestIcon = el("chestIcon");
-
-  const fmt = (n)=>Math.floor(n).toLocaleString("ko-KR");
-
-  function addLog(line, rarity){
-	  const p = document.createElement("div");
-	  p.textContent = line;
-
-	  if (rarity){
-		p.classList.add("log-" + rarity);
-	  }
-
-	  logEl.prepend(p);
-	}
-
-  function isBoosting(){ return performance.now() < S.boostUntil; }
-  function currentGps(){ return S.gps * (isBoosting() ? 2 : 1); }
-
-  function updateUI(){
-    goldEl.textContent = fmt(S.gold);
-    gpsEl.textContent = currentGps().toFixed(1);
-    chestEl.textContent = fmt(S.chest);
-
-    const eta = Math.max(0, S.chestInterval - S.chestTimer);
-    chestEtaEl.textContent = eta.toFixed(1);
-
-    gpsCostEl.textContent = fmt(gpsCost());
-    chestCostEl.textContent = fmt(chestCost());
-
-    buyGpsBtn.disabled = S.gold < gpsCost();
-    buyChestBtn.disabled = S.gold < chestCost();
-    openChestBtn.disabled = S.chest < 1;
-    boostBtn.disabled = S.gold < 50 || isBoosting();
-
-    boostPill.style.display = isBoosting() ? "inline-block" : "none";
-  }
-
-  // ===== Motion helpers =====
-  function popGold(amount, labelPrefix="+"){
-    // 너무 자주 뜨면 난잡하니: 작은 amount는 합쳐서 보여주는 느낌으로 가능
-    const d = document.createElement("div");
-    d.className = "float-text";
-    d.textContent = `${labelPrefix}${amount}G`;
-    goldFx.appendChild(d);
-    d.addEventListener("animationend", ()=>d.remove(), {once:true});
-  }
-
-  function chestPulse(){
-    chestIcon.classList.remove("pulse");
-    void chestIcon.offsetWidth; // reflow for restart animation
-    chestIcon.classList.add("pulse");
-  }
-
-  function chestOpenFX(){
-    chestIcon.classList.remove("open");
-    void chestIcon.offsetWidth;
-    chestIcon.classList.add("open");
-
-    // spark burst near chest icon
-    const rect = chestIcon.getBoundingClientRect();
-    const host = chestFx.getBoundingClientRect();
-
-    // chest center in chestFx coordinates
-    const cx = rect.left - host.left + rect.width*0.55;
-    const cy = rect.top  - host.top  + rect.height*0.35;
-
-    const n = 12;
-    for (let i=0;i<n;i++){
-      const s = document.createElement("div");
-      s.className = "spark";
-      const ang = Math.random()*Math.PI*2;
-      const dist = 30 + Math.random()*40;
-      const dx = Math.cos(ang)*dist;
-      const dy = Math.sin(ang)*dist;
-
-      s.style.left = `${cx}px`;
-      s.style.top  = `${cy}px`;
-      s.style.setProperty("--dx", `${dx}px`);
-      s.style.setProperty("--dy", `${dy}px`);
-
-      // 색감은 코드에 지정하지 말라고 했던 건 "차트"에 해당하는 룰이라 여기선 OK.
-      // 그래도 심플하게: rarity 느낌은 openChest에서 따로 한 번 더.
-      s.style.background = "rgba(49,210,255,.85)";
-      s.style.boxShadow = "0 0 14px rgba(49,210,255,.35)";
-
-      chestFx.appendChild(s);
-      s.addEventListener("animationend", ()=>s.remove(), {once:true});
-    }
-  }
-
-  // ===== Actions =====
-  buyGpsBtn.onclick = () => {
-    const c = gpsCost();
-    if (S.gold < c) return;
-    S.gold -= c;
-    S.gpsLevel += 1;
-    S.gps = S.gps + 0.8;
-    addLog(`채집 속도 업! (Lv.${S.gpsLevel})`,'');
-    popGold(c, "-"); // 비용도 이모션으로
-    updateUI();
-  };
-
-  buyChestBtn.onclick = () => {
-    const c = chestCost();
-    if (S.gold < c) return;
-    S.gold -= c;
-    S.chestLevel += 1;
-    S.chestInterval = Math.max(2.5, S.chestInterval * 0.88);
-    addLog(`상자 획득 속도 업! (Lv.${S.chestLevel})`,'');
-    popGold(c, "-");
-    updateUI();
-  };
-
-  boostBtn.onclick = () => {
-    if (S.gold < 50 || isBoosting()) return;
-    S.gold -= 50;
-    S.boostUntil = performance.now() + 10_000;
-    addLog(`부스트 시작! (10초 x2)`,'');
-    popGold(50, "-");
-    updateUI();
-  };
-
-  openChestBtn.onclick = async () => {
-  if (S.chest < 1) return;
-
-  // 버튼 연타 방지
-  openChestBtn.disabled = true;
-
-  try {
-    // 서버에 상자 오픈 요청
-    const res = await fetch("https://mrdindoin.ddns.net/gti/api/open_chest", { method: "POST" });
-    const data = await res.json();
-    if (!data.ok) throw new Error("server_fail");
-
-    // 클라 상태 반영
-    S.chest -= 1;
-
-    // 연출
-    chestOpenFX();
-
-    const rarity = data.rarity;         // i0 ~ i6
-	const itemName = data.item_name || data.item; // 표시용 우선
-	const bonus  = data.bonus;
-	
-	S.gold += bonus;
-	
-	const tagMap = { i0:"신화", i1:"전설", i2:"영웅", i3:"레어", i4:"고급", i5:"일반", i6:"잡템" };
-	const tag = tagMap[rarity] || rarity;
-	
-	addLog(`상자 OPEN → [${tag}] ${itemName} (+${bonus}G)`, rarity);
-    popGold(bonus, "+");
-
-    updateUI();
-  } catch (e) {
-    addLog("서버 응답 실패… (네트워크/서버 확인)");
-  } finally {
-    openChestBtn.disabled = S.chest < 1; // 상태에 맞게
-  }
+  chest: 0,
+  chestLv: 1,
+  chestTimer: 0,         // 다음 상자까지 남은 시간(ms)
+  chestEvery: 2500,      // 기본 상자 획득 주기(ms) - Lv에 따라 줄어듦
 };
-  
-  
-  
 
-  // ===== Main loop =====
-  let last = performance.now();
-  let goldCarry = 0; // 작은 골드 누적해서 일정량 이상일 때만 이모션(너무 도배 방지)
-  function tick(now){
-    const dt = Math.min(0.05, (now - last)/1000);
-    last = now;
+const inv = {
+  map: new Map(), // key -> { rarity, name, count, lastTs, firstTs }
+};
 
-    // passive gold
-    const g = currentGps() * dt;
-    S.gold += g;
-    goldCarry += g;
+/* ===========================
+   유틸
+=========================== */
+function $(id){ return document.getElementById(id); }
+function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
+function now(){ return Date.now(); }
+function fmt1(n){ return (Math.round(n*10)/10).toFixed(1); }
+function escapeHtml(s){
+  return String(s)
+    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
+function rarityRank(r){
+  const m = /^i(\d+)/.exec(r);
+  return m ? parseInt(m[1],10) : 999;
+}
+function invKey(rarity,name){ return `${rarity}|${name}`; }
 
-    // gold emotion: 0.8G 이상 모이면 한번 띄움(도배 방지)
-    if (goldCarry >= 0.8){
-      const amt = Math.floor(goldCarry);
-      if (amt >= 1) popGold(amt, "+");
-      goldCarry -= amt;
+/* ===========================
+   로그
+=========================== */
+function appendLog(html){
+  const log = $("log");
+  const atBottom = (log.scrollTop + log.clientHeight + 30) >= log.scrollHeight;
+  const line = `<div class="log-gray">${html}</div>`;
+  log.insertAdjacentHTML("beforeend", line);
+  if(atBottom) log.scrollTop = log.scrollHeight;
+}
+function logOpen(rarity, name, goldGain){
+  appendLog(
+    `<span class="log-green"><b>상자 OPEN</b></span> → ` +
+    `<span class="log-cyan">[${escapeHtml(rarity)}]</span> ${escapeHtml(name)} ` +
+    `<span class="log-green">(+${goldGain}G)</span>`
+  );
+}
+
+/* ===========================
+   인벤토리
+=========================== */
+function addToInventory({ rarity, name, count=1 }){
+  const key = invKey(rarity,name);
+  const t = now();
+  const cur = inv.map.get(key);
+  if(cur){
+    cur.count += count;
+    cur.lastTs = t;
+  }else{
+    inv.map.set(key, { rarity, name, count, firstTs:t, lastTs:t });
+  }
+  if(inv.map.get(key).count <= 0){
+    inv.map.delete(key);
+  }
+  saveAll();
+  renderInventory();
+}
+
+function renderInventory(){
+  const grid = $("invGrid");
+  const q = ($("invSearch").value || "").trim().toLowerCase();
+  const sort = $("invSort").value || "recent";
+
+  let items = Array.from(inv.map.entries()).map(([key,v]) => ({ key, ...v }));
+
+  if(q){
+    items = items.filter(it =>
+      it.name.toLowerCase().includes(q) ||
+      it.rarity.toLowerCase().includes(q)
+    );
+  }
+
+  if(sort === "recent"){
+    items.sort((a,b)=> b.lastTs - a.lastTs);
+  } else if(sort === "rarity"){
+    items.sort((a,b)=> (rarityRank(a.rarity)-rarityRank(b.rarity)) || (b.lastTs-a.lastTs));
+  } else if(sort === "count"){
+    items.sort((a,b)=> (b.count-a.count) || (b.lastTs-a.lastTs));
+  } else if(sort === "name"){
+    items.sort((a,b)=> a.name.localeCompare(b.name,"ko"));
+  }
+
+  if(items.length === 0){
+    grid.innerHTML = `<div style="opacity:.65;padding:10px;">비어있음</div>`;
+    return;
+  }
+
+  grid.innerHTML = items.map(it => `
+    <div class="inv-slot r-${escapeHtml(it.rarity)}" data-key="${escapeHtml(it.key)}" title="클릭: 상세">
+      <div class="inv-tag">[${escapeHtml(it.rarity)}]</div>
+      <div class="inv-name">${escapeHtml(it.name)}</div>
+      <div class="inv-count">x${it.count}</div>
+    </div>
+  `).join("");
+
+  // click bind
+  grid.querySelectorAll(".inv-slot").forEach(el=>{
+    el.addEventListener("click", ()=> openModal(el.dataset.key));
+  });
+}
+
+/* ===========================
+   모달
+=========================== */
+let modalKey = null;
+
+function openModal(key){
+  const it = inv.map.get(key);
+  if(!it) return;
+  modalKey = key;
+
+  $("mTitle").textContent = `[${it.rarity}] ${it.name}`;
+  const age1 = new Date(it.firstTs).toLocaleString();
+  const age2 = new Date(it.lastTs).toLocaleString();
+  $("mMeta").innerHTML =
+    `개수: <b>${it.count}</b><br/>`+
+    `첫 획득: ${escapeHtml(age1)}<br/>`+
+    `최근: ${escapeHtml(age2)}`;
+
+  $("modalBg").style.display = "flex";
+}
+
+function closeModal(){
+  $("modalBg").style.display = "none";
+  modalKey = null;
+}
+
+/* ===========================
+   저장/로드 (로컬스토리지)
+=========================== */
+const KEY_SAVE = "gti_save_v1";
+
+function saveAll(){
+  const payload = {
+    state,
+    inv: Array.from(inv.map.entries()),
+  };
+  localStorage.setItem(KEY_SAVE, JSON.stringify(payload));
+}
+
+function loadAll(){
+  try{
+    const raw = localStorage.getItem(KEY_SAVE);
+    if(!raw) return;
+    const p = JSON.parse(raw);
+    if(p.state){
+      // 깊은 복사 대신 필요한 것만 병합
+      Object.assign(state, p.state);
+      // boost는 시간이 지난 경우 OFF 처리
+      if(state.boost && state.boost.until && now() > state.boost.until){
+        state.boost.on = false;
+      }
     }
-
-    // chest timer
-    S.chestTimer += dt;
-    if (S.chestTimer >= S.chestInterval){
-      const k = Math.floor(S.chestTimer / S.chestInterval);
-      S.chest += k;
-      S.chestTimer -= k * S.chestInterval;
-      addLog(`상자 획득! (+${k})`,'');
-
-      // chest emotion: 펄스(새 상자 느낌)
-      chestPulse();
+    if(p.inv && Array.isArray(p.inv)){
+      inv.map = new Map(p.inv);
     }
+  }catch(e){
+    console.warn("load fail", e);
+  }
+}
 
-    updateUI();
-    requestAnimationFrame(tick);
+/* ===========================
+   밸런스 / 비용
+=========================== */
+function costGoldUp(){ return Math.floor(30 + (state.goldLv-1)*6 + Math.pow(state.goldLv,1.25)*6); }
+function costBoost(){ return 50; }
+function costChestUp(){ return Math.floor(90 + (state.chestLv-1)*19 + Math.pow(state.chestLv,1.18)*18); }
+
+function gps(){
+  let g = state.gpsBase + (state.goldLv-1)*0.35;
+  if(state.boost.on) g *= 2.0;
+  return g;
+}
+function chestEvery(){
+  // Lv 오를수록 더 빠르게: 최소 700ms까지
+  const t = 2500 - (state.chestLv-1)*140;
+  return clamp(t, 700, 2500);
+}
+
+/* ===========================
+   로컬 RNG 드랍 테이블(예시)
+   i0가 가장 희귀(강함)로 가도 되지만,
+   너 UI에선 일반/레어/에픽 느낌이라 i3~i1 중심으로 둠.
+=========================== */
+const DROPS = [
+  { rarity:"i3", w:80, names:[
+    "번뜩이는 소고기육포",
+    "상한 나뭇가지",
+    "오만방자한 도토리부두",
+    "희미하고 일어나고 반짝이고 활기돋는 마늘",
+    "쓸만한 돌멩이"
+  ]},
+  { rarity:"i1", w:18, names:[
+    "단단하고 번지고 운동 많이 된다는 노라버섯",
+    "과고한 구슬",
+    "고고한 지렁이 엑기스",
+    "고한 낚시바늘(연습용)"
+  ]},
+  { rarity:"i0", w:2, names:[
+    "에망 룬문자: 守拙安分",
+    "정(情) 역이용 방패(시대저항)",
+    "미크론 운동법 매뉴얼 조각"
+  ]},
+];
+
+function rollDrop(){
+  const total = DROPS.reduce((a,b)=>a+b.w,0);
+  let r = Math.random()*total;
+  for(const t of DROPS){
+    r -= t.w;
+    if(r <= 0){
+      const name = t.names[Math.floor(Math.random()*t.names.length)];
+      return { rarity:t.rarity, name };
+    }
+  }
+  // fallback
+  const t = DROPS[0];
+  return { rarity:t.rarity, name:t.names[0] };
+}
+
+function goldGainByRarity(r){
+  // 네 로그 느낌 유지 (+3G, +6G, +20G 등)
+  if(r==="i0") return 20;
+  if(r==="i1") return 6;
+  return 3;
+}
+
+/* ===========================
+   상자 열기: 서버/로컬 공용
+=========================== */
+async function openChest(){
+  if(state.chest <= 0){
+    appendLog(`<span class="log-warn">상자 없음…</span>`);
+    return;
+  }
+  state.chest -= 1;
+  updateUI();
+
+  if(USE_SERVER){
+    // 서버 모드: {rarity,name,gold} 형태로 받는 걸 권장
+    try{
+      const res = await fetch(SERVER_OPEN_URL, {
+        method:"POST",
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify({ action:"open" })
+      });
+      if(!res.ok) throw new Error("HTTP "+res.status);
+		const data = await res.json();
+		if(!data.ok) throw new Error("not ok");
+
+		// ✅ Flask 응답: rarity, item_name, bonus
+		const rarity = data.rarity ?? "i6";
+		const name = data.item_name ?? data.item ?? "unknown";
+		const g = Number(data.bonus ?? 0);
+
+		state.gold += g;
+		logOpen(rarity, name, g);
+		addToInventory({ rarity, name, count: 1 });
+		updateUI();
+		saveAll();
+		return;
+    }catch(e){
+      appendLog(`<span class="log-warn">서버 실패 → 로컬 처리로 대체</span>`);
+      // 실패하면 로컬로 떨어짐
+    }
+  }
+
+  // 로컬 모드
+  const d = rollDrop();
+  const g = goldGainByRarity(d.rarity);
+  state.gold += g;
+  logOpen(d.rarity, d.name, g);
+  addToInventory({ rarity:d.rarity, name:d.name, count:1 });
+  updateUI();
+  saveAll();
+}
+
+/* ===========================
+   업그레이드
+=========================== */
+function upGold(){
+  const c = costGoldUp();
+  if(state.gold < c){ appendLog(`<span class="log-warn">골드 부족</span>`); return; }
+  state.gold -= c;
+  state.goldLv += 1;
+  appendLog(`<span class="log-cyan"><b>채집 속도 업!</b></span> (Lv.${state.goldLv})`);
+  saveAll(); updateUI();
+}
+function boost10s(){
+  const c = costBoost();
+  if(state.gold < c){ appendLog(`<span class="log-warn">골드 부족</span>`); return; }
+  state.gold -= c;
+  state.boost.on = true;
+  state.boost.until = now() + 10_000;
+  appendLog(`<span class="log-cyan"><b>부스트 ON</b></span> (10초)`);
+  saveAll(); updateUI();
+}
+function upChest(){
+  const c = costChestUp();
+  if(state.gold < c){ appendLog(`<span class="log-warn">골드 부족</span>`); return; }
+  state.gold -= c;
+  state.chestLv += 1;
+  appendLog(`<span class="log-cyan"><b>상자 획득 속도 업!</b></span> (Lv.${state.chestLv})`);
+  saveAll(); updateUI();
+}
+
+/* ===========================
+   UI 업데이트
+=========================== */
+function updateUI(){
+  $("gold").textContent = Math.floor(state.gold);
+  $("goldLv").textContent = state.goldLv;
+  $("gps").textContent = fmt1(gps());
+
+  $("chest").textContent = state.chest;
+  $("chestLv").textContent = state.chestLv;
+
+  $("costGoldUp").textContent = costGoldUp();
+  $("costBoost").textContent = costBoost();
+  $("costChestUp").textContent = costChestUp();
+
+  const left = Math.max(0, state.chestTimer);
+  $("nextChest").textContent = (left/1000).toFixed(1) + "s";
+
+  // boost state
+  if(state.boost.on){
+    const remain = Math.max(0, state.boost.until - now());
+    $("boostState").textContent = `ON (${(remain/1000).toFixed(1)}s)`;
+  }else{
+    $("boostState").textContent = "OFF";
+  }
+
+  // open btn
+  $("btnOpen").disabled = (state.chest <= 0);
+}
+
+/* ===========================
+   루프
+=========================== */
+let lastT = now();
+function tick(){
+  const t = now();
+  const dt = t - lastT;
+  lastT = t;
+
+  // gold per sec
+  state.gold += gps() * (dt/1000);
+
+  // chest timer
+  const every = chestEvery();
+  state.chestEvery = every;
+  state.chestTimer -= dt;
+  while(state.chestTimer <= 0){
+    state.chest += 1;
+    state.chestTimer += every;
+    appendLog(`<span class="log-green"><b>상자 획득!</b></span> (+1)`);
+  }
+
+  // boost expiry
+  if(state.boost.on && t >= state.boost.until){
+    state.boost.on = false;
+    appendLog(`<span class="log-gray">부스트 종료</span>`);
   }
 
   updateUI();
-  addLog("시작. 시간이 흐르면 골드/상자가 자동으로 쌓인다.",'');
   requestAnimationFrame(tick);
-})();
+}
+
+/* ===========================
+   인벤 백업/복원
+=========================== */
+function exportBackup(){
+  const payload = localStorage.getItem(KEY_SAVE) || "{}";
+  navigator.clipboard?.writeText(payload).then(()=>{
+    appendLog(`<span class="log-cyan">백업 문자열을 클립보드에 복사함</span>`);
+  }).catch(()=>{
+    prompt("아래 문자열을 복사해서 저장해둬:", payload);
+  });
+}
+function importBackup(){
+  const s = prompt("백업 문자열 붙여넣기:");
+  if(!s) return;
+  try{
+    JSON.parse(s); // validate
+    localStorage.setItem(KEY_SAVE, s);
+    location.reload();
+  }catch(e){
+    appendLog(`<span class="log-warn">복원 실패: JSON 아님</span>`);
+  }
+}
+
+/* ===========================
+   이벤트 바인딩
+=========================== */
+$("btnOpen").addEventListener("click", openChest);
+$("btnUpGold").addEventListener("click", upGold);
+$("btnBoost").addEventListener("click", boost10s);
+$("btnUpChest").addEventListener("click", upChest);
+
+$("invSearch").addEventListener("input", renderInventory);
+$("invSort").addEventListener("change", renderInventory);
+$("invClear").addEventListener("click", ()=>{
+  if(!confirm("인벤/상태 전부 초기화?")) return;
+  localStorage.removeItem(KEY_SAVE);
+  location.reload();
+});
+$("invExport").addEventListener("click", exportBackup);
+$("invImport").addEventListener("click", importBackup);
+
+// modal
+$("mClose").addEventListener("click", closeModal);
+$("modalBg").addEventListener("click", (e)=>{ if(e.target.id==="modalBg") closeModal(); });
+$("mMinus1").addEventListener("click", ()=>{
+  if(!modalKey) return;
+  const it = inv.map.get(modalKey);
+  if(!it) return;
+  addToInventory({ rarity: it.rarity, name: it.name, count:-1 });
+  if(!inv.map.get(modalKey)) closeModal(); else openModal(modalKey);
+});
+$("mPlus1").addEventListener("click", ()=>{
+  if(!modalKey) return;
+  const it = inv.map.get(modalKey);
+  if(!it) return;
+  addToInventory({ rarity: it.rarity, name: it.name, count:+1 });
+  openModal(modalKey);
+});
+$("mDelete").addEventListener("click", ()=>{
+  if(!modalKey) return;
+  const it = inv.map.get(modalKey);
+  if(!it) return;
+  if(!confirm("이 아이템을 인벤에서 삭제?")) return;
+  inv.map.delete(modalKey);
+  saveAll();
+  renderInventory();
+  closeModal();
+});
+
+/* ===========================
+   시작
+=========================== */
+loadAll();
+
+// 첫 상자 타이머 없으면 초기화
+if(!state.chestTimer || state.chestTimer > 60_000) state.chestTimer = chestEvery();
+
+// 초기 로그
+appendLog(`<span class="log-gray">시작. (로컬저장 ON)</span>`);
+appendLog(`<span class="log-gray">서버 모드: ${USE_SERVER ? "ON" : "OFF"}</span>`);
+
+renderInventory();
+updateUI();
+requestAnimationFrame(tick);
 </script>
 </body>
 </html>
