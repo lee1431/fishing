@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Get The Item - 상자까기</title>
+  <title>Get The Item - Chest Only (Inventory + Sell + Respawn)</title>
   <style>
     :root{
       --bg:#070a10; --fg:#e8eefc;
@@ -120,6 +120,71 @@
     .r-i4{border-color:rgba(255,160,220,.28);}
     .r-i5{border-color:rgba(255,120,120,.28);}
     .r-i6{border-color:rgba(140,140,140,.24);}
+	
+	
+	.inv-slot .inv-tag{ opacity:.9; }
+	.inv-slot .inv-name{ font-weight:600; }
+
+	.inv-slot.r-i0{
+	  border-color:#ffd86b;
+	  box-shadow:0 0 10px rgba(255,216,107,.35);
+	  background:linear-gradient(145deg, rgba(255,216,107,.12), rgba(255,255,255,.02));
+	}
+	.inv-slot.r-i0 .inv-tag{ color:#ffd86b; font-weight:800; }
+	.inv-slot.r-i0 .inv-name{ color:#ffe9b0; }
+
+	.inv-slot.r-i1{
+	  border-color:#ffb86b;
+	  box-shadow:0 0 8px rgba(255,184,107,.25);
+	  background:linear-gradient(145deg, rgba(255,184,107,.08), rgba(255,255,255,.02));
+	}
+	.inv-slot.r-i1 .inv-tag{ color:#ffb86b; font-weight:700; }
+	.inv-slot.r-i1 .inv-name{ color:#ffe1c2; }
+
+	.inv-slot.r-i2{
+	  border-color:#7fd4ff;
+	  box-shadow:0 0 7px rgba(127,212,255,.22);
+	}
+	.inv-slot.r-i2 .inv-tag{ color:#7fd4ff; }
+	.inv-slot.r-i2 .inv-name{ color:#d7f2ff; }
+
+	.inv-slot.r-i3{
+	  border-color:#6ad66a;
+	  box-shadow:0 0 6px rgba(106,214,106,.18);
+	}
+	.inv-slot.r-i3 .inv-tag{ color:#6ad66a; }
+	.inv-slot.r-i3 .inv-name{ color:#d7ffd7; }
+
+	.inv-slot.r-i4{
+	  border-color:#9fa8ff;
+	  box-shadow:0 0 6px rgba(159,168,255,.16);
+	}
+	.inv-slot.r-i4 .inv-tag{ color:#9fa8ff; }
+	.inv-slot.r-i4 .inv-name{ color:#e3e6ff; }
+
+	.inv-slot.r-i5{
+	  border-color:#c7c7c7;
+	  opacity:.92;
+	}
+	.inv-slot.r-i5 .inv-tag{ color:#c7c7c7; }
+	.inv-slot.r-i5 .inv-name{ color:#e0e0e0; }
+
+	.inv-slot.r-i6{
+	  border-color:#6f7785;
+	  opacity:.80;
+	  filter:saturate(.9);
+	}
+	.inv-slot.r-i6 .inv-tag{ color:#6f7785; }
+	.inv-slot.r-i6 .inv-name{ color:#b7becb; }
+
+	@keyframes legendPulse {
+	  0%   { box-shadow:0 0 6px rgba(255,216,107,.25); }
+	  50%  { box-shadow:0 0 14px rgba(255,216,107,.55); }
+	  100% { box-shadow:0 0 6px rgba(255,216,107,.25); }
+	}
+	.inv-slot.r-i0{ animation: legendPulse 2.2s infinite; }
+	
+	
 
     /* modal */
     .modal-bg{
@@ -277,7 +342,8 @@ function appendLog(html){
 function logOpen(rarity, name){
   appendLog(
     `<span class="log-green"><b>상자 OPEN</b></span> → ` +
-    `<span class="log-cyan">[${escapeHtml(rarity)}]</span> ${escapeHtml(name)}`
+    `<span class="log-${escapeHtml(rarity)}"><b>[${escapeHtml(rarity)}]</b></span> ` +
+    `${escapeHtml(name)}`
   );
 }
 function logSell(rarity, name, qty, gain){
@@ -627,6 +693,7 @@ $("btnReset").addEventListener("click", ()=>{
 // modal
 $("mClose").addEventListener("click", closeModal);
 $("modalBg").addEventListener("click", (e)=>{ if(e.target.id==="modalBg") closeModal(); });
+
 
 $("mSell1").addEventListener("click", ()=>{
   if(!modalKey) return;
