@@ -216,8 +216,6 @@
         <button class="xbtn" id="mClose">닫기</button>
       </div>
       <div class="modal-actions">
-        <button class="btn btn2" id="mMinus1">-1</button>
-        <button class="btn btn2" id="mPlus1">+1</button>
         <button class="btn" id="mSell1">판매 1개</button>
         <button class="btn" id="mSellAll">판매 전부</button>
         <button class="btn btn2" id="mDelete">삭제</button>
@@ -629,20 +627,7 @@ $("btnReset").addEventListener("click", ()=>{
 // modal
 $("mClose").addEventListener("click", closeModal);
 $("modalBg").addEventListener("click", (e)=>{ if(e.target.id==="modalBg") closeModal(); });
-$("mMinus1").addEventListener("click", ()=>{
-  if(!modalKey) return;
-  const it = inv.map.get(modalKey);
-  if(!it) return;
-  addToInventory({ rarity: it.rarity, name: it.name, count:-1 });
-  if(!inv.map.get(modalKey)) closeModal(); else openModal(modalKey);
-});
-$("mPlus1").addEventListener("click", ()=>{
-  if(!modalKey) return;
-  const it = inv.map.get(modalKey);
-  if(!it) return;
-  addToInventory({ rarity: it.rarity, name: it.name, count:+1 });
-  openModal(modalKey);
-});
+
 $("mSell1").addEventListener("click", ()=>{
   if(!modalKey) return;
   sellItem(modalKey, 1);
