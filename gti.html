@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>방치형 아이템 획득 - Motion (Log + Inventory)</title>
+  <title>Get The Item - Chest Only (Inventory + Sell + Respawn)</title>
   <style>
     :root{
       --bg:#070a10; --fg:#e8eefc;
@@ -56,7 +56,7 @@
       background:rgba(0,0,0,.18);
       border-radius:12px;
       padding:10px;
-      height:320px;
+      height:260px;
       overflow:auto;
       white-space:pre-wrap;
       line-height:1.35;
@@ -88,12 +88,8 @@
       grid-template-columns:repeat(7,minmax(0,1fr));
       gap:10px;
     }
-    @media (max-width: 980px){
-      .inv-grid{grid-template-columns:repeat(4,minmax(0,1fr));}
-    }
-    @media (max-width: 560px){
-      .inv-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
-    }
+    @media (max-width: 980px){ .inv-grid{grid-template-columns:repeat(4,minmax(0,1fr));} }
+    @media (max-width: 560px){ .inv-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
 
     .inv-slot{
       background:rgba(255,255,255,.03);
@@ -131,7 +127,7 @@
       display:none;align-items:center;justify-content:center;padding:14px;
     }
     .modal{
-      width:min(520px, 96vw);
+      width:min(560px, 96vw);
       background:rgba(12,14,20,.92);
       border:1px solid rgba(255,255,255,.12);
       border-radius:18px;
@@ -150,16 +146,20 @@
     <div class="row">
       <div class="card">
         <div class="big">GOLD: <span id="gold">0</span></div>
-        <div class="muted">초당 골드: <span id="gps">0</span></div>
+        <div class="muted">골드는 자동으로 안 쌓임. <b>판매</b>로만 획득.</div>
 
         <div class="actions">
-          <button class="btn" id="btnUpGold">채집 속도 업 (비용 <span id="costGoldUp">36</span>)</button>
-          <button class="btn" id="btnBoost">부스트 10초 (비용 <span id="costBoost">50</span>)</button>
+          <button class="btn" id="btnUpRespawn">
+            리스폰 단축 (비용 <span id="costRespawn">50</span>)
+          </button>
+          <button class="btn btn2" id="btnSellAllTrash">
+            i5~i6 전부 판매
+          </button>
         </div>
 
         <div class="statline">
-          <span class="pill">채집 Lv. <span id="goldLv">1</span></span>
-          <span class="pill">부스트: <span id="boostState">OFF</span></span>
+          <span class="pill">리스폰 Lv. <span id="respawnLv">1</span></span>
+          <span class="pill">현재 리스폰: <span id="respawnNow">60.0s</span></span>
         </div>
       </div>
 
@@ -169,19 +169,19 @@
 
         <div class="actions">
           <button class="btn" id="btnOpen">상자 열기</button>
-          <button class="btn btn2" id="btnUpChest">상자 획득 속도 업 (비용 <span id="costChestUp">109</span>)</button>
+          <button class="btn btn2" id="btnReset">세이브 초기화</button>
         </div>
 
         <div class="statline">
-          <span class="pill">상자 Lv. <span id="chestLv">1</span></span>
-          <span class="pill">드랍: 일반 80% / 레어 18% / 에픽 2%</span>
+          <span class="pill">기본: 1분에 1개</span>
+          <span class="pill">오픈은 <b>아이템만</b> 줌</span>
         </div>
       </div>
     </div>
 
     <div class="card" style="margin-top:12px;">
       <div class="big">획득 로그</div>
-      <div class="muted">상자/업그레이드/골드 이벤트가 여기에 쌓임</div>
+      <div class="muted">상자/판매/업그레이드가 여기에 쌓임</div>
       <div id="log" class="logbox"></div>
     </div>
 
@@ -190,7 +190,7 @@
       <div class="inv-head">
         <div class="big">인벤토리</div>
         <div class="inv-controls">
-          <input id="invSearch" placeholder="검색 (예: 육포, 도토리…)" />
+          <input id="invSearch" placeholder="검색 (예: 육포, 룬문자…)" />
           <select id="invSort">
             <option value="recent">최근 획득순</option>
             <option value="rarity">등급순</option>
@@ -199,7 +199,6 @@
           </select>
           <button class="btn btn2" id="invExport">백업</button>
           <button class="btn btn2" id="invImport">복원</button>
-          <button class="btn" id="invClear">초기화</button>
         </div>
       </div>
       <div id="invGrid" class="inv-grid"></div>
@@ -219,33 +218,34 @@
       <div class="modal-actions">
         <button class="btn btn2" id="mMinus1">-1</button>
         <button class="btn btn2" id="mPlus1">+1</button>
-        <button class="btn" id="mDelete">삭제</button>
+        <button class="btn" id="mSell1">판매 1개</button>
+        <button class="btn" id="mSellAll">판매 전부</button>
+        <button class="btn btn2" id="mDelete">삭제</button>
       </div>
     </div>
   </div>
 
 <script>
 /* ===========================
-   설정 (서버 붙일 때 여기만)
+   서버 연동 옵션
+   - 갤8 Flask: POST /api/open_chest
 =========================== */
-const USE_SERVER = true;                       // true로 바꾸면 서버 호출
-const SERVER_OPEN_URL = "https://mrdindoin.ddns.net/gti/api/open_chest";            // 너 서버 endpoint로 변경
+const USE_SERVER = true;
+const SERVER_OPEN_URL = "https://mrdindoin.ddns.net/gti/api/open_chest";
 
 /* ===========================
    상태
 =========================== */
 const state = {
   gold: 0,
-  goldLv: 1,
-  gpsBase: 2.6,
-  boost: { on:false, until:0 },
-
   chest: 0,
-  chestLv: 1,
-  chestTimer: 0,         // 다음 상자까지 남은 시간(ms)
-  chestEvery: 2500,      // 기본 상자 획득 주기(ms) - Lv에 따라 줄어듦
+  chestTimer: 0,
+  respawnLv: 1,
 };
 
+/* ===========================
+   인벤
+=========================== */
 const inv = {
   map: new Map(), // key -> { rarity, name, count, lastTs, firstTs }
 };
@@ -256,7 +256,6 @@ const inv = {
 function $(id){ return document.getElementById(id); }
 function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
 function now(){ return Date.now(); }
-function fmt1(n){ return (Math.round(n*10)/10).toFixed(1); }
 function escapeHtml(s){
   return String(s)
     .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
@@ -274,21 +273,54 @@ function invKey(rarity,name){ return `${rarity}|${name}`; }
 function appendLog(html){
   const log = $("log");
   const atBottom = (log.scrollTop + log.clientHeight + 30) >= log.scrollHeight;
-  const line = `<div class="log-gray">${html}</div>`;
-  log.insertAdjacentHTML("beforeend", line);
+  log.insertAdjacentHTML("beforeend", `<div class="log-gray">${html}</div>`);
   if(atBottom) log.scrollTop = log.scrollHeight;
 }
-function logOpen(rarity, name, goldGain){
+function logOpen(rarity, name){
   appendLog(
     `<span class="log-green"><b>상자 OPEN</b></span> → ` +
-    `<span class="log-cyan">[${escapeHtml(rarity)}]</span> ${escapeHtml(name)} ` +
-    `<span class="log-green">(+${goldGain}G)</span>`
+    `<span class="log-cyan">[${escapeHtml(rarity)}]</span> ${escapeHtml(name)}`
+  );
+}
+function logSell(rarity, name, qty, gain){
+  appendLog(
+    `<span class="log-cyan"><b>판매</b></span> → ` +
+    `[${escapeHtml(rarity)}] ${escapeHtml(name)} x${qty} ` +
+    `<span class="log-green">(+${gain}G)</span>`
   );
 }
 
 /* ===========================
-   인벤토리
+   리스폰(1분 기본, 업그레이드로 단축)
 =========================== */
+function chestEvery(){
+  const base = 60_000; // 1분
+  const speed = Math.pow(0.92, state.respawnLv - 1); // 레벨당 8% 단축
+  return clamp(base * speed, 10_000, base); // 최소 10초(추천)
+}
+function costRespawn(){
+  return Math.floor(50 + (state.respawnLv - 1) * 40 + Math.pow(state.respawnLv, 1.35) * 12);
+}
+function upRespawn(){
+  const c = costRespawn();
+  if(state.gold < c){
+    appendLog(`<span class="log-warn">골드 부족</span>`);
+    return;
+  }
+  state.gold -= c;
+  state.respawnLv += 1;
+  appendLog(`<span class="log-cyan"><b>리스폰 단축!</b></span> (Lv.${state.respawnLv})`);
+  saveAll(); updateUI();
+}
+
+/* ===========================
+   판매가(rarity 기반, 서버 BONUS_TABLE 느낌 재사용)
+=========================== */
+function sellPrice(rarity){
+  const table = { i0:100, i1:50, i2:30, i3:20, i4:12, i5:6, i6:3 };
+  return table[rarity] ?? 1;
+}
+
 function addToInventory({ rarity, name, count=1 }){
   const key = invKey(rarity,name);
   const t = now();
@@ -299,13 +331,35 @@ function addToInventory({ rarity, name, count=1 }){
   }else{
     inv.map.set(key, { rarity, name, count, firstTs:t, lastTs:t });
   }
-  if(inv.map.get(key).count <= 0){
-    inv.map.delete(key);
-  }
+  const it = inv.map.get(key);
+  if(it && it.count <= 0) inv.map.delete(key);
+
   saveAll();
   renderInventory();
 }
 
+function sellItem(key, n){
+  const it = inv.map.get(key);
+  if(!it) return;
+  const qty = Math.min(n, it.count);
+  if(qty <= 0) return;
+
+  const gain = sellPrice(it.rarity) * qty;
+
+  // 인벤 감소
+  addToInventory({ rarity: it.rarity, name: it.name, count: -qty });
+
+  // 골드 증가(판매로만)
+  state.gold += gain;
+
+  logSell(it.rarity, it.name, qty, gain);
+  saveAll();
+  updateUI();
+}
+
+/* ===========================
+   인벤 렌더
+=========================== */
 function renderInventory(){
   const grid = $("invGrid");
   const q = ($("invSearch").value || "").trim().toLowerCase();
@@ -337,13 +391,12 @@ function renderInventory(){
 
   grid.innerHTML = items.map(it => `
     <div class="inv-slot r-${escapeHtml(it.rarity)}" data-key="${escapeHtml(it.key)}" title="클릭: 상세">
-      <div class="inv-tag">[${escapeHtml(it.rarity)}]</div>
+      <div class="inv-tag">[${escapeHtml(it.rarity)}] (판매가 ${sellPrice(it.rarity)}G)</div>
       <div class="inv-name">${escapeHtml(it.name)}</div>
       <div class="inv-count">x${it.count}</div>
     </div>
   `).join("");
 
-  // click bind
   grid.querySelectorAll(".inv-slot").forEach(el=>{
     el.addEventListener("click", ()=> openModal(el.dataset.key));
   });
@@ -353,7 +406,6 @@ function renderInventory(){
    모달
 =========================== */
 let modalKey = null;
-
 function openModal(key){
   const it = inv.map.get(key);
   if(!it) return;
@@ -364,21 +416,21 @@ function openModal(key){
   const age2 = new Date(it.lastTs).toLocaleString();
   $("mMeta").innerHTML =
     `개수: <b>${it.count}</b><br/>`+
+    `판매가: <b>${sellPrice(it.rarity)}G</b> / 1개<br/>`+
     `첫 획득: ${escapeHtml(age1)}<br/>`+
     `최근: ${escapeHtml(age2)}`;
 
   $("modalBg").style.display = "flex";
 }
-
 function closeModal(){
   $("modalBg").style.display = "none";
   modalKey = null;
 }
 
 /* ===========================
-   저장/로드 (로컬스토리지)
+   저장/로드
 =========================== */
-const KEY_SAVE = "gti_save_v1";
+const KEY_SAVE = "gti_chest_only_v1";
 
 function saveAll(){
   const payload = {
@@ -387,205 +439,132 @@ function saveAll(){
   };
   localStorage.setItem(KEY_SAVE, JSON.stringify(payload));
 }
-
 function loadAll(){
   try{
     const raw = localStorage.getItem(KEY_SAVE);
     if(!raw) return;
     const p = JSON.parse(raw);
-    if(p.state){
-      // 깊은 복사 대신 필요한 것만 병합
-      Object.assign(state, p.state);
-      // boost는 시간이 지난 경우 OFF 처리
-      if(state.boost && state.boost.until && now() > state.boost.until){
-        state.boost.on = false;
-      }
-    }
-    if(p.inv && Array.isArray(p.inv)){
-      inv.map = new Map(p.inv);
-    }
+    if(p.state) Object.assign(state, p.state);
+    if(p.inv && Array.isArray(p.inv)) inv.map = new Map(p.inv);
   }catch(e){
     console.warn("load fail", e);
   }
 }
 
 /* ===========================
-   밸런스 / 비용
+   상자 오픈
 =========================== */
-function costGoldUp(){ return Math.floor(30 + (state.goldLv-1)*6 + Math.pow(state.goldLv,1.25)*6); }
-function costBoost(){ return 50; }
-function costChestUp(){ return Math.floor(90 + (state.chestLv-1)*19 + Math.pow(state.chestLv,1.18)*18); }
+let openCdUntil = 0;
 
-function gps(){
-  let g = state.gpsBase + (state.goldLv-1)*0.35;
-  if(state.boost.on) g *= 2.0;
-  return g;
-}
-function chestEvery(){
-  // Lv 오를수록 더 빠르게: 최소 700ms까지
-  const t = 2500 - (state.chestLv-1)*140;
-  return clamp(t, 700, 2500);
+async function openChest(){
+  const t = now();
+  if(t < openCdUntil) return;
+  openCdUntil = t + 250; // 0.25초 쿨타임(폭주 방지)
+
+  if(state.chest <= 0){
+    appendLog(`<span class="log-warn">상자 없음…</span>`);
+    return;
+  }
+
+  state.chest -= 1;
+  updateUI();
+  saveAll();
+
+  if(USE_SERVER){
+    try{
+      const res = await fetch(SERVER_OPEN_URL, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ action:"open" })
+      });
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      const data = await res.json();
+      if(!data.ok) throw new Error("not ok");
+
+      const rarity = data.rarity ?? "i6";
+      const name = data.item_name ?? data.item ?? "unknown";
+
+      logOpen(rarity, name);
+      addToInventory({ rarity, name, count: 1 });
+      updateUI();
+      saveAll();
+      return;
+    }catch(e){
+      appendLog(`<span class="log-warn">서버 실패 → 로컬 드랍으로 대체</span>`);
+      // fallthrough to local
+    }
+  }
+
+  // 로컬 대체 드랍(서버 없을 때만)
+  const d = rollDropLocal();
+  logOpen(d.rarity, d.name);
+  addToInventory({ rarity: d.rarity, name: d.name, count: 1 });
+  updateUI();
+  saveAll();
 }
 
-/* ===========================
-   로컬 RNG 드랍 테이블(예시)
-   i0가 가장 희귀(강함)로 가도 되지만,
-   너 UI에선 일반/레어/에픽 느낌이라 i3~i1 중심으로 둠.
-=========================== */
-const DROPS = [
-  { rarity:"i3", w:80, names:[
-    "번뜩이는 소고기육포",
-    "상한 나뭇가지",
-    "오만방자한 도토리부두",
-    "희미하고 일어나고 반짝이고 활기돋는 마늘",
-    "쓸만한 돌멩이"
-  ]},
-  { rarity:"i1", w:18, names:[
-    "단단하고 번지고 운동 많이 된다는 노라버섯",
-    "과고한 구슬",
-    "고고한 지렁이 엑기스",
-    "고한 낚시바늘(연습용)"
-  ]},
-  { rarity:"i0", w:2, names:[
-    "에망 룬문자: 守拙安分",
-    "정(情) 역이용 방패(시대저항)",
-    "미크론 운동법 매뉴얼 조각"
-  ]},
+/* 로컬 드랍 (서버 없을 때만) */
+const DROPS_LOCAL = [
+  { rarity:"i3", w:80, names:["번뜩이는 소고기육포","상한 나뭇가지","오만방자한 도토리부두","희미하고 반짝이는 마늘","쓸만한 돌멩이"]},
+  { rarity:"i1", w:18, names:["단단하고 고요한 노라버섯","과고한 구슬","고고한 지렁이 엑기스","고한 낚시바늘(연습용)"]},
+  { rarity:"i0", w:2,  names:["에망 룬문자: 守拙安分","정(情) 역이용 방패(시대저항)","미크론 운동법 매뉴얼 조각"]},
 ];
-
-function rollDrop(){
-  const total = DROPS.reduce((a,b)=>a+b.w,0);
+function rollDropLocal(){
+  const total = DROPS_LOCAL.reduce((a,b)=>a+b.w,0);
   let r = Math.random()*total;
-  for(const t of DROPS){
+  for(const t of DROPS_LOCAL){
     r -= t.w;
     if(r <= 0){
       const name = t.names[Math.floor(Math.random()*t.names.length)];
       return { rarity:t.rarity, name };
     }
   }
-  // fallback
-  const t = DROPS[0];
-  return { rarity:t.rarity, name:t.names[0] };
-}
-
-function goldGainByRarity(r){
-  // 네 로그 느낌 유지 (+3G, +6G, +20G 등)
-  if(r==="i0") return 20;
-  if(r==="i1") return 6;
-  return 3;
+  return { rarity:"i6", name:"broken_wood" };
 }
 
 /* ===========================
-   상자 열기: 서버/로컬 공용
+   i5~i6 전부 판매 버튼
 =========================== */
-async function openChest(){
-  if(state.chest <= 0){
-    appendLog(`<span class="log-warn">상자 없음…</span>`);
-    return;
-  }
-  state.chest -= 1;
-  updateUI();
-
-  if(USE_SERVER){
-    // 서버 모드: {rarity,name,gold} 형태로 받는 걸 권장
-    try{
-      const res = await fetch(SERVER_OPEN_URL, {
-        method:"POST",
-        headers: { "Content-Type":"application/json" },
-        body: JSON.stringify({ action:"open" })
-      });
-      if(!res.ok) throw new Error("HTTP "+res.status);
-		const data = await res.json();
-		if(!data.ok) throw new Error("not ok");
-
-		// ✅ Flask 응답: rarity, item_name, bonus
-		const rarity = data.rarity ?? "i6";
-		const name = data.item_name ?? data.item ?? "unknown";
-		const g = Number(data.bonus ?? 0);
-
-		state.gold += g;
-		logOpen(rarity, name, g);
-		addToInventory({ rarity, name, count: 1 });
-		updateUI();
-		saveAll();
-		return;
-    }catch(e){
-      appendLog(`<span class="log-warn">서버 실패 → 로컬 처리로 대체</span>`);
-      // 실패하면 로컬로 떨어짐
+function sellAllTrash(){
+  let total = 0;
+  let sold = 0;
+  for(const [key, it] of Array.from(inv.map.entries())){
+    if(it.rarity === "i5" || it.rarity === "i6"){
+      const gain = sellPrice(it.rarity) * it.count;
+      sold += it.count;
+      total += gain;
+      inv.map.delete(key);
+      appendLog(`<span class="log-cyan"><b>판매</b></span> → [${it.rarity}] ${escapeHtml(it.name)} x${it.count} <span class="log-green">(+${gain}G)</span>`);
     }
   }
-
-  // 로컬 모드
-  const d = rollDrop();
-  const g = goldGainByRarity(d.rarity);
-  state.gold += g;
-  logOpen(d.rarity, d.name, g);
-  addToInventory({ rarity:d.rarity, name:d.name, count:1 });
-  updateUI();
-  saveAll();
+  if(sold <= 0){
+    appendLog(`<span class="log-warn">판매할 i5~i6 아이템 없음</span>`);
+    return;
+  }
+  state.gold += total;
+  saveAll(); renderInventory(); updateUI();
 }
 
 /* ===========================
-   업그레이드
-=========================== */
-function upGold(){
-  const c = costGoldUp();
-  if(state.gold < c){ appendLog(`<span class="log-warn">골드 부족</span>`); return; }
-  state.gold -= c;
-  state.goldLv += 1;
-  appendLog(`<span class="log-cyan"><b>채집 속도 업!</b></span> (Lv.${state.goldLv})`);
-  saveAll(); updateUI();
-}
-function boost10s(){
-  const c = costBoost();
-  if(state.gold < c){ appendLog(`<span class="log-warn">골드 부족</span>`); return; }
-  state.gold -= c;
-  state.boost.on = true;
-  state.boost.until = now() + 10_000;
-  appendLog(`<span class="log-cyan"><b>부스트 ON</b></span> (10초)`);
-  saveAll(); updateUI();
-}
-function upChest(){
-  const c = costChestUp();
-  if(state.gold < c){ appendLog(`<span class="log-warn">골드 부족</span>`); return; }
-  state.gold -= c;
-  state.chestLv += 1;
-  appendLog(`<span class="log-cyan"><b>상자 획득 속도 업!</b></span> (Lv.${state.chestLv})`);
-  saveAll(); updateUI();
-}
-
-/* ===========================
-   UI 업데이트
+   UI
 =========================== */
 function updateUI(){
   $("gold").textContent = Math.floor(state.gold);
-  $("goldLv").textContent = state.goldLv;
-  $("gps").textContent = fmt1(gps());
-
   $("chest").textContent = state.chest;
-  $("chestLv").textContent = state.chestLv;
-
-  $("costGoldUp").textContent = costGoldUp();
-  $("costBoost").textContent = costBoost();
-  $("costChestUp").textContent = costChestUp();
 
   const left = Math.max(0, state.chestTimer);
   $("nextChest").textContent = (left/1000).toFixed(1) + "s";
 
-  // boost state
-  if(state.boost.on){
-    const remain = Math.max(0, state.boost.until - now());
-    $("boostState").textContent = `ON (${(remain/1000).toFixed(1)}s)`;
-  }else{
-    $("boostState").textContent = "OFF";
-  }
+  $("respawnLv").textContent = state.respawnLv;
+  $("costRespawn").textContent = costRespawn();
 
-  // open btn
+  $("respawnNow").textContent = (chestEvery()/1000).toFixed(1) + "s";
+
   $("btnOpen").disabled = (state.chest <= 0);
 }
 
 /* ===========================
-   루프
+   루프: 상자만 생성
 =========================== */
 let lastT = now();
 function tick(){
@@ -593,23 +572,13 @@ function tick(){
   const dt = t - lastT;
   lastT = t;
 
-  // gold per sec
-  state.gold += gps() * (dt/1000);
-
-  // chest timer
   const every = chestEvery();
-  state.chestEvery = every;
   state.chestTimer -= dt;
+
   while(state.chestTimer <= 0){
     state.chest += 1;
     state.chestTimer += every;
     appendLog(`<span class="log-green"><b>상자 획득!</b></span> (+1)`);
-  }
-
-  // boost expiry
-  if(state.boost.on && t >= state.boost.until){
-    state.boost.on = false;
-    appendLog(`<span class="log-gray">부스트 종료</span>`);
   }
 
   updateUI();
@@ -617,7 +586,7 @@ function tick(){
 }
 
 /* ===========================
-   인벤 백업/복원
+   백업/복원
 =========================== */
 function exportBackup(){
   const payload = localStorage.getItem(KEY_SAVE) || "{}";
@@ -631,7 +600,7 @@ function importBackup(){
   const s = prompt("백업 문자열 붙여넣기:");
   if(!s) return;
   try{
-    JSON.parse(s); // validate
+    JSON.parse(s);
     localStorage.setItem(KEY_SAVE, s);
     location.reload();
   }catch(e){
@@ -640,22 +609,22 @@ function importBackup(){
 }
 
 /* ===========================
-   이벤트 바인딩
+   이벤트
 =========================== */
 $("btnOpen").addEventListener("click", openChest);
-$("btnUpGold").addEventListener("click", upGold);
-$("btnBoost").addEventListener("click", boost10s);
-$("btnUpChest").addEventListener("click", upChest);
+$("btnUpRespawn").addEventListener("click", upRespawn);
+$("btnSellAllTrash").addEventListener("click", sellAllTrash);
 
 $("invSearch").addEventListener("input", renderInventory);
 $("invSort").addEventListener("change", renderInventory);
-$("invClear").addEventListener("click", ()=>{
-  if(!confirm("인벤/상태 전부 초기화?")) return;
+$("invExport").addEventListener("click", exportBackup);
+$("invImport").addEventListener("click", importBackup);
+
+$("btnReset").addEventListener("click", ()=>{
+  if(!confirm("세이브 초기화?")) return;
   localStorage.removeItem(KEY_SAVE);
   location.reload();
 });
-$("invExport").addEventListener("click", exportBackup);
-$("invImport").addEventListener("click", importBackup);
 
 // modal
 $("mClose").addEventListener("click", closeModal);
@@ -674,6 +643,18 @@ $("mPlus1").addEventListener("click", ()=>{
   addToInventory({ rarity: it.rarity, name: it.name, count:+1 });
   openModal(modalKey);
 });
+$("mSell1").addEventListener("click", ()=>{
+  if(!modalKey) return;
+  sellItem(modalKey, 1);
+  if(inv.map.get(modalKey)) openModal(modalKey); else closeModal();
+});
+$("mSellAll").addEventListener("click", ()=>{
+  if(!modalKey) return;
+  const it = inv.map.get(modalKey);
+  if(!it) return;
+  sellItem(modalKey, it.count);
+  closeModal();
+});
 $("mDelete").addEventListener("click", ()=>{
   if(!modalKey) return;
   const it = inv.map.get(modalKey);
@@ -690,11 +671,10 @@ $("mDelete").addEventListener("click", ()=>{
 =========================== */
 loadAll();
 
-// 첫 상자 타이머 없으면 초기화
-if(!state.chestTimer || state.chestTimer > 60_000) state.chestTimer = chestEvery();
+// 타이머 초기화
+if(!state.chestTimer || state.chestTimer > 1_000_000) state.chestTimer = chestEvery();
 
-// 초기 로그
-appendLog(`<span class="log-gray">시작. (로컬저장 ON)</span>`);
+appendLog(`<span class="log-gray">시작. (골드 자동증가 OFF / 상자=1분 기본 / 판매로 골드)</span>`);
 appendLog(`<span class="log-gray">서버 모드: ${USE_SERVER ? "ON" : "OFF"}</span>`);
 
 renderInventory();
