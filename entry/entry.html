@@ -116,7 +116,7 @@
         if(!res.ok) throw new Error(data.error || "failed");
 
         setMsg("OK: REGISTERED. REDIRECTING...");
-        location.href = "/pool";
+        location.href = "./pool.html";
       }catch(e){
         setMsg("ERROR: REQUEST FAILED (CHECK SERVER/DB)", true);
       }finally{
