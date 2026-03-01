@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>POOL.SYS</title>
+  <style>
+    :root{
+      --bg:#050805; --fg:#39ff14; --dim:#1fbf0f; --line:#0d3a0d;
+      --err:#ff4d4d; --warn:#ffcc00;
+    }
+    html,body{height:100%}
+    body{
+      margin:0;background:var(--bg);color:var(--fg);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      letter-spacing:.3px;
+    }
+    .crt:before{
+      content:"";position:fixed; inset:0;
+      background: repeating-linear-gradient(to bottom,
+        rgba(255,255,255,0.03), rgba(255,255,255,0.03) 1px,
+        rgba(0,0,0,0) 2px, rgba(0,0,0,0) 4px);
+      pointer-events:none; mix-blend-mode:overlay;
+    }
+    .wrap{max-width:1100px;margin:0 auto;padding:28px 16px 48px}
+    .top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end}
+    .title{font-size:28px;margin:0}
+    .dim{color:var(--dim)}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .box{border:1px solid var(--line);padding:16px;background:rgba(0,0,0,.25);flex:1;min-width:320px}
+    .box h2{margin:0 0 10px 0;font-size:16px}
+    .pill{border:1px solid var(--line);padding:2px 8px;display:inline-block}
+    ul{margin:8px 0 0 0;padding-left:18px}
+    li{margin:6px 0}
+    input,textarea{
+      width:100%;
+      background:transparent;border:1px solid var(--line);
+      color:var(--fg);padding:10px;outline:none;
+    }
+    button{
+      background:transparent;border:1px solid var(--fg);
+      color:var(--fg);padding:10px 12px;cursor:pointer;width:100%;
+    }
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .split{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:980px){.split{grid-template-columns:1.15fr .85fr}}
+    .reviewItem{border-top:1px dashed var(--line);padding-top:10px;margin-top:10px}
+    a{color:var(--fg)}
+  </style>
+</head>
+<body class="crt">
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1 class="title">C:\> POOL.SYS <span id="count" class="pill">0</span></h1>
+        <div class="dim">현재까지 응모한 인원의 풀을 보여줍니다. (이메일은 일부 마스킹)</div>
+        <div class="dim"><a href="/">[GO BACK]</a> · <a href="/draw">[DRAW]</a></div>
+      </div>
+      <div class="dim" id="poolMsg">LOADING...</div>
+    </div>
+
+    <div style="height:14px"></div>
+
+    <div class="split">
+      <div class="box">
+        <h2>== PARTICIPANTS ==</h2>
+        <ul id="list"></ul>
+      </div>
+
+      <div class="box">
+        <h2>== REVIEWS (FREE) ==</h2>
+        <div class="dim">상품 수령 여부와 관계없이 남길 수 있어요.</div>
+        <div style="height:10px"></div>
+        <input id="name" placeholder="NAME (OPTIONAL)" maxlength="40" />
+        <div style="height:10px"></div>
+        <textarea id="content" placeholder="REVIEW CONTENT" rows="5" maxlength="2000"></textarea>
+        <div style="height:10px"></div>
+        <button id="post">POST</button>
+        <div class="dim" id="postMsg" style="margin-top:10px"></div>
+
+        <div class="reviewItem">
+          <h2 style="margin:0 0 8px 0">== REVIEW LIST ==</h2>
+          <div id="reviews" class="dim">LOADING...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (s)=>document.querySelector(s);
+
+    async function loadPool(){
+      const res = await fetch("https://mrdindoin.ddns.net/entry/api/pool");
+      const data = await res.json();
+      $("#count").textContent = data.count + " PPL";
+      $("#poolMsg").textContent = data.count ? "STATUS: OK" : "STATUS: EMPTY";
+
+      const ul = $("#list");
+      ul.innerHTML = "";
+      data.entries.forEach(e=>{
+        const li = document.createElement("li");
+        li.textContent = `${e.email_masked}  |  ${e.created_at}`;
+        ul.appendChild(li);
+      });
+    }
+
+    function escapeHtml(s){
+      return s.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+    }
+
+    async function loadReviews(){
+      const res = await fetch("https://mrdindoin.ddns.net/entry/api/reviews");
+      const data = await res.json();
+      const wrap = $("#reviews");
+      if(!data.reviews.length){
+        wrap.innerHTML = `<div class="dim">NO REVIEWS YET.</div>`;
+        return;
+      }
+      wrap.innerHTML = data.reviews.map(r => `
+        <div style="padding:10px 0;border-bottom:1px solid var(--line)">
+          <div><b>${escapeHtml(r.display_name || "익명")}</b> <span class="dim">| ${r.created_at}</span></div>
+          <div style="white-space:pre-wrap;margin-top:6px">${escapeHtml(r.content)}</div>
+        </div>
+      `).join("");
+    }
+
+    $("#post").addEventListener("click", async ()=>{
+      const display_name = $("#name").value.trim();
+      const content = $("#content").value.trim();
+
+      $("#post").disabled = true;
+      $("#postMsg").textContent = "POSTING...";
+
+      try{
+        const res = await fetch("https://mrdindoin.ddns.net/entry/api/reviews", {
+          method:"POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ display_name, content })
+        });
+        const data = await res.json().catch(()=>({}));
+        if(!res.ok) throw new Error(data.error || "failed");
+
+        $("#name").value = "";
+        $("#content").value = "";
+        $("#postMsg").textContent = "OK: POSTED";
+        await loadReviews();
+      }catch(e){
+        $("#postMsg").textContent = "ERROR: MIN 3 CHARS REQUIRED";
+      }finally{
+        $("#post").disabled = false;
+        setTimeout(()=> $("#postMsg").textContent = "", 1800);
+      }
+    });
+
+    loadPool();
+    loadReviews();
+    setInterval(loadPool, 10000);
+  </script>
+</body>
+</html>
