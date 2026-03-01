@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>DRAW.COM</title>
+  <title>WINNERS.COM</title>
   <style>
     :root{
       --bg:#050805; --fg:#39ff14; --dim:#1fbf0f; --line:#0d3a0d;
-      --err:#ff4d4d; --warn:#ffcc00;
+      --err:#ff4d4d;
     }
     html,body{height:100%}
     body{
@@ -22,94 +22,56 @@
         rgba(0,0,0,0) 2px, rgba(0,0,0,0) 4px);
       pointer-events:none; mix-blend-mode:overlay;
     }
-    .wrap{max-width:1100px;margin:0 auto;padding:28px 16px 48px}
+    .wrap{max-width:980px;margin:0 auto;padding:28px 16px 48px}
     .box{border:1px solid var(--line);padding:16px;background:rgba(0,0,0,.25)}
     .title{font-size:28px;margin:0 0 8px 0}
     .dim{color:var(--dim)}
-    .grid{display:grid;grid-template-columns:1fr;gap:12px}
-    @media(min-width:980px){.grid{grid-template-columns:1.05fr .95fr}}
-    input{
-      background:transparent;border:1px solid var(--line);
-      color:var(--fg);padding:10px;outline:none;width:100%;
-    }
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     button{
       background:transparent;border:1px solid var(--fg);
-      color:var(--fg);padding:10px 12px;cursor:pointer;width:100%;
+      color:var(--fg);padding:10px 12px;cursor:pointer;
+      min-width:140px;
     }
     button:disabled{opacity:.55;cursor:not-allowed}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .row > *{flex:1;min-width:220px}
-    ul{margin:8px 0 0 0;padding-left:18px}
-    li{margin:6px 0}
-    .big{
-      border:1px dashed var(--fg);
-      padding:14px;
-      font-size:22px;
-      min-height:64px;
-      display:flex;
-      align-items:center;
-    }
     .pill{border:1px solid var(--line);padding:2px 8px;display:inline-block}
+    ul{margin:10px 0 0 0;padding-left:18px}
+    li{margin:8px 0}
+    .big{border:1px dashed var(--fg);padding:12px;font-size:18px}
     a{color:var(--fg)}
   </style>
 </head>
 <body class="crt">
   <div class="wrap">
     <div class="box">
-      <div class="title">C:\> DRAW.COM</div>
-      <div class="dim">
-        - 방송용 추첨(시드 기반 재현 가능) ·
-        <a href="./pool.html">[POOL]</a> · <a href="./entry.html">[ENTRY]</a>
-      </div>
-      <div class="dim">- 순서: LOAD → (LOCK) → SEED → START → DRAW NEXT</div>
+      <div class="title">C:\> WINNERS.COM</div>
+      <div class="dim">- 결과 전용 페이지(조회만 가능) · <a href="./pool.html">[POOL]</a> · <a href="./entry.html">[ENTRY]</a></div>
+      <div class="dim">- 회차 이동: &lt; PREV / NEXT &gt;</div>
     </div>
 
     <div style="height:12px"></div>
 
-    <div class="grid">
-      <div class="box">
-        <div class="row">
-          <div>
-            <div class="dim">ADMIN TOKEN</div>
-            <input id="token" placeholder="ADMIN_TOKEN" />
-          </div>
-          <div>
-            <div class="dim">SEED (CHAT WORD / TIME)</div>
-            <input id="seed" placeholder="e.g. LIVE-2026-03-01-0915 / chatword" />
-          </div>
-        </div>
-
-        <div style="height:10px"></div>
-
-        <div class="row">
-          <button id="loadBtn">LOAD LIST</button>
-          <button id="lockBtn" disabled>LOCK FINAL LIST</button>
-          <button id="startBtn" disabled>START (INIT RNG)</button>
-          <button id="nextBtn" disabled>DRAW NEXT</button>
-        </div>
-
-        <div style="height:12px"></div>
-
-        <div class="dim">PARTICIPANTS: <span id="count" class="pill">0</span></div>
-        <div class="dim">LOCK HASH: <span id="lockHash" class="pill">not locked</span></div>
-        <div class="dim">RNG: <span class="pill">xmur3 + mulberry32</span> (seeded)</div>
-
-        <div style="height:12px"></div>
-
-        <div class="dim">WINNER:</div>
-        <div id="winner" class="big">-</div>
-
-        <div style="height:10px"></div>
-        <div class="dim">HISTORY:</div>
-        <ul id="history"></ul>
-
-        <div id="msg" class="dim" style="margin-top:10px">READY.</div>
+    <div class="box">
+      <div class="row" style="justify-content:space-between">
+        <div class="dim">ROUND: <span id="round" class="pill">-</span></div>
+        <div class="dim">COUNT: <span id="count" class="pill">0</span></div>
       </div>
 
-      <div class="box">
-        <div class="dim">== LIST (MASKED DISPLAY) ==</div>
-        <ul id="list"></ul>
+      <div style="height:10px"></div>
+
+      <div class="row">
+        <button id="prevBtn">&lt; PREV</button>
+        <button id="nextBtn">NEXT &gt;</button>
+        <button id="latestBtn">LATEST</button>
       </div>
+
+      <div style="height:12px"></div>
+
+      <div class="dim">WINNERS LIST:</div>
+      <div class="big">
+        <ul id="list" style="margin:0;padding-left:18px"></ul>
+      </div>
+
+      <div id="msg" class="dim" style="margin-top:10px">READY.</div>
     </div>
   </div>
 
@@ -117,159 +79,101 @@
     const $ = (s)=>document.querySelector(s);
     const setMsg = (t, isErr=false)=>{
       const el=$("#msg");
-      el.textContent = t;
+      el.textContent=t;
       el.style.color = isErr ? "var(--err)" : "var(--dim)";
     };
 
-    // --- helpers ---
     function maskEmail(email){
-      if(!email.includes("@")) return "***";
+      if(!email || !email.includes("@")) return "***";
       const [local, dom] = email.split("@");
       if(local.length <= 2) return local[0] + "*@" + dom;
       return local.slice(0,2) + "*".repeat(Math.max(1, local.length-3)) + local.slice(-1) + "@" + dom;
     }
 
-    async function sha256Hex(text){
-      const enc = new TextEncoder().encode(text);
-      const buf = await crypto.subtle.digest("SHA-256", enc);
-      return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
-    }
+    let rounds = [];      // ["2026-W09", ...] desc
+    let idx = 0;          // current index in rounds
 
-    // seeded RNG: xmur3 -> mulberry32
-    function xmur3(str){
-      let h = 1779033703 ^ str.length;
-      for (let i = 0; i < str.length; i++) {
-        h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
-        h = (h << 13) | (h >>> 19);
-      }
-      return function() {
-        h = Math.imul(h ^ (h >>> 16), 2246822507);
-        h = Math.imul(h ^ (h >>> 13), 3266489909);
-        return (h ^= h >>> 16) >>> 0;
-      }
-    }
-    function mulberry32(a){
-      return function(){
-        let t = a += 0x6D2B79F5;
-        t = Math.imul(t ^ (t >>> 15), t | 1);
-        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-      }
-    }
-
-    let entries = [];      // [{id,email,created_at,...}]
-    let locked = false;
-    let lockHash = "";
-    let rng = null;
-    let remaining = [];    // emails (locked order)
-    let history = [];
-
-    function renderList(){
-      const ul=$("#list");
-      ul.innerHTML="";
-      entries.forEach((e, idx)=>{
-        const li=document.createElement("li");
-        li.textContent = `${String(idx+1).padStart(4,"0")}  ${maskEmail(e.email)}  |  id=${e.id}`;
-        ul.appendChild(li);
-      });
-      $("#count").textContent = entries.length + " PPL";
-    }
-
-    function renderHistory(){
-      const ul=$("#history");
-      ul.innerHTML="";
-      history.forEach((w,i)=>{
-        const li=document.createElement("li");
-        li.textContent = `${i+1}. ${maskEmail(w)}`;
-        ul.appendChild(li);
-      });
-    }
-
-    async function doLock(){
-      // lock based on sorted emails (stable)
-      const emails = entries.map(e=>e.email.trim().toLowerCase()).sort();
-      const raw = emails.join("\n");
-      lockHash = await sha256Hex(raw);
-      locked = true;
-      remaining = emails.slice(); // initial remaining
-      $("#lockHash").textContent = lockHash.slice(0,16) + "...";
-      $("#lockBtn").disabled = true;
-      $("#startBtn").disabled = false;
-      setMsg("LOCKED. HASH SHOWN (LIST FINGERPRINT).");
-    }
-
-    function initRng(){
-      const seed = $("#seed").value.trim();
-      if(!seed){ setMsg("ERROR: SEED REQUIRED.", true); return; }
-      if(!locked){ setMsg("ERROR: LOCK FIRST.", true); return; }
-
-      // combine seed + lockHash (prevents “seed만 바꿔서 유리하게” 느낌 줄이기)
-      const seedFn = xmur3(seed + "|" + lockHash);
-      rng = mulberry32(seedFn());
-      history = [];
-      $("#winner").textContent = "-";
-      renderHistory();
-
-      $("#nextBtn").disabled = false;
-      setMsg("RNG INITIALIZED. READY TO DRAW.");
-    }
-
-    function drawNext(){
-      if(!rng){ setMsg("ERROR: START FIRST.", true); return; }
-      if(remaining.length === 0){ setMsg("DONE: NO MORE PARTICIPANTS.", true); return; }
-
-      // pick index using seeded RNG
-      const idx = Math.floor(rng() * remaining.length);
-      const winnerEmail = remaining.splice(idx, 1)[0];
-
-      history.push(winnerEmail);
-      $("#winner").textContent = ">> " + maskEmail(winnerEmail) + " <<";
-      renderHistory();
-      setMsg(`PICKED (remaining=${remaining.length})`);
-    }
-
-    // --- events ---
-    $("#loadBtn").addEventListener("click", async ()=>{
-      const token = $("#token").value.trim();
-      if(!token){ setMsg("ERROR: ADMIN TOKEN REQUIRED.", true); return; }
-
-      setMsg("LOADING LIST...");
-      try{
-        const res = await fetch("https://mrdindoin.ddns.net/entry/api/admin/entries", {
-          headers: {"X-Admin-Token": token}
-        });
-        const data = await res.json().catch(()=>({}));
-        if(!res.ok) throw new Error(data.error || "unauthorized");
-
-        entries = (data.entries || []).map(e=>({
-          id: e.id,
-          email: e.email,
-          created_at: e.created_at
-        }));
-
-        locked = false;
-        lockHash = "";
-        rng = null;
-        remaining = [];
-        history = [];
-        $("#lockHash").textContent = "not locked";
-        $("#winner").textContent = "-";
-        renderHistory();
-        renderList();
-
-        $("#lockBtn").disabled = entries.length === 0;
-        $("#startBtn").disabled = true;
+    async function loadRounds(){
+      const res = await fetch("https://mrdindoin.ddns.net/entry/api/winners/rounds");
+      const data = await res.json();
+      rounds = (data.rounds || []).map(r => r.round_key);
+      if(rounds.length === 0){
+        $("#round").textContent = "-";
+        $("#count").textContent = "0";
+        $("#list").innerHTML = "<li>NO WINNERS YET.</li>";
+        $("#prevBtn").disabled = true;
         $("#nextBtn").disabled = true;
-
-        setMsg("LIST LOADED. (NOW LOCK FINAL LIST)");
-      }catch(e){
-        setMsg("ERROR: LOAD FAILED (TOKEN/NETWORK)", true);
+        setMsg("EMPTY.");
+        return false;
       }
+      return true;
+    }
+
+    async function showRound(roundKey){
+      setMsg("LOADING...");
+      const res = await fetch("https://mrdindoin.ddns.net/entry/api/winners?round=" + encodeURIComponent(roundKey));
+      const data = await res.json();
+
+      if(!res.ok || !data.ok){
+        setMsg("ERROR: LOAD FAILED", true);
+        return;
+      }
+
+      $("#round").textContent = data.round_key;
+      $("#count").textContent = (data.winners || []).length;
+
+      const ul = $("#list");
+      ul.innerHTML = "";
+      if(!data.winners || data.winners.length === 0){
+        ul.innerHTML = "<li>NO WINNERS IN THIS ROUND.</li>";
+      }else{
+        data.winners.forEach((w,i)=>{
+          const li = document.createElement("li");
+          li.textContent = `${String(i+1).padStart(2,"0")}. ${maskEmail(w.email)}`;
+          ul.appendChild(li);
+        });
+      }
+
+      $("#prevBtn").disabled = (idx >= rounds.length - 1);
+      $("#nextBtn").disabled = (idx <= 0);
+      setMsg("OK.");
+    }
+
+    async function goLatest(){
+      const ok = await loadRounds();
+      if(!ok) return;
+      idx = 0; // desc 정렬이므로 0이 최신
+      await showRound(rounds[idx]);
+    }
+
+    $("#prevBtn").addEventListener("click", async ()=>{
+      if(idx >= rounds.length - 1) return;
+      idx += 1;
+      await showRound(rounds[idx]);
     });
 
-    $("#lockBtn").addEventListener("click", doLock);
-    $("#startBtn").addEventListener("click", initRng);
-    $("#nextBtn").addEventListener("click", drawNext);
+    $("#nextBtn").addEventListener("click", async ()=>{
+      if(idx <= 0) return;
+      idx -= 1;
+      await showRound(rounds[idx]);
+    });
+
+    $("#latestBtn").addEventListener("click", goLatest);
+
+    // 초기 로드: 최신 회차
+    goLatest();
+
+    // 주기적으로 최신 회차 갱신(예: 60초마다)
+    setInterval(async ()=>{
+      const prevLatest = rounds[0] || null;
+      const ok = await loadRounds();
+      if(!ok) return;
+      const newLatest = rounds[0] || null;
+      if(newLatest && newLatest !== prevLatest){
+        idx = 0;
+        await showRound(rounds[idx]);
+      }
+    }, 60000);
   </script>
 </body>
 </html>
