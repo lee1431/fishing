@@ -3,52 +3,122 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>응모</title>
+  <title>ENTRY.EXE</title>
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto;max-width:720px;margin:40px auto;padding:0 16px;}
-    .card{border:1px solid #ddd;border-radius:12px;padding:18px;}
-    input,button,textarea{font:inherit;padding:10px;border-radius:10px;border:1px solid #ccc;width:100%;}
-    button{cursor:pointer}
-    .row{display:flex;gap:10px;align-items:center}
-    .muted{color:#666;font-size:14px}
-    .err{color:#b00020}
+    :root{
+      --bg:#050805;
+      --fg:#39ff14;
+      --dim:#1fbf0f;
+      --line:#0d3a0d;
+      --warn:#ffcc00;
+      --err:#ff4d4d;
+    }
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--fg);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      letter-spacing:0.3px;
+    }
+    .crt:before{
+      content:"";
+      position:fixed; inset:0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.03),
+        rgba(255,255,255,0.03) 1px,
+        rgba(0,0,0,0) 2px,
+        rgba(0,0,0,0) 4px
+      );
+      pointer-events:none;
+      mix-blend-mode:overlay;
+    }
+    .wrap{max-width:860px;margin:0 auto;padding:28px 16px 48px}
+    .box{
+      border:1px solid var(--line);
+      padding:18px;
+      background: rgba(0,0,0,0.25);
+    }
+    .title{
+      font-size:28px;
+      margin:0 0 10px 0;
+    }
+    .dim{color:var(--dim)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    input{
+      background:transparent;
+      border:1px solid var(--line);
+      color:var(--fg);
+      padding:12px 12px;
+      outline:none;
+      flex:1;
+      min-width:240px;
+    }
+    button{
+      background:transparent;
+      border:1px solid var(--fg);
+      color:var(--fg);
+      padding:12px 14px;
+      cursor:pointer;
+      min-width:140px;
+    }
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .msg{margin-top:10px}
+    .err{color:var(--err)}
+    .hint{color:var(--dim);font-size:13px;margin-top:10px}
+    a{color:var(--fg)}
   </style>
 </head>
-<body>
-  <h1>응모</h1>
-  <div class="card">
-    <div class="muted">이메일을 입력하고 응모하세요.</div>
-    <div style="height:10px"></div>
-    <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
-    <div style="height:10px"></div>
-    <button id="btn">응모하기</button>
-    <div id="msg" class="muted" style="margin-top:10px"></div>
+<body class="crt">
+  <div class="wrap">
+    <div class="box">
+      <div class="title">C:\> ENTRY.EXE</div>
+      <div class="dim">- 이메일 입력 → 응모 완료 후 참가자 풀 화면으로 이동합니다.</div>
+      <div class="dim">- 입력한 이메일은 내부에 저장되며 공개 화면에는 일부 마스킹됩니다.</div>
+
+      <div style="height:16px"></div>
+
+      <div class="row">
+        <span>C:\> ENTER EMAIL :</span>
+        <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+        <button id="btn">SUBMIT</button>
+      </div>
+
+      <div id="msg" class="msg dim"></div>
+      <div class="hint">TIP: 제출 후 화면이 안 넘어가면 네트워크/프록시 경로(/entry/) 확인</div>
+      <div class="hint"><a href="/pool">[VIEW POOL]</a></div>
+    </div>
   </div>
 
   <script>
     const $ = (s)=>document.querySelector(s);
-    const msg = (t, isErr=false) => { $("#msg").textContent=t; $("#msg").className = isErr ? "err" : "muted"; };
+    const setMsg = (t, isErr=false)=>{
+      const m=$("#msg");
+      m.textContent=t;
+      m.className = "msg " + (isErr ? "err" : "dim");
+    };
 
-    $("#btn").addEventListener("click", async () => {
+    $("#btn").addEventListener("click", async ()=>{
       const email = $("#email").value.trim();
-      if(!email){ msg("이메일을 입력해주세요.", true); return; }
+      if(!email){ setMsg("ERROR: EMAIL REQUIRED", true); return; }
 
       $("#btn").disabled = true;
-      msg("처리 중...");
+      setMsg("PROCESSING...");
 
       try{
         const res = await fetch("https://mrdindoin.ddns.net/entry/api/enter", {
           method:"POST",
           headers: {"Content-Type":"application/json"},
-          body: JSON.stringify({ email })
+          body: JSON.stringify({email})
         });
         const data = await res.json().catch(()=>({}));
         if(!res.ok) throw new Error(data.error || "failed");
 
-        // 응모 후 풀 화면으로 이동
+        setMsg("OK: REGISTERED. REDIRECTING...");
         location.href = "/pool";
       }catch(e){
-        msg("응모에 실패했어요. 이메일 형식/네트워크를 확인해주세요.", true);
+        setMsg("ERROR: REQUEST FAILED (CHECK SERVER/DB)", true);
       }finally{
         $("#btn").disabled = false;
       }
