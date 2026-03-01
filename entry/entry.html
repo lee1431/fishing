@@ -189,7 +189,7 @@
         <div class="prizeFooter">
           <span class="blink">■</span> UPDATE: MANUAL
           <span class="sep">|</span>
-          ROUND: 2026-W09
+          ROUND: <span id="roundValue">2026-W09</span>
         </div>
       </div>
 
@@ -245,6 +245,39 @@
         $("#btn").disabled = false;
       }
     });
+
+
+    function getISORoundString(date = new Date()) {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+    
+      // ISO 요일 (월=1 ~ 일=7)
+      const day = d.getDay() === 0 ? 7 : d.getDay();
+      d.setDate(d.getDate() + (4 - day)); // 이번 주 목요일로 이동
+    
+      const isoYear = d.getFullYear();
+    
+      const yearStart = new Date(isoYear, 0, 1);
+      yearStart.setHours(0, 0, 0, 0);
+    
+      const yearStartDay = yearStart.getDay() === 0 ? 7 : yearStart.getDay();
+      const firstThursday = new Date(yearStart);
+      firstThursday.setDate(yearStart.getDate() + (4 - yearStartDay));
+    
+      const diff = d - firstThursday;
+      const week = 1 + Math.round(diff / (7 * 24 * 60 * 60 * 1000));
+    
+      return `${isoYear}-W${String(week).padStart(2, "0")}`;
+    }
+    
+    document.addEventListener("DOMContentLoaded", () => {
+      const roundEl = document.getElementById("roundValue");
+      if (roundEl) {
+        roundEl.textContent = getISORoundString();
+      }
+    });
+
+    
   </script>
 </body>
 </html>
