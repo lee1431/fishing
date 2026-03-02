@@ -90,7 +90,7 @@ header{
 
 <header>
   <div>STANCE ARCHIVE</div>
-  <div>247 Projects</div>
+  <div><span id="project-count">0</span> Projects</div>
 </header>
 
 <section class="grid">
@@ -196,12 +196,27 @@ header{
 </section>
 
 <script>
-// 스크롤 감지
-window.addEventListener("scroll", () => {
-  if(window.innerHeight + window.scrollY >= document.body.offsetHeight - 400){
-    loadMore();
-  }
+
+function updateProjectCounter() {
+	const count = document.querySelectorAll('.item').length;
+	const el = document.getElementById('project-count');
+	if (el) el.textContent = String(count);
+}
+document.addEventListener('DOMContentLoaded', () => {
+	updateProjectCounter();
+	const observer = new MutationObserver(updateProjectCounter);
+	observer.observe(document.querySelector('.grid') || document.body, {
+		childList: true,
+		subtree: true
+	});
 });
+	
+window.addEventListener("scroll", () => {
+	if(window.innerHeight + window.scrollY >= document.body.offsetHeight - 400){
+		loadMore();
+	}
+});
+	
 </script>
 
 </body>
