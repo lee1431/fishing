@@ -29,6 +29,140 @@
     .bad{color:#FF8A8A;}
     .warn{color:#FFD48A;}
     @media (max-width: 860px){ .grid{grid-template-columns:1fr;} }
+
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      margin: 0;
+      background: #0b0f17;
+      color: #e8eefc;
+    }
+    
+    .wrap {
+      max-width: 960px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    
+    .card {
+      background: #121a2a;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,.35);
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    
+    .grid1 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    
+    label {
+      font-size: 13px;
+      opacity: .9;
+      display: block;
+      margin-bottom: 6px;
+    }
+    
+    input, textarea, select {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: #0b1220;
+      color: #e8eefc;
+      outline: none;
+      font-size: 14px;
+    }
+    
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+    
+    input[type="checkbox"] {
+      width: auto;
+      margin-right: 8px;
+    }
+    
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+    
+    .btn {
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: #18233a;
+      color: #e8eefc;
+      cursor: pointer;
+      font-size: 14px;
+      transition: 0.15s ease;
+    }
+    
+    .btn:hover {
+      transform: translateY(-1px);
+      opacity: 0.9;
+    }
+    
+    .btn.primary {
+      background: #2a4cff;
+      border-color: #2a4cff;
+    }
+    
+    .btn.danger {
+      background: #3a1a1a;
+      border-color: rgba(255,80,80,.35);
+    }
+    
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: #0b1220;
+      font-size: 12px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    
+    th, td {
+      padding: 12px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      text-align: left;
+    }
+    
+    .right {
+      text-align: right;
+    }
+    
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+
+    
   </style>
 </head>
 <body>
