@@ -1,418 +1,207 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" href="https://mrdindoin.ddns.net/ingo/images/favicon.ico?r=wof01">
-  <title>스탕스 - STANCE</title>
-  <style>
-    html {
-      scroll-behavior: smooth;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STANCE ARCHIVE</title>
+
+<style>
+:root{
+  --size: 120px;
+  --gap: 6px;
+  --bg:#ffffff;
+  --line:#e9ecef;
+  --accent:#123c2f;
 }
-    body {
-      margin: 0;
-      font-family: 'Noto Sans KR', sans-serif;
-      background: #f9f9f9;
-      color: #333;
-    }
-    header {
-      background-color: #1f1f1f;
-      color: white;
-      padding: 1.5rem;
-      text-align: center;
-    }
-    h1 {
-      margin: 0;
-      font-size: 2.5rem;
-    }
-    section.hero {
-      padding: 3rem 1rem;
-      text-align: center;
-      background: linear-gradient(to bottom, #e8ecef, #ffffff);
-    }
-    .hero h2 {
-      font-size: 2rem;
-      margin-bottom: 1rem;
-    }
-    .hero p {
-      font-size: 1.1rem;
-      max-width: 600px;
-      margin: 0 auto;
-    }
-    nav {
-      display: flex;
-      justify-content: center;
-      gap: 2rem;
-      padding: 1rem;
-      background-color: #fff;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    nav a {
-      text-decoration: none;
-      color: #2E8B57;
-      font-weight: bold;
-    }
-    footer {
-      text-align: center;
-      padding: 2rem;
-      font-size: 0.9rem;
-      color: #999;
-    }
-	
-	.project-card {
-	  width: 300px;
-	  background-color: #f5f8fc;
-	  border-radius: 1rem;
-	  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-	  overflow: hidden;
-	  text-align: center;
-	  transition: transform 0.3s ease, box-shadow 0.3s ease;
-	}
-	.project-card:hover {
-	  transform: translateY(-8px);
-	  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-	}
-	.project-card img {
-	  width: 100%;
-	  height: 240px;
-	  object-fit: cover;
-	}
-	.project-card h3 {
-	  margin: 1rem 0 0.5rem;
-	  font-size: 1.25rem;
-	  color: #2E8B57;
-	}
-	.project-card p {
-	  padding: 0 1rem 1.5rem;
-	  font-size: 0.95rem;
-	  color: #444;
-	}
-	
-	#mangoFace.fade-glow {
-	  box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
-	}
-	
-	.sticky-mango {
-	  position: fixed;
-	  bottom: 20px;
-	  left: 20px;
-	  width: 120px;
-	  z-index: 9999;
-	  transition: opacity 0.6s ease;
-	  cursor: pointer;
-	}
-	.sticky-mango:hover {
-	  box-shadow: 0 0 10px #ffa500cc;
-	  transform: scale(1.03);
-	}
 
-	#scrollToTop {
-	  position: fixed;
-	  bottom: 20px;
-	  right: 20px;
-	  z-index: 999;
-	  display: none;
-	  background-color: transparent;
-	  border: none;
-	  font-size: 2.2rem;
-	  cursor: pointer;
-	  transition: transform 0.3s ease;
-	}
+*{box-sizing:border-box;margin:0;padding:0;}
 
-	#scrollToTop:hover {
-	  transform: scale(1.2) rotate(-15deg);
-	}
-	
-	form input, form textarea {
-	  width: 100%;
-	  padding: 0.8rem;
-	  border: 1px solid #ccc;
-	  border-radius: 1rem;
-	  font-size: 1rem;
-	  font-family: inherit;
-	}
+body{
+  font-family:Inter, sans-serif;
+  background:
+    linear-gradient(#f2f4f3 1px, transparent 1px),
+    linear-gradient(90deg, #f2f4f3 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-color:#ffffff;
+}
 
-	form button {
-	  background-color: #ffb347;
-	  color: white;
-	  padding: 0.8rem 2rem;
-	  font-size: 1rem;
-	  border: none;
-	  border-radius: 2rem;
-	  cursor: pointer;
-	  transition: transform 0.3s ease;
-	}
+header{
+  height:48px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 18px;
+  border-bottom:1px solid var(--line);
+  font-size:13px;
+  letter-spacing:.5px;
+}
 
-	form button:hover {
-	  background-color: #ff9944;
-	  transform: scale(1.05);
-	}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(var(--size),1fr));
+  gap:var(--gap);
+  padding:var(--gap);
+}
 
-        .project-link {
-   	   display: block;
-  	   text-decoration: none;
-  	   color: inherit;
-	}
-  </style>
+.item{
+  aspect-ratio:1/1;
+  background:#f4f6f5;
+  position:relative;
+  overflow:hidden;
+  cursor:pointer;
+  transition:transform .15s ease;
+}
 
+.item:hover{
+  transform:scale(1.04);
+  z-index:2;
+}
+
+.item img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.item .title{
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  background:rgba(0,0,0,.65);
+  color:#fff;
+  font-size:11px;
+  padding:4px 6px;
+  opacity:0;
+  transition:.2s;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.item:hover .title{
+  opacity:1;
+}
+</style>
 </head>
+
 <body>
 
-  <header>
-    <h1>STANCE</h1>
-    <p>기술과 감성, 스스로의 태도를 담다.</p>
-  </header>
+<header>
+  <div>STANCE ARCHIVE</div>
+  <div>247 Projects</div>
+</header>
 
-  <nav>
-    <a href="#about">소개</a>
-    <a href="#projects">프로젝트</a>
-    <a href="#contact">문의</a>
-  </nav>
+<section class="grid">
 
-
-
-  <section class="hero">
-    <h2>스탕스는 독립적인 기술 실험 브랜드입니다.</h2>
-    <p>
-      전자공학, 인공지능, 환경 관측, 감성 콘텐츠까지<br />
-      스탕스는 하나의 정체성에 얽매이지 않습니다.<br />
-      우리의 삶과 시대에 맞는 기술을 고민하고, 실험하며, 기록합니다.
-    </p>
-  </section>
-
-  <section id="about" style="padding: 4rem 1rem; background-color: #f0f4f8;">
-  <div style="max-width: 1000px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 2rem; align-items: center;">
-    
-    <!-- 이미지 영역 -->
-    <div style="flex: 1 1 300px; text-align: center;">
-      <img src="mg.png" alt="Emang character" style="max-width: 100%; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-    </div>
-
-    <!-- 설명 텍스트 영역 -->
-    <div style="flex: 2 1 400px;">
-      <h2 style="font-size: 2rem; margin-bottom: 1rem;">About STANCE</h2>
-      <p style="font-size: 1.1rem; line-height: 1.7; color: #333;">
-        STANCE는 단순한 브랜드가 아닙니다.<br/>
-        의문에서 시작하고, 관찰을 통해 질문을 던지며,<br/>
-        기술과 감성의 경계에서 자신만의 태도를 세웁니다.
-      </p>
-      <p style="margin-top: 1rem; font-style: italic; color: #666;">
-        "왜 망고가 여기에?"  
-        그 순간, STANCE는 이미 당신 곁에 있었습니다.
-      </p>
-    </div>
-	
-	<!-- <img id="mangoFace" src="./org_mgface.png" alt="망고 얼굴" style="width:300px; transition: opacity 0.6s ease;"> -->
-
-    
-  </div>
-</section>
-
-
-<section id="projects" style="padding: 4rem 1rem; background-color: #ffffff;">
-  <div style="max-width: 1200px; margin: 0 auto;">
-    <h2 style="font-size: 2rem; text-align: center; margin-bottom: 2rem;">Our Projects</h2>    
-    <div style="display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center;">
-
-
-		
-      <!-- 프로젝트 카드 -->
-	<a href="./emang.html" class="project-link" target="_blank" rel="noopener noreferrer">
-	    <div class="project-card">
-        	<img src="./emang.png" alt="애망나니 브랜드">
-        	<h3>애망나니</h3>
-        	<p>정신나간 감성의 의인화된 철학 브랜드, ‘사랑이 망가진 나니’</p>      	
-	    </div>
-	</a>
-	<a href="./windowup.html" class="project-link" target="_blank" rel="noopener noreferrer">
-		<div class="project-card">
-			<img src="./windowup.png" alt="창업 아이디어 정리">
-			<h3>창업 아이디어 정리</h3>
-			<p>생각만 해둔 아이템들, 이제 정리해봅시다!</p>
+	<a href="https://llsshh.com/emang.html" class="project-link" target="_blank" rel="noopener noreferrer">
+		<div class="item">
+			<img src="./emang.png" loading="lazy">
+			<div class="title">Emang</div>
+		</div>
+	</a>	
+	<a href="https://llsshh.com/windowup.html" class="project-link" target="_blank" rel="noopener noreferrer">
+		<div class="item">
+			<img src="./windowup.png" loading="lazy">
+			<div class="title">Idea</div>
 		</div>
 	</a>
-    <a href="https://mrdindoin.ddns.net/uploadimg/newgallery/page/1" class="project-link" target="_blank" rel="noopener noreferrer">
-		<div class="project-card">
-			<img src="./spg.png" alt="스몰픽처갤러리">
-			<h3>스몰픽처갤러리</h3>
-			<p>Small Picture Gallery</p>
+	<a href="https://llsshh.com/spg.html" class="project-link" target="_blank" rel="noopener noreferrer">
+		<div class="item">
+			<img src="./spg.png" loading="lazy">
+			<div class="title">Small Picture</div>
 		</div>
 	</a>
 	<a href="https://llsshh.com/snail.html" class="project-link" target="_blank" rel="noopener noreferrer">
-		<div class="project-card">
-			<img src="./snail.png" alt="Snail">
-			<h3>달팽이 철학관</h3>
-			<p>人生無常</p>
-		</div>
-	</a>		
-  	<a href="https://llsshh.com/td.html" class="project-link" target="_blank" rel="noopener noreferrer">
-		<div class="project-card">
-			<img src="./todolist.png" alt="Do it List">
-			<h3>ToDo List</h3>
-			<p>할 일 메 모</p>
+		<div class="item">
+			<img src="./snail.png" loading="lazy">
+			<div class="title">Snail</div>
 		</div>
 	</a>
 	<a href="https://llsshh.com/utq.html" class="project-link" target="_blank" rel="noopener noreferrer">
-		<div class="project-card">
-			<img src="./utq.png" alt="URL to QR">
-			<h3>URLtoQR</h3>
-			<p>URL to QRcode</p>
+		<div class="item">
+			<img src="./utq.png" loading="lazy">
+			<div class="title">Url To QR</div>
 		</div>
 	</a>
-	<a href="https://localflow.info/" class="project-link" target="_blank" rel="noopener noreferrer">
-		<div class="project-card">
-			<img src="./localflow.png" alt="Local Flow">
-			<h3>로컬 플로우</h3>
-			<p>뭐먹지?</p>
+	<a href="https://llsshh.com/localflow.html" class="project-link" target="_blank" rel="noopener noreferrer">
+		<div class="item">
+			<img src="./localflow.png" loading="lazy">
+			<div class="title">Local Flow</div>
 		</div>
 	</a>
-		
 	<a href="https://llsshh.com/game/swg.html" class="project-link" target="_blank" rel="noopener noreferrer">
-		<div class="project-card">
-			<img src="./game.png" alt="PLAY">
-			<h3>플레이 게임</h3>
-			<p>Play to Game</p>
+		<div class="item">
+			<img src="./game.png" loading="lazy">
+			<div class="title">Play</div>
 		</div>
 	</a>
 	<a href="https://llsshh.com/setimg.html" class="project-link" target="_blank" rel="noopener noreferrer">
-		<div class="project-card">
-			<img src="./setimg.png" alt="Ebay">
-			<h3>상세페이지</h3>
-            <p>For Ebay</p>
-		</div>
-	</a>
-	<a href="https://llsshh.com/stsf.html" class="project-link" target="_blank" rel="noopener noreferrer">
-		<div class="project-card">
-			<img src="./img/stsf_logo_space.png" alt="Fishing Logs">
-			<h3> 인생의 기록 </h3>
-            <p>Fishing Logs</p>
+		<div class="item">
+			<img src="./setimg.png" loading="lazy">
+			<div class="title">Get Img</div>
 		</div>
 	</a>
 	<a href="https://llsshh.com/lonelyisland.html" class="project-link" target="_blank" rel="noopener noreferrer">
-		<div class="project-card">
-			<img src="./img/li.png" alt="Lonely Island">
-			<h3> 고독사 vs 돈복사 </h3>
-            <p>Lonely Island</p>
+		<div class="item">
+			<img src="./img/li.png" loading="lazy">
+			<div class="title">Lonely Island</div>
 		</div>
-	</a>		
-	<a href="https://llsshh.com/tools.html" class="project-link" target="_blank" rel="noopener noreferrer">
-		<div class="project-card">
-			<img src="./tools.png" alt="Tool Tip">
-			<h3> 유용한 사이트 모음집 </h3>
-            <p>Mo um zip</p>
-		</div>
-	</a>			
-
-	<a href="https://llsshh.com/moneyflow.html" class="project-link" target="_blank" rel="noopener noreferrer">
-		<div class="project-card">
-			<img src="./img/moneyflow.png" alt="Tool Tip">
-			<h3> 이게 맞야? </h3>
-            <p> it is Right? Light? Left? </p>
+	</a>
+	<a href="https://llsshh.com/stsf.html" class="project-link" target="_blank" rel="noopener noreferrer">
+		<div class="item">
+			<img src="./img/stsf_logo_space.png" loading="lazy">
+			<div class="title">Fishing Logs</div>
 		</div>
 	</a>
 	<a href="https://llsshh.com/ipzil.html" class="project-link" target="_blank" rel="noopener noreferrer">
-		<div class="project-card">
-			<img src="./img/ipzil.png" alt="Tool Tip">
-			<h3> 입질 표현 </h3>
-            <p> Test.. </p>
+		<div class="item">
+			<img src="./img/ipzil.png" loading="lazy">
+			<div class="title">ip zil</div>
 		</div>
 	</a>
-	<a href="https://llsshh.com/messenger.html" class="project-link" target="_blank" rel="noopener noreferrer">
-		<div class="project-card">
-			<img src="./oi.png" alt="Tool Tip">
-			<h3> 메신져 </h3>
-            <p> MSG </p>
+	<a href="https://llsshh.com/tools.html" class="project-link" target="_blank" rel="noopener noreferrer">
+		<div class="item">
+			<img src="./img/tools.png" loading="lazy">
+			<div class="title">MoUpZip</div>
+		</div>
+	</a>
+	<a href="https://llsshh.com/moneyflow.html" class="project-link" target="_blank" rel="noopener noreferrer">
+		<div class="item">
+			<img src="./img/moneyflow.png" loading="lazy">
+			<div class="title">Money Flow</div>
+		</div>
+	</a>
+	<a href="https://llsshh.com/oi.html" class="project-link" target="_blank" rel="noopener noreferrer">
+		<div class="item">
+			<img src="./oi.png" loading="lazy">
+			<div class="title">MSG</div>
 		</div>
 	</a>
 	<a href="https://llsshh.com/entry/entry.html" class="project-link" target="_blank" rel="noopener noreferrer">
-		<div class="project-card">
-			<img src="./entry/dot.png" alt="Tool Tip">
-			<h3> Dot Gacha </h3>
-            <p> Do not use your email. but gift you </p>
+		<div class="item">
+			<img src="./entry/dot.png" loading="lazy">
+			<div class="title">Dot Gacha</div>
 		</div>
 	</a>
 	<a href="https://llsshh.com/gti.html" class="project-link" target="_blank" rel="noopener noreferrer">
-		<div class="project-card">
-			<img src="./gti.png" alt="Tool Tip">
-			<h3> 랜덤 아이템 뽑기 - 가끔 뭐 줌 </h3>
-            <p> Get The Item !! </p>
+		<div class="item">
+			<img src="./gti.png" loading="lazy">
+			<div class="title">Get The Item</div>
 		</div>
 	</a>
-		
 
-    </div>
-  </div>
+
 </section>
 
-
-
-<img id="mangoFace" src="./org_mgface.png" alt="망고 얼굴" class="sticky-mango">
-<button id="scrollToTop" title="맨 위로">🥭</button>
-  <footer>
-    © 2025 STANCE. All rights reserved.
-  </footer>
-
-
-	
 <script>
-let clickCount = 0;
-let lastClickTime = Date.now();
-let isClean = false;
-const mango = document.getElementById('mangoFace');
-
-// 클릭 이벤트
-mango.addEventListener('click', () => {
-  clickCount++;
-  lastClickTime = Date.now();
-
-  if (clickCount >= 5 && !isClean) {
-    isClean = true;
-    clickCount = 0;
-
-    // 페이드 아웃
-    mango.style.opacity = '0';
-
-    // 이미지 전환 후 페이드 인
-    setTimeout(() => {
-      mango.src = './clear_mgface.png';
-      mango.style.opacity = '1';
-    }, 600);
+// 스크롤 감지
+window.addEventListener("scroll", () => {
+  if(window.innerHeight + window.scrollY >= document.body.offsetHeight - 400){
+    loadMore();
   }
 });
-
-// 자동 복귀 타이머 체크
-setInterval(() => {
-  if (isClean && Date.now() - lastClickTime > 10000) {
-    isClean = false;
-
-    // 페이드 아웃
-    mango.style.opacity = '0';
-
-    setTimeout(() => {
-      mango.src = './org_mgface.png';
-      mango.style.opacity = '1';
-      clickCount = 0; // 다시 처음부터 클릭 유도
-    }, 600);
-  }
-}, 1000);
-
-
-const scrollBtn = document.getElementById("scrollToTop");
-
-window.onscroll = () => {
-  if (window.scrollY > 300) {
-    scrollBtn.style.display = "block";
-  } else {
-    scrollBtn.style.display = "none";
-  }
-};
-
-scrollBtn.onclick = () => {
-  window.scrollTo({ top: 0, behavior: "smooth" });
-};
-
-
-
 </script>
 
 </body>
