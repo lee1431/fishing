@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lunatics of Liquidity — Drip Before Dip</title>
+  <meta name="description" content="Lunatics of Liquidity: Drip Before Dip. Mad in theory. Disciplined in risk." />
+  <style>
+    :root{
+      --bg:#ffffff;
+      --ink:#101214;
+      --muted:#5b6168;
+      --grid:rgba(16,18,20,.06);
+      --line:rgba(16,18,20,.12);
+      --card:rgba(255,255,255,.72);
+      --accent:#0b4f3f; /* deep green */
+      --accent2:#1a1f24; /* dark gray */
+      --glow:rgba(11,79,63,.12);
+      --radius:20px;
+      --shadow:0 12px 40px rgba(16,18,20,.10);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--ink);
+      background:
+        linear-gradient(to bottom, rgba(255,255,255,.92), rgba(255,255,255,.92)),
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: auto, 28px 28px, 28px 28px;
+      background-position: 0 0, -1px -1px, -1px -1px;
+    }
+
+    a{ color:inherit; text-decoration:none; }
+    .wrap{ max-width:1080px; margin:0 auto; padding:28px 20px 56px; }
+
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      position:sticky;
+      top:0;
+      padding:14px 0;
+      backdrop-filter: blur(10px);
+      background: linear-gradient(to bottom, rgba(255,255,255,.90), rgba(255,255,255,.60));
+      border-bottom: 1px solid rgba(16,18,20,.06);
+      z-index:10;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      user-select:none;
+    }
+
+    .sigil{
+      width:40px;
+      height:40px;
+      border-radius:14px;
+      display:grid;
+      place-items:center;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(11,79,63,.22), rgba(11,79,63,0)),
+        linear-gradient(180deg, rgba(255,255,255,.90), rgba(255,255,255,.60));
+      border:1px solid rgba(16,18,20,.12);
+      box-shadow: 0 10px 24px rgba(16,18,20,.08);
+      cursor:pointer;
+      position:relative;
+      overflow:hidden;
+    }
+    .sigil::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 10px 10px;
+      opacity:.6;
+      mix-blend-mode:multiply;
+      pointer-events:none;
+    }
+
+    .sigil span{ font-family:var(--mono); font-weight:700; letter-spacing:.5px; color:var(--accent); position:relative; z-index:1; }
+
+    .brand h1{
+      font-size:14px;
+      line-height:1.1;
+      margin:0;
+      font-weight:700;
+      letter-spacing:.2px;
+    }
+    .brand small{ display:block; margin-top:2px; font-size:12px; color:var(--muted); font-family:var(--mono); }
+
+    nav{ display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+    nav a{
+      font-size:13px;
+      color:var(--muted);
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid transparent;
+    }
+    nav a:hover{ border-color:rgba(16,18,20,.12); color:var(--ink); background:rgba(255,255,255,.60); }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid rgba(16,18,20,.14);
+      background:rgba(255,255,255,.72);
+      box-shadow: 0 12px 30px rgba(16,18,20,.08);
+      font-weight:700;
+      font-size:13px;
+      cursor:pointer;
+      transition: transform .12s ease, box-shadow .12s ease;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); box-shadow: 0 16px 40px rgba(16,18,20,.10); }
+    .btn.primary{ background: rgba(11,79,63,.08); border-color: rgba(11,79,63,.34); color: var(--accent); }
+    .btn.primary:hover{ box-shadow: 0 16px 46px var(--glow); }
+
+    .hero{
+      padding:42px 0 18px;
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:18px;
+      align-items:stretch;
+    }
+
+    .card{
+      border-radius: var(--radius);
+      border: 1px solid rgba(16,18,20,.12);
+      background: var(--card);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .hero .left{ padding:28px; position:relative; }
+    .kicker{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      font-family:var(--mono);
+      font-size:12px;
+      color:var(--muted);
+      border:1px solid rgba(16,18,20,.12);
+      background:rgba(255,255,255,.75);
+      border-radius:999px;
+      padding:8px 12px;
+    }
+    .dot{ width:8px; height:8px; border-radius:999px; background:var(--accent); box-shadow: 0 0 0 6px rgba(11,79,63,.10); }
+
+    .hero h2{
+      margin:18px 0 10px;
+      font-size:44px;
+      line-height:1.02;
+      letter-spacing:-.8px;
+    }
+
+    .hero p{
+      margin:0;
+      font-size:16px;
+      line-height:1.55;
+      color:var(--muted);
+      max-width: 62ch;
+    }
+
+    .tagline{
+      margin-top:16px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+
+    .pill{
+      font-family:var(--mono);
+      font-size:12px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px dashed rgba(16,18,20,.18);
+      background:rgba(255,255,255,.65);
+      color:var(--accent2);
+    }
+
+    .cta{ margin-top:20px; display:flex; gap:10px; flex-wrap:wrap; }
+
+    .hero .right{ padding:18px; display:flex; flex-direction:column; gap:12px; }
+
+    .panel{ padding:18px; border-radius:18px; border:1px solid rgba(16,18,20,.10); background:rgba(255,255,255,.70); }
+    .panel h3{ margin:0 0 10px; font-size:14px; letter-spacing:.2px; }
+    .panel ul{ margin:0; padding:0 0 0 18px; color:var(--muted); font-size:13px; line-height:1.55; }
+    .panel li{ margin:6px 0; }
+
+    .grid{
+      margin-top:18px;
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:12px;
+    }
+
+    .tile{ padding:16px; }
+    .tile .t{ font-family:var(--mono); font-size:12px; color:var(--muted); }
+    .tile .v{ margin-top:8px; font-size:18px; font-weight:800; letter-spacing:-.2px; }
+    .tile .s{ margin-top:6px; font-size:12px; color:var(--muted); line-height:1.45; }
+
+    section{
+      margin-top:18px;
+      padding:22px;
+    }
+
+    section h3{
+      margin:0 0 10px;
+      font-size:16px;
+      letter-spacing:.2px;
+    }
+
+    .two{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+      margin-top:12px;
+    }
+
+    .rule{
+      padding:16px;
+      border-radius:18px;
+      border:1px solid rgba(16,18,20,.10);
+      background:rgba(255,255,255,.70);
+    }
+    .rule b{ display:block; margin-bottom:6px; }
+    .rule p{ margin:0; color:var(--muted); font-size:13px; line-height:1.55; }
+
+    footer{
+      margin-top:18px;
+      padding:18px 22px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .tiny{ font-family:var(--mono); font-size:12px; color:var(--muted); }
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:18px;
+      transform: translateX(-50%);
+      background: rgba(16,18,20,.92);
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.25);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    .toast.show{ opacity:1; transform: translateX(-50%) translateY(-2px); }
+
+    @media (max-width: 900px){
+      .hero{ grid-template-columns:1fr; }
+      .hero h2{ font-size:38px; }
+      .grid{ grid-template-columns:1fr; }
+      .two{ grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="sigil" id="sigil" title="click me (easter egg)" aria-label="sigil">
+          <span>LoL</span>
+        </div>
+        <div>
+          <h1>Lunatics of Liquidity</h1>
+          <small>Drip Before Dip</small>
+        </div>
+      </div>
+      <nav>
+        <a href="#manifesto">Manifesto</a>
+        <a href="#rules">Rules</a>
+        <a href="#join">Join</a>
+        <button class="btn" id="copyBtn" type="button">Copy tagline</button>
+        <button class="btn primary" id="joinBtn" type="button">Enter the Lab</button>
+      </nav>
+    </header>
+
+    <main>
+      <div class="hero">
+        <div class="card left">
+          <div class="kicker"><span class="dot"></span><span>Minimal lab tone • grid discipline • deep-green accent</span></div>
+          <h2>Mad in theory.<br/>Disciplined in risk.</h2>
+          <p>
+            We gather for memes, banter, and clean execution.
+            Tell your story. Test it. Manage size.
+            If it dips, we drip first.
+          </p>
+          <div class="tagline" aria-label="tagline pills">
+            <span class="pill">#LiquidityHunt</span>
+            <span class="pill">#DripBeforeDip</span>
+            <span class="pill">#GrandBowEvent</span>
+            <span class="pill">#LunarPhase</span>
+          </div>
+          <div class="cta">
+            <button class="btn primary" type="button" id="manifestoBtn">Read manifesto</button>
+            <button class="btn" type="button" id="rulesBtn">See rules</button>
+            <button class="btn" type="button" id="eggHintBtn">Need a hidden rule?</button>
+          </div>
+        </div>
+
+        <div class="card right">
+          <div class="panel">
+            <h3>Today’s vibe</h3>
+            <ul>
+              <li>We respect the candle, not the ego.</li>
+              <li>We can be wrong. We still survive.</li>
+              <li>We laugh first, then we hedge.</li>
+            </ul>
+          </div>
+          <div class="panel">
+            <h3>Modes</h3>
+            <ul>
+              <li><b>Lunar Phase</b>: idea storming + memes</li>
+              <li><b>Liquidity Mode</b>: entries + exits + receipts</li>
+              <li><b>Grand Bow</b>: only if structure confirms</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card tile">
+          <div class="t">Protocol</div>
+          <div class="v">Drip → Risk → Dip</div>
+          <div class="s">Humor first. Size second. Narrative last.</div>
+        </div>
+        <div class="card tile">
+          <div class="t">Prime directive</div>
+          <div class="v">Survive</div>
+          <div class="s">A dead account can’t enjoy a good meme.</div>
+        </div>
+        <div class="card tile">
+          <div class="t">Culture</div>
+          <div class="v">Evidence + Banter</div>
+          <div class="s">A story is allowed. A plan is mandatory.</div>
+        </div>
+      </div>
+
+      <section class="card" id="manifesto">
+        <h3>Manifesto</h3>
+        <div class="two">
+          <div class="rule">
+            <b>1) Stories are welcome.</b>
+            <p>But your position must be explainable without your feelings. If it can’t be tested, it can’t be traded.</p>
+          </div>
+          <div class="rule">
+            <b>2) Execution beats prophecy.</b>
+            <p>We don’t predict. We react with structure. Confirmation earns conviction.</p>
+          </div>
+          <div class="rule">
+            <b>3) Memes are medicine.</b>
+            <p>Drip is how we stay humble. If you can’t joke, you’re probably over-levered.</p>
+          </div>
+          <div class="rule">
+            <b>4) Survivors get the real big moves.</b>
+            <p>Big shorts don’t come from belief. They come from being there when liquidity breaks.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" id="rules">
+        <h3>Rules (simple & stupid)</h3>
+        <div class="two">
+          <div class="rule">
+            <b>A) Size is sacred.</b>
+            <p>Trade size you can laugh through. If you can’t laugh, you sized wrong.</p>
+          </div>
+          <div class="rule">
+            <b>B) Receipts or it didn’t happen.</b>
+            <p>Post entries/exits when possible. We’re here for clarity, not mythology.</p>
+          </div>
+          <div class="rule">
+            <b>C) No guru worship.</b>
+            <p>We bow to liquidity, not influencers. Question everything (especially yourself).</p>
+          </div>
+          <div class="rule">
+            <b>D) Be kind, be funny.</b>
+            <p>People lose money. Don’t pile on. Drip on the trade, not the trader.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" id="join">
+        <h3>Join the Lab</h3>
+        <p style="margin:0;color:var(--muted);font-size:13px;line-height:1.6;max-width:80ch;">
+          This is a placeholder landing page. Wire it to WebSite later.
+          For now, hit the button to simulate entry and get your initiation url.
+        </p>
+        <div class="cta" style="margin-top:14px;">
+          <button class="btn primary" type="button" id="initBtn">Initiate</button>
+          <button class="btn" type="button" id="randomDripBtn">Random drip</button>
+		  <button class="btn" type="button" id="goToWebSite">Go To Chatting Room</button>
+        </div>
+      </section>
+
+      <footer class="card">
+        <div class="tiny">© <span id="year"></span> Lunatics of Liquidity — Drip Before Dip</div>
+        <div class="tiny" title="psst">Built with vanilla. Grid with discipline.</div>
+      </footer>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const toast = (msg) => {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      window.clearTimeout(toast._tm);
+      toast._tm = window.setTimeout(() => t.classList.remove('show'), 1900);
+    };
+
+    // smooth jump helpers
+    const go = (id) => document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Buttons
+    document.getElementById('manifestoBtn').addEventListener('click', () => go('manifesto'));
+    document.getElementById('rulesBtn').addEventListener('click', () => go('rules'));
+    document.getElementById('joinBtn').addEventListener('click', () => go('join'));
+
+    // Copy tagline
+    const tagline = 'Lunatics of Liquidity: Drip Before Dip';
+    document.getElementById('copyBtn').addEventListener('click', async () => {
+      try{
+        await navigator.clipboard.writeText(tagline);
+        toast('Copied: ' + tagline);
+      }catch{
+        toast('Copy failed. Manual copy: ' + tagline);
+      }
+    });
+
+    // Join / init
+    const codes = ['https://llsshh.com/messenger.html/'];
+    document.getElementById('initBtn').addEventListener('click', () => {
+      const c = codes[Math.floor(Math.random()*codes.length)];
+      toast('Initiation site : ' + c + ' ,  Channel : lol');
+    });
+
+    // Random drip generator
+    const drips = [
+      'Drip first. Then decide.',
+      'Liquidity doesn’t care about your thesis.',
+      'If you can’t laugh, you sized wrong.',
+      'Grand Bow is earned, not wished.',
+      'Respect the candle. Question the ego.',
+      'Survive today to meme tomorrow.'
+    ];
+    document.getElementById('randomDripBtn').addEventListener('click', () => {
+      toast(drips[Math.floor(Math.random()*drips.length)]);
+    });
+	document.getElementById('goToWebSite').addEventListener('click', () => {
+      window.open('https://llsshh.com/messenger.html', '_blank', 'noopener,noreferrer');
+    });
+
+    // Easter egg hint button
+    document.getElementById('eggHintBtn').addEventListener('click', () => {
+      toast('Hint: click the sigil, or try the Konami code.');
+    });
+
+    // EASTER EGG 1: click the sigil
+    document.getElementById('sigil').addEventListener('click', () => {
+      toast('Love the chart. Don\'t sex it.');
+    });
+
+    // EASTER EGG 2: Konami code
+    const konami = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+    let k = 0;
+    window.addEventListener('keydown', (e) => {
+      const key = e.key;
+      if(key === konami[k]){
+        k++;
+        if(k === konami.length){
+          k = 0;
+          toast('EASTER EGG: Drip is free. Leverage is not.');
+        }
+      } else {
+        k = 0;
+      }
+    });
+  </script>
+</body>
+</html>
