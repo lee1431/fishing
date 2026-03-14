@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STANCE Template Library Light</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f6f4ef;
+      color: #171717;
+      line-height: 1.6;
+    }
+    a { text-decoration: none; color: inherit; }
+    .container { width: min(1200px, calc(100% - 48px)); margin: 0 auto; }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(14px);
+      background: rgba(246, 244, 239, 0.88);
+      border-bottom: 1px solid rgba(23,23,23,0.08);
+    }
+    .nav {
+      height: 84px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .logo {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: 0.28em;
+    }
+    .nav-menu {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      color: #665f54;
+      font-size: 0.95rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 50px;
+      padding: 0 22px;
+      border-radius: 999px;
+      border: 1px solid rgba(23,23,23,0.12);
+      cursor: pointer;
+      transition: 0.2s ease;
+      font-weight: 700;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: #171717; color: #f8f5ef; }
+    .btn-dark { background: #ece7dc; color: #171717; }
+
+    .hero {
+      padding: 72px 0 42px;
+      border-bottom: 1px solid rgba(23,23,23,0.08);
+      background:
+        radial-gradient(circle at top right, rgba(193,167,122,0.16), transparent 30%),
+        linear-gradient(180deg, #f8f6f1 0%, #f3efe7 100%);
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.12fr 0.88fr;
+      gap: 40px;
+      align-items: stretch;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 16px;
+      border: 1px solid rgba(23,23,23,0.10);
+      border-radius: 999px;
+      font-size: 0.95rem;
+      color: #6b6254;
+      margin-bottom: 22px;
+      background: rgba(255,255,255,0.58);
+    }
+    h1 {
+      font-size: clamp(3rem, 6vw, 5rem);
+      line-height: 1.02;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      margin-bottom: 24px;
+      max-width: 760px;
+    }
+    .hero p {
+      color: #5e584f;
+      font-size: 1.08rem;
+      max-width: 760px;
+      margin-bottom: 30px;
+    }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .tag {
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(23,23,23,0.08);
+      background: #f1ebe0;
+      color: #4f493f;
+      font-size: 0.92rem;
+    }
+
+    .hero-panel {
+      border: 1px solid rgba(23,23,23,0.08);
+      border-radius: 28px;
+      padding: 20px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(246,240,230,0.88));
+      box-shadow: 0 20px 42px rgba(80,66,40,0.08);
+    }
+    .panel-inner {
+      border: 1px solid rgba(23,23,23,0.07);
+      border-radius: 24px;
+      padding: 22px;
+      background: #fffdf8;
+      height: 100%;
+    }
+    .panel-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 24px;
+    }
+    .panel-label {
+      font-size: 0.92rem;
+      color: #8d816f;
+      margin-bottom: 6px;
+    }
+    .panel-title {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1.08;
+    }
+    .badge {
+      border-radius: 999px;
+      background: #f1ebe0;
+      color: #171717;
+      border: 1px solid rgba(23,23,23,0.08);
+      padding: 10px 14px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+    .template-preview-list {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .preview-item {
+      display: grid;
+      grid-template-columns: 58px 1fr;
+      gap: 14px;
+      align-items: center;
+      padding: 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(23,23,23,0.08);
+      background: #f9f5ee;
+    }
+    .preview-no {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: #171717;
+      color: #fffaf2;
+      font-weight: 800;
+    }
+    .preview-item strong {
+      display: block;
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+    .preview-item span {
+      color: #6c6254;
+      font-size: 0.92rem;
+    }
+
+    .section { padding: 92px 0; }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 30px;
+    }
+    .section-kicker {
+      color: #8d816f;
+      letter-spacing: 0.32em;
+      font-size: 0.86rem;
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      line-height: 1.06;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+    .section-desc {
+      max-width: 520px;
+      color: #665f54;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1.3fr 0.9fr 0.9fr;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .field {
+      background: #fffdf8;
+      border: 1px solid rgba(23,23,23,0.08);
+      border-radius: 18px;
+      padding: 14px 16px;
+      color: #171717;
+      min-height: 56px;
+      width: 100%;
+    }
+    .field::placeholder { color: #9a907f; }
+
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 22px;
+    }
+    .template-card {
+      border: 1px solid rgba(23,23,23,0.08);
+      border-radius: 26px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #fffdf8 0%, #f5efe5 100%);
+      transition: 0.22s ease;
+      box-shadow: 0 14px 32px rgba(80,66,40,0.08);
+    }
+    .template-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(23,23,23,0.18);
+    }
+    .thumb {
+      aspect-ratio: 16 / 10;
+      padding: 16px;
+      background: radial-gradient(circle at top right, rgba(193,167,122,0.20), transparent 35%), #f2eadf;
+      border-bottom: 1px solid rgba(23,23,23,0.08);
+    }
+    .thumb-ui {
+      width: 100%;
+      height: 100%;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #fffdf9, #f4ede1);
+      border: 1px solid rgba(23,23,23,0.08);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .thumb-bar {
+      height: 12px;
+      width: 42%;
+      border-radius: 999px;
+      background: rgba(23,23,23,0.12);
+    }
+    .thumb-box-row {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 10px;
+      flex: 1;
+    }
+    .thumb-box, .thumb-box-small {
+      border-radius: 14px;
+      background: rgba(255,255,255,0.72);
+      border: 1px solid rgba(23,23,23,0.06);
+    }
+    .thumb-stack {
+      display: grid;
+      grid-template-rows: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .card-body { padding: 22px; }
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .card-tag {
+      font-size: 0.84rem;
+      color: #857868;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .card-rating {
+      font-size: 0.88rem;
+      color: #665f54;
+    }
+    .card-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
+    }
+    .card-desc {
+      color: #5d564b;
+      margin-bottom: 18px;
+      min-height: 48px;
+    }
+    .card-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .card-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .build-section {
+      border-top: 1px solid rgba(23,23,23,0.08);
+      border-bottom: 1px solid rgba(23,23,23,0.08);
+      background: linear-gradient(180deg, #f3eee5, #f8f5ef);
+    }
+    .build-grid {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 28px;
+      align-items: stretch;
+    }
+    .info-card, .submit-card {
+      border: 1px solid rgba(23,23,23,0.08);
+      border-radius: 28px;
+      background: #fffdf8;
+      padding: 26px;
+    }
+    .check-list {
+      display: grid;
+      gap: 14px;
+      margin-top: 22px;
+    }
+    .check-item {
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+    .check-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: #171717;
+      color: #fffaf2;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .form-grid .full { grid-column: 1 / -1; }
+    textarea.field { resize: vertical; min-height: 148px; }
+
+    footer {
+      padding: 28px 0 50px;
+      color: #746b5d;
+    }
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 1080px) {
+      .hero-grid, .build-grid, .toolbar, .template-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 760px) {
+      .container { width: min(100% - 28px, 1200px); }
+      .nav { height: auto; padding: 18px 0; flex-wrap: wrap; }
+      .nav-menu { order: 3; width: 100%; justify-content: space-between; gap: 12px; }
+      .hero { padding-top: 48px; }
+      .section { padding: 70px 0; }
+      .form-grid { grid-template-columns: 1fr; }
+      .section-head, .footer-row { flex-direction: column; align-items: start; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <a href="#" class="logo">STANCE</a>
+      <nav class="nav-menu">
+        <a href="#templates">템플릿</a>
+        <a href="#build">제작의뢰</a>
+        <a href="#guide">이용가이드</a>
+        <a href="#contact">문의</a>
+      </nav>
+      <a class="btn btn-primary" href="#build">템플릿 등록</a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <div class="eyebrow">스탕스 · Light Template Library</div>
+        <h1>밝은 색감으로<br>템플릿을 정리하고<br>더 부드럽게 보여주는 페이지</h1>
+        <p>화이트 베이스의 새로운 템플릿 페이지는 기존 다크 무드와 다르게 더 가볍고 친근한 인상을 줍니다. 템플릿 보관, 미리보기, 분류, 상담 연결은 유지하면서도 한층 밝고 정돈된 브랜드 톤으로 전환했습니다.</p>
+        <div class="hero-actions">
+          <a href="#templates" class="btn btn-primary">템플릿 둘러보기</a>
+          <a href="#build" class="btn btn-dark">새 템플릿 등록</a>
+        </div>
+        <div class="hero-tags">
+          <span class="tag">화이트 베이스</span>
+          <span class="tag">소프트 베이지 포인트</span>
+          <span class="tag">정돈된 카드형 UI</span>
+          <span class="tag">상담 연동</span>
+        </div>
+      </div>
+
+      <div class="hero-panel">
+        <div class="panel-inner">
+          <div class="panel-top">
+            <div>
+              <div class="panel-label">페이지 핵심 구조</div>
+              <div class="panel-title">라이트 톤 보관 + 선택 + 전환</div>
+            </div>
+            <div class="badge">LIGHT</div>
+          </div>
+          <div class="template-preview-list">
+            <div class="preview-item"><div class="preview-no">01</div><div><strong>템플릿 목록 노출</strong><span>기업형, 브랜드형, 서비스형 등 목적별 정리</span></div></div>
+            <div class="preview-item"><div class="preview-no">02</div><div><strong>빠른 미리보기</strong><span>썸네일과 핵심 특징으로 첫 인상 전달</span></div></div>
+            <div class="preview-item"><div class="preview-no">03</div><div><strong>선택 흐름 연결</strong><span>상세보기, 상담, 커스텀 제작 의뢰까지 연결</span></div></div>
+            <div class="preview-item"><div class="preview-no">04</div><div><strong>확장 가능한 구조</strong><span>앞으로 템플릿이 늘어나도 관리 가능한 라이브러리형</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="templates">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">TEMPLATE COLLECTION</div>
+          <h2 class="section-title">새로운 색감의 템플릿을 한눈에 보는 공간</h2>
+        </div>
+        <p class="section-desc">밝은 바탕과 부드러운 포인트 컬러를 중심으로, 업종과 분위기에 맞는 템플릿을 고르고 상담으로 연결할 수 있도록 설계했습니다.</p>
+      </div>
+
+      <div class="toolbar">
+        <input class="field" type="text" placeholder="템플릿 이름이나 업종으로 검색" />
+        <select class="field"><option>전체 카테고리</option><option>기업형</option><option>브랜드형</option><option>서비스형</option><option>포트폴리오형</option></select>
+        <select class="field"><option>최신순</option><option>인기순</option><option>상담 전환순</option></select>
+      </div>
+
+      <div class="template-grid">
+        <article class="template-card">
+          <div class="thumb"><div class="thumb-ui"><div class="thumb-bar"></div><div class="thumb-box-row"><div class="thumb-box"></div><div class="thumb-stack"><div class="thumb-box-small"></div><div class="thumb-box-small"></div><div class="thumb-box-small"></div></div></div></div></div>
+          <div class="card-body">
+            <div class="card-meta"><span class="card-tag">기업형</span><span class="card-rating">Light Edition</span></div>
+            <h3 class="card-title">STANCE Corporate Light</h3>
+            <p class="card-desc">화이트와 크림 계열 중심의 기업 소개형 템플릿. 부드러운 첫 인상과 안정적인 상담 흐름에 잘 맞습니다.</p>
+            <div class="card-features"><span class="tag">라이트 UI</span><span class="tag">CTA 구조</span><span class="tag">기업 소개</span></div>
+            <div class="card-actions"><a href="#" class="btn btn-primary">상세보기</a><a href="#build" class="btn btn-dark">이 템플릿 상담</a></div>
+          </div>
+        </article>
+
+        <article class="template-card">
+          <div class="thumb"><div class="thumb-ui"><div class="thumb-bar" style="width:58%"></div><div class="thumb-box-row"><div class="thumb-stack"><div class="thumb-box-small"></div><div class="thumb-box-small"></div><div class="thumb-box-small"></div></div><div class="thumb-box"></div></div></div></div>
+          <div class="card-body">
+            <div class="card-meta"><span class="card-tag">브랜드형</span><span class="card-rating">Soft Mood</span></div>
+            <h3 class="card-title">Soft Brand Showcase</h3>
+            <p class="card-desc">과하지 않은 베이지 포인트와 넉넉한 여백을 활용해 브랜드 이미지를 부드럽게 보여주는 템플릿입니다.</p>
+            <div class="card-features"><span class="tag">미니멀</span><span class="tag">브랜드 스토리</span><span class="tag">소프트 톤</span></div>
+            <div class="card-actions"><a href="#" class="btn btn-primary">상세보기</a><a href="#build" class="btn btn-dark">이 템플릿 상담</a></div>
+          </div>
+        </article>
+
+        <article class="template-card">
+          <div class="thumb"><div class="thumb-ui"><div class="thumb-bar" style="width:35%"></div><div class="thumb-box-row"><div class="thumb-box"></div><div class="thumb-box"></div></div></div></div>
+          <div class="card-body">
+            <div class="card-meta"><span class="card-tag">서비스형</span><span class="card-rating">Clear Flow</span></div>
+            <h3 class="card-title">Landing Conversion Soft</h3>
+            <p class="card-desc">깔끔한 설명 흐름과 부담 없는 색감을 결합한 서비스형 템플릿. 문의 전환에 필요한 구조를 부드럽게 담았습니다.</p>
+            <div class="card-features"><span class="tag">랜딩형</span><span class="tag">상담 유도</span><span class="tag">전환 중심</span></div>
+            <div class="card-actions"><a href="#" class="btn btn-primary">상세보기</a><a href="#build" class="btn btn-dark">이 템플릿 상담</a></div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section build-section" id="build">
+    <div class="container build-grid">
+      <div class="info-card" id="guide">
+        <div class="section-kicker">HOW IT WORKS</div>
+        <h2 class="section-title" style="font-size: clamp(1.8rem, 3vw, 2.8rem);">밝은 템플릿 페이지는 이렇게 쓰면 됩니다</h2>
+        <div class="check-list">
+          <div class="check-item"><div class="check-icon">✓</div><div><strong>부드러운 첫 인상</strong><p class="section-desc">검정 배경보다 가볍고 친근한 인상을 주고 싶을 때 라이트 버전이 더 잘 맞습니다.</p></div></div>
+          <div class="check-item"><div class="check-icon">✓</div><div><strong>정리된 카드 라이브러리</strong><p class="section-desc">카드와 여백을 중심으로 템플릿을 더 깔끔하게 보여주기에 적합합니다.</p></div></div>
+          <div class="check-item"><div class="check-icon">✓</div><div><strong>브랜드 확장성</strong><p class="section-desc">향후 업종별 다른 라이트 팔레트로 쉽게 파생 템플릿을 만들 수 있습니다.</p></div></div>
+          <div class="check-item"><div class="check-icon">✓</div><div><strong>상담 연결 유지</strong><p class="section-desc">색감은 바뀌어도 선택, 상세보기, 문의 흐름은 그대로 유지해 전환 구조를 살립니다.</p></div></div>
+        </div>
+      </div>
+
+      <div class="submit-card" id="contact">
+        <div class="section-kicker">CUSTOM REQUEST</div>
+        <h2 class="section-title" style="font-size: clamp(1.8rem, 3vw, 2.8rem);">새 템플릿 또는 맞춤 제작 의뢰</h2>
+        <p class="section-desc" style="margin-top: 12px; max-width: 100%;">화이트 기반 기업형, 브랜드형, 서비스형 템플릿 제작 요청을 연결하는 문의 영역입니다.</p>
+        <form class="form-grid">
+          <input class="field" type="text" placeholder="이름 또는 회사명" />
+          <input class="field" type="text" placeholder="연락처 또는 이메일" />
+          <input class="field full" type="text" placeholder="원하는 업종 / 홈페이지 유형" />
+          <textarea class="field full" placeholder="원하는 스타일, 필요한 기능, 참고 사이트 등을 적어주세요"></textarea>
+          <button type="submit" class="btn btn-primary">제작 문의 보내기</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container footer-row">
+      <div>© 2026 STANCE. Template Library Light.</div>
+      <div>화이트 베이스 · 소프트 베이지 포인트 · 상담 연결</div>
+    </div>
+  </footer>
+
+  <script>
+    document.querySelectorAll('a[href^="#"]').forEach(link => {
+      link.addEventListener('click', function (e) {
+        const target = document.querySelector(this.getAttribute('href'));
+        if (!target) return;
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    const form = document.querySelector('form');
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        alert('문의 기능은 추후 실제 전송 로직과 연결하면 됩니다.');
+      });
+    }
+  </script>
+</body>
+</html>
