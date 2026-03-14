@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>시니어 웰에이징 추천관</title>
+  <style>
+    :root {
+      --bg: #f6f4ef;
+      --surface: #ffffff;
+      --text: #222222;
+      --muted: #6b6b6b;
+      --line: #e7e2d8;
+      --point: #2f6f5f;
+      --point-dark: #244f45;
+      --warm: #dca86a;
+      --shadow: 0 16px 40px rgba(0, 0, 0, 0.07);
+      --radius: 24px;
+      --max: 1180px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "Pretendard", "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+
+    .container {
+      width: min(calc(100% - 32px), var(--max));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      backdrop-filter: blur(12px);
+      background: rgba(246, 244, 239, 0.84);
+      border-bottom: 1px solid rgba(34, 34, 34, 0.06);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 74px;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+    }
+
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--point), var(--warm));
+      box-shadow: var(--shadow);
+    }
+
+    .menu {
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .menu a:hover { color: var(--text); }
+
+    .nav-cta {
+      padding: 12px 18px;
+      border-radius: 999px;
+      background: var(--point);
+      color: #fff;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .hero {
+      padding: 72px 0 42px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.12fr 0.88fr;
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .hero-copy,
+    .hero-panel,
+    .card,
+    .notice,
+    .article-card,
+    .footer-box {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-copy {
+      padding: 44px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(47, 111, 95, 0.1);
+      color: var(--point-dark);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+
+    h1, h2, h3, h4, p { margin: 0; }
+
+    h1 {
+      font-size: clamp(38px, 6vw, 68px);
+      line-height: 1.04;
+      letter-spacing: -0.05em;
+      margin-bottom: 18px;
+    }
+
+    .hero-copy p {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 620px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 52px;
+      padding: 0 22px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 15px;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: var(--point); color: #fff; }
+    .btn-secondary { background: #f3efe8; color: var(--text); }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 34px;
+    }
+
+    .stat {
+      padding: 18px;
+      border-radius: 20px;
+      background: #faf8f3;
+      border: 1px solid var(--line);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 24px;
+      letter-spacing: -0.04em;
+      margin-bottom: 4px;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .hero-panel {
+      overflow: hidden;
+      position: relative;
+      min-height: 100%;
+      padding: 28px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8f3ea 100%);
+    }
+
+    .panel-badge {
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+
+    .mockup {
+      display: grid;
+      gap: 14px;
+      margin-top: 10px;
+    }
+
+    .mock-item {
+      padding: 18px;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid var(--line);
+    }
+
+    .mock-item small {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .mock-item strong {
+      font-size: 21px;
+      letter-spacing: -0.04em;
+    }
+
+    .section {
+      padding: 28px 0;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .section-head h2 {
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.1;
+      letter-spacing: -0.05em;
+    }
+
+    .section-head p {
+      max-width: 520px;
+      color: var(--muted);
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+
+    .card {
+      padding: 24px;
+    }
+
+    .pill {
+      display: inline-flex;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: #f3efe8;
+      color: var(--point-dark);
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    .card h3 {
+      font-size: 24px;
+      line-height: 1.15;
+      letter-spacing: -0.04em;
+      margin-bottom: 10px;
+    }
+
+    .card p,
+    .meta,
+    .article-card p,
+    .disclaimer,
+    .footer-box p {
+      color: var(--muted);
+    }
+
+    .feature-list,
+    .product-list,
+    .check-list {
+      display: grid;
+      gap: 10px;
+      margin: 18px 0 22px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .feature-list li,
+    .product-list li,
+    .check-list li {
+      display: flex;
+      gap: 10px;
+      align-items: start;
+      color: #3d3d3d;
+      font-size: 15px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      margin-top: 8px;
+      border-radius: 999px;
+      background: var(--warm);
+      flex: 0 0 auto;
+    }
+
+    .product-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 100%;
+    }
+
+    .product-top {
+      margin-bottom: 18px;
+    }
+
+    .product-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .rank {
+      min-width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      background: #f3efe8;
+      font-weight: 800;
+    }
+
+    .price {
+      margin-top: 16px;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .price small {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-top: 2px;
+      letter-spacing: 0;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .tag {
+      padding: 7px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: 12px;
+      color: #4f4f4f;
+      background: #fff;
+    }
+
+    .notice {
+      padding: 24px;
+      margin-top: 12px;
+    }
+
+    .notice h3 {
+      font-size: 22px;
+      letter-spacing: -0.04em;
+      margin-bottom: 10px;
+    }
+
+    .notice .check-list {
+      margin: 16px 0 0;
+    }
+
+    .articles {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .article-card {
+      padding: 24px;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .article-card h3 {
+      font-size: 22px;
+      line-height: 1.2;
+      letter-spacing: -0.04em;
+      margin: 14px 0 10px;
+    }
+
+    .article-link {
+      margin-top: 16px;
+      color: var(--point-dark);
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .faq {
+      display: grid;
+      gap: 12px;
+    }
+
+    details {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px 20px;
+      box-shadow: var(--shadow);
+    }
+
+    summary {
+      cursor: pointer;
+      list-style: none;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+    details p { margin-top: 12px; color: var(--muted); }
+
+    footer {
+      padding: 36px 0 54px;
+    }
+
+    .footer-box {
+      padding: 28px;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .footer-brand {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      margin-bottom: 8px;
+    }
+
+    .disclaimer {
+      font-size: 13px;
+      line-height: 1.7;
+      margin-top: 10px;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .footer-links a {
+      padding: 12px 16px;
+      border-radius: 999px;
+      background: #f3efe8;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 1100px) {
+      .hero-grid,
+      .grid-4,
+      .grid-3,
+      .articles {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 780px) {
+      .menu { display: none; }
+      .nav { min-height: 68px; }
+      .hero { padding-top: 28px; }
+      .hero-grid,
+      .grid-4,
+      .grid-3,
+      .articles,
+      .hero-stats,
+      .footer-box {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+      .hero-copy,
+      .hero-panel,
+      .card,
+      .notice,
+      .article-card,
+      .footer-box {
+        padding: 22px;
+      }
+      h1 { font-size: 40px; }
+      .hero-copy p { font-size: 16px; }
+      .section-head { align-items: start; flex-direction: column; }
+      .footer-links { margin-top: 6px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container nav">
+      <a href="#top" class="brand">
+        <span class="brand-mark"></span>
+        <span>WELLAGING LAB</span>
+      </a>
+      <nav class="menu">
+        <a href="#products">추천 아이템</a>
+        <a href="#routine">건강 루틴</a>
+        <a href="#articles">정보 콘텐츠</a>
+        <a href="#faq">자주 묻는 질문</a>
+      </nav>
+      <a class="nav-cta" href="#products">추천 보러가기</a>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow">시니어 웰에이징 큐레이션</div>
+          <h1>나이보다 늦게 늙는<br />건강한 생활 아이템 모음</h1>
+          <p>
+            과장된 치료 표현 없이, 일상 컨디션 관리와 활력 루틴에 초점을 맞춘
+            시니어 추천관입니다. 부모님 선물, 중장년 자기관리, 웰에이징 관심층에게
+            어울리는 제품과 정보를 한눈에 정리했습니다.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#products">쿠팡 추천 아이템 보기</a>
+            <a class="btn btn-secondary" href="#articles">건강 정보 먼저 읽기</a>
+          </div>
+          <div class="hero-stats">
+            <div class="stat">
+              <strong>50+</strong>
+              <span>중장년 타깃 문구 활용</span>
+            </div>
+            <div class="stat">
+              <strong>TOP 4</strong>
+              <span>핵심 카테고리 중심 구성</span>
+            </div>
+            <div class="stat">
+              <strong>1 Page</strong>
+              <span>광고형 랜딩 템플릿</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-panel">
+          <span class="panel-badge">브랜드 문구 예시</span>
+          <div class="mockup">
+            <div class="mock-item">
+              <small>메인 카피</small>
+              <strong>오늘의 활력, 내일의 루틴</strong>
+            </div>
+            <div class="mock-item">
+              <small>서브 카피</small>
+              <strong>잘 먹고, 잘 자고, 잘 걷는 웰에이징</strong>
+            </div>
+            <div class="mock-item">
+              <small>전환 버튼</small>
+              <strong>지금 쿠팡에서 확인하기</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="routine">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2>시니어 웰에이징 카테고리</h2>
+          </div>
+          <p>
+            “불로장생” 같은 자극적인 톤은 컨셉으로만 두고, 실제 페이지 문구는
+            활력, 균형, 일상관리, 웰에이징 중심으로 잡는 것이 안전합니다.
+          </p>
+        </div>
+
+        <div class="grid-4">
+          <article class="card">
+            <span class="pill">활력 루틴</span>
+            <h3>기초 영양 밸런스</h3>
+            <p>식사가 불규칙하거나 기본 영양 관리를 챙기고 싶은 분에게 어울리는 구성.</p>
+            <ul class="feature-list">
+              <li><span class="dot"></span><span>종합비타민/미네랄 중심 소개</span></li>
+              <li><span class="dot"></span><span>하루 1정, 쉬운 루틴 강조</span></li>
+              <li><span class="dot"></span><span>부모님 선물 포인트 연결</span></li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <span class="pill">눈 건강</span>
+            <h3>일상 속 편안한 시야 관리</h3>
+            <p>독서, 스마트폰, TV 시청 시간이 많은 중장년층을 위한 관심 카테고리.</p>
+            <ul class="feature-list">
+              <li><span class="dot"></span><span>루테인·지아잔틴 계열 정리</span></li>
+              <li><span class="dot"></span><span>복용 포인트와 보관법 요약</span></li>
+              <li><span class="dot"></span><span>가성비/프리미엄 구분 추천</span></li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <span class="pill">순환 케어</span>
+            <h3>가벼운 하루 컨디션</h3>
+            <p>걷기, 스트레칭, 수분 섭취 같은 생활 루틴과 함께 소개하기 좋은 영역.</p>
+            <ul class="feature-list">
+              <li><span class="dot"></span><span>오메가3 계열 관심 제품 연결</span></li>
+              <li><span class="dot"></span><span>식단과 함께 보는 정보형 구성</span></li>
+              <li><span class="dot"></span><span>중장년 친화적 톤 유지</span></li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <span class="pill">장 건강</span>
+            <h3>편안한 아침 루틴</h3>
+            <p>유산균, 식이습관, 물 섭취 등 일상형 콘텐츠와 가장 잘 맞는 추천 카테고리.</p>
+            <ul class="feature-list">
+              <li><span class="dot"></span><span>유산균 제품 비교형 콘텐츠</span></li>
+              <li><span class="dot"></span><span>냉장/실온 보관 포인트 정리</span></li>
+              <li><span class="dot"></span><span>정기구매 유도 문구 삽입 가능</span></li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="products">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2>추천 아이템 템플릿</h2>
+          </div>
+          <p>
+            아래 버튼의 <strong>href</strong> 값을 쿠팡파트너스 링크로 교체하면 바로 활용 가능합니다.
+            상품명과 가격, 요약 문구도 원하는 형태로 수정하면 됩니다.
+          </p>
+        </div>
+
+        <div class="grid-3">
+          <article class="card product-card">
+            <div class="product-top">
+              <div class="product-title">
+                <div>
+                  <span class="pill">베스트 루틴 01</span>
+                  <h3>종합비타민 포뮬러</h3>
+                </div>
+                <span class="rank">01</span>
+              </div>
+              <p>기본 영양 관리 중심의 대표 상품 영역. 입문자용 설명에 잘 어울립니다.</p>
+              <ul class="product-list">
+                <li><span class="dot"></span><span>하루 1정 루틴</span></li>
+                <li><span class="dot"></span><span>부모님 선물형 문구 활용 가능</span></li>
+                <li><span class="dot"></span><span>기초 영양 밸런스 카테고리 적합</span></li>
+              </ul>
+              <div class="tag-row">
+                <span class="tag">입문용</span>
+                <span class="tag">기본관리</span>
+                <span class="tag">선물추천</span>
+              </div>
+              <div class="price">29,900원 <small>가격은 예시입니다</small></div>
+            </div>
+            <a class="btn btn-primary" href="https://partners.coupang.com/" target="_blank" rel="noopener noreferrer sponsored">쿠팡에서 보기</a>
+          </article>
+
+          <article class="card product-card">
+            <div class="product-top">
+              <div class="product-title">
+                <div>
+                  <span class="pill">베스트 루틴 02</span>
+                  <h3>루테인 케어 제품</h3>
+                </div>
+                <span class="rank">02</span>
+              </div>
+              <p>눈 건강 관심층을 위한 비교형 섹션. 시니어 타깃 콘텐츠에서 반응이 좋은 편입니다.</p>
+              <ul class="product-list">
+                <li><span class="dot"></span><span>독서·TV 시청 습관과 연결하기 좋음</span></li>
+                <li><span class="dot"></span><span>가성비형/프리미엄형 분기 가능</span></li>
+                <li><span class="dot"></span><span>상세페이지 이동 CTA 강함</span></li>
+              </ul>
+              <div class="tag-row">
+                <span class="tag">눈 건강</span>
+                <span class="tag">중장년</span>
+                <span class="tag">비교추천</span>
+              </div>
+              <div class="price">34,500원 <small>가격은 예시입니다</small></div>
+            </div>
+            <a class="btn btn-primary" href="https://partners.coupang.com/" target="_blank" rel="noopener noreferrer sponsored">쿠팡에서 보기</a>
+          </article>
+
+          <article class="card product-card">
+            <div class="product-top">
+              <div class="product-title">
+                <div>
+                  <span class="pill">베스트 루틴 03</span>
+                  <h3>오메가3 데일리</h3>
+                </div>
+                <span class="rank">03</span>
+              </div>
+              <p>가벼운 운동과 식단 관리를 함께 소개할 때 자연스럽게 묶기 좋은 상품 영역.</p>
+              <ul class="product-list">
+                <li><span class="dot"></span><span>하루 섭취량 중심 정보 배치</span></li>
+                <li><span class="dot"></span><span>순환/활력 카테고리와 연결</span></li>
+                <li><span class="dot"></span><span>50대 이상 타깃 문구 활용 가능</span></li>
+              </ul>
+              <div class="tag-row">
+                <span class="tag">활력관리</span>
+                <span class="tag">데일리</span>
+                <span class="tag">가족추천</span>
+              </div>
+              <div class="price">25,800원 <small>가격은 예시입니다</small></div>
+            </div>
+            <a class="btn btn-primary" href="https://partners.coupang.com/" target="_blank" rel="noopener noreferrer sponsored">쿠팡에서 보기</a>
+          </article>
+        </div>
+
+        <div class="notice">
+          <h3>쿠팡파트너스 적용 체크포인트</h3>
+          <ul class="check-list">
+            <li><span class="dot"></span><span>버튼 링크를 본인 파트너스 링크로 교체하세요.</span></li>
+            <li><span class="dot"></span><span>페이지 하단에 “이 포스팅은 쿠팡파트너스 활동의 일환으로 일정 수수료를 제공받을 수 있습니다.” 문구를 넣으세요.</span></li>
+            <li><span class="dot"></span><span>질병 치료·예방처럼 보이는 직접적 표현은 피하고, 일상 건강관리 중심으로 작성하세요.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="articles">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2>정보형 콘텐츠 블록</h2>
+          </div>
+          <p>
+            검색 유입은 결국 글에서 옵니다. 상품만 올리기보다 카테고리별 정보 글을 함께 배치하면 클릭률이 좋아집니다.
+          </p>
+        </div>
+
+        <div class="articles">
+          <article class="article-card">
+            <div>
+              <span class="pill">콘텐츠 01</span>
+              <h3>50대 이후 기본 영양 관리는 어떻게 시작할까</h3>
+              <p>기초 영양, 식사 습관, 하루 루틴을 함께 묶어서 설명하기 좋은 정보형 글 템플릿.</p>
+            </div>
+            <a class="article-link" href="#">글 자세히 보기 →</a>
+          </article>
+
+          <article class="article-card">
+            <div>
+              <span class="pill">콘텐츠 02</span>
+              <h3>부모님 선물용 건강 아이템 고를 때 보는 기준</h3>
+              <p>선물형 카피와 추천형 CTA를 섞기 좋은 주제. 시즌 이벤트와도 잘 맞습니다.</p>
+            </div>
+            <a class="article-link" href="#">글 자세히 보기 →</a>
+          </article>
+
+          <article class="article-card">
+            <div>
+              <span class="pill">콘텐츠 03</span>
+              <h3>아침 루틴을 가볍게 만드는 장 건강 관리 포인트</h3>
+              <p>유산균, 식이섬유, 물 섭취를 함께 묶어 제품형 글과 정보형 글을 동시에 구성할 수 있습니다.</p>
+            </div>
+            <a class="article-link" href="#">글 자세히 보기 →</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="faq">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2>자주 묻는 질문</h2>
+          </div>
+          <p>광고형 랜딩이어도 기본적인 안내 문구와 신뢰 요소는 반드시 넣는 편이 좋습니다.</p>
+        </div>
+
+        <div class="faq">
+          <details open>
+            <summary>이 페이지는 직접 판매를 하나요?</summary>
+            <p>아니요. 이 템플릿은 추천형 랜딩페이지 구조입니다. 실제 구매는 외부 판매처로 연결되는 형태를 기준으로 만들었습니다.</p>
+          </details>
+          <details>
+            <summary>상품명은 어떻게 바꾸나요?</summary>
+            <p>상품 카드 안의 제목, 설명, 가격, 버튼 링크를 원하는 내용으로 수정하면 됩니다. 현재 들어간 문구는 모두 예시입니다.</p>
+          </details>
+          <details>
+            <summary>“불로장생” 표현을 그대로 써도 되나요?</summary>
+            <p>컨셉 키워드로는 가능하지만 실제 본문과 광고 문구는 웰에이징, 활력, 일상 건강관리 같은 표현으로 정리하는 편이 안전합니다.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-box">
+        <div>
+          <div class="footer-brand">WELLAGING LAB</div>
+          <p>시니어 웰에이징을 위한 추천형 콘텐츠 템플릿</p>
+          <p class="disclaimer">
+            본 페이지는 건강 관련 일반 정보 제공 및 상품 추천을 위한 예시 템플릿입니다.<br />
+            특정 질환의 진단, 치료, 예방을 위한 의료 정보로 해석되어서는 안 됩니다.<br />
+            이 포스팅은 쿠팡파트너스 활동의 일환으로 일정 수수료를 제공받을 수 있습니다.
+          </p>
+        </div>
+
+        <div class="footer-links">
+          <a href="#products">추천 아이템</a>
+          <a href="#articles">정보 콘텐츠</a>
+          <a href="#faq">이용 안내</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
