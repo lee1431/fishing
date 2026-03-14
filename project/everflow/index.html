@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EVERFLOW CONTENT HUB · Alternate UI</title>
+  <style>
+    :root {
+      --bg: #f3efe7;
+      --paper: #fffdf8;
+      --ink: #1e1d1a;
+      --muted: #6d685f;
+      --line: #ddd4c7;
+      --forest: #254736;
+      --sand: #d9b980;
+      --accent: #8c6a3d;
+      --shadow: 0 18px 40px rgba(42, 32, 18, 0.08);
+      --radius-xl: 30px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --max: 1240px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: linear-gradient(180deg, #f7f3eb 0%, #f0eadf 100%);
+      font-family: "Pretendard", "Noto Sans KR", system-ui, sans-serif;
+      line-height: 1.6;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+
+    .container {
+      width: min(calc(100% - 32px), var(--max));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(243, 239, 231, 0.78);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(30, 29, 26, 0.06);
+    }
+
+    .nav {
+      min-height: 78px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--forest), var(--sand));
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-mark::before,
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      background: rgba(255,255,255,0.85);
+      border-radius: 999px;
+    }
+
+    .brand-mark::before {
+      width: 18px;
+      height: 18px;
+      top: 7px;
+      right: 7px;
+    }
+
+    .brand-mark::after {
+      width: 24px;
+      height: 10px;
+      left: 9px;
+      bottom: 8px;
+      transform: rotate(-18deg);
+    }
+
+    .menu {
+      display: flex;
+      gap: 24px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .menu a:hover { color: var(--ink); }
+
+    .nav-cta {
+      min-height: 48px;
+      padding: 0 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: var(--forest);
+      color: #fff;
+      font-weight: 800;
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 28px 0 22px;
+    }
+
+    .editorial {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .frame,
+    .card,
+    .statement,
+    .sidebar-card,
+    .footer-box,
+    .partner-box {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .frame {
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+    }
+
+    .hero-main {
+      padding: 42px;
+      display: grid;
+      gap: 22px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.94)),
+        radial-gradient(circle at right top, rgba(217,185,128,0.14), transparent 28%);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(37,71,54,0.08);
+      color: var(--forest);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, h4, p { margin: 0; }
+
+    h1 {
+      font-size: clamp(38px, 6vw, 78px);
+      line-height: 0.98;
+      letter-spacing: -0.06em;
+      max-width: 780px;
+    }
+
+    .hero-sub {
+      max-width: 650px;
+      font-size: 18px;
+      color: var(--muted);
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .btn {
+      min-height: 54px;
+      padding: 0 22px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+      transition: transform .18s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: var(--forest); color: #fff; }
+    .btn-secondary { background: #f7f1e7; color: var(--ink); border: 1px solid var(--line); }
+
+    .ticker {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .ticker-item {
+      padding: 18px;
+      border-radius: 18px;
+      background: #faf6ef;
+      border: 1px solid var(--line);
+    }
+
+    .ticker-item strong {
+      display: block;
+      font-size: 24px;
+      letter-spacing: -0.04em;
+      margin-bottom: 4px;
+    }
+
+    .ticker-item span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .feature-band {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      border-top: 1px solid var(--line);
+    }
+
+    .feature-copy,
+    .feature-visual {
+      min-height: 240px;
+      padding: 28px 42px;
+    }
+
+    .feature-copy {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 12px;
+      border-right: 1px solid var(--line);
+      background: #fcf9f3;
+    }
+
+    .feature-copy h3 {
+      font-size: 30px;
+      line-height: 1.05;
+      letter-spacing: -0.05em;
+    }
+
+    .feature-copy p { color: var(--muted); }
+
+    .feature-visual {
+      position: relative;
+      background: linear-gradient(180deg, #dbe4d6 0%, #b8cab6 100%);
+      overflow: hidden;
+    }
+
+    .sun, .mount, .mount2, .ring, .pin, .dot1, .dot2, .dot3 {
+      position: absolute;
+    }
+
+    .sun {
+      width: 110px;
+      height: 110px;
+      border-radius: 999px;
+      background: rgba(255, 225, 160, 0.82);
+      top: 26px;
+      right: 34px;
+      box-shadow: 0 0 60px rgba(255,225,160,0.6);
+    }
+
+    .mount {
+      left: -10%;
+      right: -10%;
+      bottom: -10px;
+      height: 44%;
+      background: #557962;
+      border-top-left-radius: 50% 100%;
+      border-top-right-radius: 50% 100%;
+    }
+
+    .mount2 {
+      left: -10%;
+      right: 20%;
+      bottom: 30%;
+      height: 26%;
+      background: #6f9277;
+      border-top-left-radius: 50% 100%;
+      border-top-right-radius: 50% 100%;
+    }
+
+    .ring {
+      width: 180px;
+      height: 180px;
+      border-radius: 999px;
+      border: 2px dashed rgba(255,255,255,0.7);
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -45%);
+    }
+
+    .pin {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: var(--forest);
+      border: 5px solid rgba(255,255,255,0.9);
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -45%);
+      box-shadow: var(--shadow);
+    }
+
+    .dot1, .dot2, .dot3 {
+      width: 74px;
+      height: 74px;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.78);
+      border: 1px solid rgba(30,29,26,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: var(--forest);
+      box-shadow: var(--shadow);
+    }
+
+    .dot1 { left: 18%; top: 38%; }
+    .dot2 { right: 14%; top: 28%; }
+    .dot3 { left: 50%; bottom: 14%; transform: translateX(-50%); }
+
+    .sidebar {
+      display: grid;
+      gap: 18px;
+    }
+
+    .sidebar-card {
+      border-radius: var(--radius-xl);
+      padding: 26px;
+    }
+
+    .sidebar-card h3 {
+      font-size: 24px;
+      line-height: 1.12;
+      letter-spacing: -0.04em;
+      margin-bottom: 10px;
+    }
+
+    .sidebar-card p { color: var(--muted); }
+
+    .sidebar-list {
+      list-style: none;
+      padding: 0;
+      margin: 18px 0 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    .sidebar-list li {
+      display: flex;
+      gap: 10px;
+      align-items: start;
+      font-size: 15px;
+    }
+
+    .bullet {
+      width: 8px;
+      height: 8px;
+      margin-top: 8px;
+      border-radius: 999px;
+      background: var(--sand);
+      flex: 0 0 auto;
+    }
+
+    .section {
+      padding: 24px 0;
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .section-title h2 {
+      font-size: clamp(28px, 4vw, 46px);
+      line-height: 1.05;
+      letter-spacing: -0.05em;
+    }
+
+    .section-title p {
+      max-width: 560px;
+      color: var(--muted);
+    }
+
+    .statement {
+      border-radius: var(--radius-xl);
+      padding: 34px;
+      background: linear-gradient(135deg, #233d30, #355947);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .statement::after {
+      content: "";
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      border-radius: 999px;
+      right: -80px;
+      top: -70px;
+      background: rgba(255,255,255,0.08);
+    }
+
+    .statement .eyebrow {
+      background: rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.92);
+    }
+
+    .statement h2 {
+      font-size: clamp(30px, 4.4vw, 52px);
+      line-height: 1.1;
+      letter-spacing: -0.05em;
+      max-width: 900px;
+      margin-bottom: 14px;
+    }
+
+    .statement p {
+      max-width: 760px;
+      color: rgba(255,255,255,0.76);
+    }
+
+    .statement-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .btn-light { background: #fff; color: var(--forest); }
+    .btn-darkline { background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.16); }
+
+    .masonry {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr 0.95fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .card {
+      border-radius: var(--radius-lg);
+      padding: 22px;
+    }
+
+    .pill {
+      display: inline-flex;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(37,71,54,0.08);
+      color: var(--forest);
+      font-size: 12px;
+      font-weight: 900;
+      margin-bottom: 14px;
+    }
+
+    .card h3 {
+      font-size: 24px;
+      line-height: 1.12;
+      letter-spacing: -0.04em;
+      margin-bottom: 10px;
+    }
+
+    .card p { color: var(--muted); }
+
+    .thumb {
+      width: 100%;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(37,71,54,0.12), rgba(217,185,128,0.24));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--forest);
+      margin-bottom: 16px;
+      font-size: 34px;
+    }
+
+    .thumb.tall { min-height: 360px; }
+    .thumb.mid { min-height: 240px; }
+    .thumb.small { min-height: 180px; }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .tag {
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fcf8f1;
+      font-size: 12px;
+      color: #5d564c;
+    }
+
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .card-action {
+      display: inline-flex;
+      margin-top: 18px;
+      color: var(--forest);
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .partner-layout {
+      display: grid;
+      grid-template-columns: 0.82fr 1.18fr;
+      gap: 18px;
+    }
+
+    .partner-box {
+      border-radius: var(--radius-xl);
+      padding: 28px;
+    }
+
+    .partner-box h3 {
+      font-size: 30px;
+      line-height: 1.08;
+      letter-spacing: -0.05em;
+      margin-bottom: 10px;
+    }
+
+    .price-panel {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .price-item {
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: #faf6ef;
+      border: 1px solid var(--line);
+    }
+
+    .price-item strong {
+      display: block;
+      font-size: 17px;
+      margin-bottom: 4px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 14px;
+      font-weight: 800;
+      color: #4f4a42;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fffefb;
+      border-radius: 16px;
+      padding: 14px 16px;
+      font: inherit;
+      color: var(--ink);
+      outline: none;
+    }
+
+    textarea {
+      min-height: 144px;
+      resize: vertical;
+    }
+
+    .faq {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+    }
+
+    details {
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    summary {
+      cursor: pointer;
+      list-style: none;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+    details p { margin-top: 12px; color: var(--muted); }
+
+    footer {
+      padding: 36px 0 56px;
+    }
+
+    .footer-box {
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .footer-brand {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      margin-bottom: 8px;
+    }
+
+    .footer-box p {
+      color: var(--muted);
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .footer-links a {
+      padding: 12px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #faf6ef;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    @media (max-width: 1120px) {
+      .editorial,
+      .partner-layout,
+      .masonry,
+      .faq,
+      .feature-band,
+      .form-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .masonry > .card:first-child { grid-column: 1 / -1; }
+      .partner-layout > *:first-child { grid-column: 1 / -1; }
+      .feature-copy, .feature-visual { padding: 26px; }
+    }
+
+    @media (max-width: 780px) {
+      .menu { display: none; }
+      .nav { min-height: 68px; }
+      .editorial,
+      .partner-layout,
+      .masonry,
+      .faq,
+      .feature-band,
+      .ticker,
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero-main,
+      .feature-copy,
+      .feature-visual,
+      .sidebar-card,
+      .statement,
+      .card,
+      .partner-box,
+      .footer-box { padding: 22px; }
+      .section-title { flex-direction: column; align-items: start; }
+      h1 { font-size: 44px; }
+      .hero-sub { font-size: 16px; }
+      .feature-copy { border-right: none; border-bottom: 1px solid var(--line); }
+      .footer-box { display: grid; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container nav">
+      <a href="#top" class="brand">
+        <span class="brand-mark"></span>
+        <span>EVERFLOW</span>
+      </a>
+      <nav class="menu">
+        <a href="#showcase">쇼케이스</a>
+        <a href="#channels">채널</a>
+        <a href="#locals">로컬</a>
+        <a href="#partner">파트너</a>
+      </nav>
+      <a href="#partner" class="nav-cta">광고 문의</a>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="container editorial">
+        <div class="frame">
+          <div class="hero-main">
+            <span class="eyebrow">Everflow Local Media Platform</span>
+            <h1>지역 미디어 플랫폼을<br>조금 더 매거진처럼</h1>
+            <p class="hero-sub">
+              이번 버전은 기존 카드형보다 더 편집 디자인에 가까운 UI입니다.
+              메인 기사, 하이라이트 보드, 세로형 쇼케이스를 섞어 채널과 상점이 더 콘텐츠처럼 보이도록 구성했습니다.
+            </p>
+            <div class="hero-actions">
+              <a href="#showcase" class="btn btn-primary">새 UI 살펴보기</a>
+              <a href="#partner" class="btn btn-secondary">광고 등록 구조</a>
+            </div>
+            <div class="ticker">
+              <div class="ticker-item">
+                <strong>MAGAZINE</strong>
+                <span>콘텐츠 허브형 편집 구조</span>
+              </div>
+              <div class="ticker-item">
+                <strong>SHOWCASE</strong>
+                <span>세로형 카드와 기사형 배치</span>
+              </div>
+              <div class="ticker-item">
+                <strong>LOCAL</strong>
+                <span>채널과 상점을 같은 톤으로</span>
+              </div>
+            </div>
+          </div>
+          <div class="feature-band">
+            <div class="feature-copy">
+              <span class="eyebrow">Alternative Hero</span>
+              <h3>추천보다 발행에 가까운 화면</h3>
+              <p>광고가 전면에 드러나기보다, 좋은 지역 정보와 파트너를 선별해 소개하는 매체처럼 보이는 쪽에 초점을 맞췄습니다.</p>
+            </div>
+            <div class="feature-visual" aria-hidden="true">
+              <div class="sun"></div>
+              <div class="mount2"></div>
+              <div class="mount"></div>
+              <div class="ring"></div>
+              <div class="pin"></div>
+              <div class="dot1">▶</div>
+              <div class="dot2">⌂</div>
+              <div class="dot3">✦</div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="sidebar">
+          <div class="sidebar-card">
+            <span class="eyebrow">Why another UI</span>
+            <h3>같은 내용도 다른 구조면 분위기가 바뀝니다</h3>
+            <p>기존 버전이 브랜드형 랜딩이라면, 이번 버전은 큐레이션 매거진에 더 가깝습니다.</p>
+            <ul class="sidebar-list">
+              <li><span class="bullet"></span><span>상단 메인 기사형 히어로</span></li>
+              <li><span class="bullet"></span><span>세로형 쇼케이스 카드</span></li>
+              <li><span class="bullet"></span><span>광고도 에디토리얼처럼 노출</span></li>
+            </ul>
+          </div>
+          <div class="sidebar-card">
+            <span class="eyebrow">Suggested usage</span>
+            <h3>이런 경우에 잘 맞습니다</h3>
+            <ul class="sidebar-list">
+              <li><span class="bullet"></span><span>지역 매거진 느낌을 내고 싶을 때</span></li>
+              <li><span class="bullet"></span><span>광고 티를 조금 줄이고 싶을 때</span></li>
+              <li><span class="bullet"></span><span>유튜브/상점/브랜드를 한 화면에서 다룰 때</span></li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="statement">
+          <span class="eyebrow">Editorial Tone</span>
+          <h2>광고대행 페이지가 아니라<br>지역 안의 좋은 흐름을 발행하는 허브</h2>
+          <p>이 UI는 추천 채널과 지역 상호를 카드가 아닌 콘텐츠 조각처럼 보이게 만듭니다. 그래서 사용자가 더 자연스럽게 읽고, 파트너도 더 고급스럽게 보입니다.</p>
+          <div class="statement-actions">
+            <a href="#channels" class="btn btn-light">추천 채널</a>
+            <a href="#locals" class="btn btn-darkline">지역 상점</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="showcase">
+      <div class="container">
+        <div class="section-title">
+          <h2>쇼케이스형 메인 보드</h2>
+          <p>세로 카드, 중형 카드, 소형 카드를 섞어 한눈에 정보량이 많아 보이면서도 답답하지 않게 구성한 타입입니다.</p>
+        </div>
+
+        <div class="masonry">
+          <article class="card">
+            <div class="thumb tall">⌂</div>
+            <span class="pill">Featured Local</span>
+            <h3>이번 주 지역 하이라이트 공간</h3>
+            <p>로컬 카페, 문화 공간, 소규모 행사장처럼 이미지가 중요한 파트너를 크게 보여주는 자리입니다. 이 칸 하나만으로도 메인 시선이 꽤 강해집니다.</p>
+            <div class="tag-row">
+              <span class="tag">메인 노출</span>
+              <span class="tag">로컬 파트너</span>
+              <span class="tag">브랜드형</span>
+            </div>
+            <div class="meta">
+              <span>충주 · 주차 가능</span>
+              <span>상세 소개 연결</span>
+            </div>
+            <a href="#" class="card-action">상세 페이지 이동 →</a>
+          </article>
+
+          <div class="stack">
+            <article class="card">
+              <div class="thumb mid">▶</div>
+              <span class="pill">Channel Pick</span>
+              <h3>걷기와 건강 루틴 채널</h3>
+              <p>시니어, 여행, 운동 루틴 같은 채널을 기사형으로 소개하기 좋은 카드입니다.</p>
+              <div class="tag-row">
+                <span class="tag">유튜브</span>
+                <span class="tag">건강</span>
+              </div>
+              <a href="#" class="card-action">채널 보기 →</a>
+            </article>
+            <article class="card">
+              <span class="pill">Brand Story</span>
+              <h3>작은 브랜드도 이야기로 보이게</h3>
+              <p>상호명, 사진, 위치만 나열하는 대신 ‘왜 소개하는지’를 한 문단으로 써주면 훨씬 좋아 보입니다.</p>
+            </article>
+          </div>
+
+          <div class="stack">
+            <article class="card">
+              <div class="thumb small">✦</div>
+              <span class="pill">Project</span>
+              <h3>지역 행사 또는 프로젝트</h3>
+              <p>기간성 있는 홍보를 넣기 좋은 자리입니다.</p>
+              <a href="#" class="card-action">자세히 보기 →</a>
+            </article>
+            <article class="card">
+              <div class="thumb small">☕</div>
+              <span class="pill">Cafe Pick</span>
+              <h3>부모님과 가기 좋은 공간</h3>
+              <p>짧고 강한 추천형 문구를 넣는 곳입니다.</p>
+              <a href="#" class="card-action">상점 보기 →</a>
+            </article>
+            <article class="card">
+              <span class="pill">Mini Note</span>
+              <h3>로컬 큐레이션 메모</h3>
+              <p>운영자가 직접 쓰는 짧은 코멘트를 넣으면 플랫폼의 개성이 살아납니다.</p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="channels">
+      <div class="container">
+        <div class="section-title">
+          <h2>추천 채널 섹션</h2>
+          <p>이번 레이아웃은 채널 카드도 배너처럼 보이지 않고, 짧은 매거진 기사처럼 읽히는 구조로 잡았습니다.</p>
+        </div>
+
+        <div class="masonry">
+          <article class="card">
+            <div class="thumb tall">▶</div>
+            <span class="pill">Editorial Channel</span>
+            <h3>시니어 라이프 기록 채널</h3>
+            <p>여행, 걷기, 음식, 일상 루틴을 담은 채널을 깊이 있게 소개하는 큰 카드입니다. 대표 영상 하나를 상단에 배치해도 잘 어울립니다.</p>
+            <div class="tag-row">
+              <span class="tag">브이로그</span>
+              <span class="tag">시니어</span>
+              <span class="tag">로컬</span>
+            </div>
+            <a href="#" class="card-action">채널 방문 →</a>
+          </article>
+
+          <div class="stack">
+            <article class="card">
+              <div class="thumb small">⌘</div>
+              <span class="pill">Interview</span>
+              <h3>지역 사람 이야기 채널</h3>
+              <p>인터뷰형 채널이나 상점 인터뷰 콘텐츠에 잘 맞습니다.</p>
+            </article>
+            <article class="card">
+              <div class="thumb mid">♫</div>
+              <span class="pill">Lifestyle</span>
+              <h3>음악과 산책이 있는 채널</h3>
+              <p>조금 감성적인 채널도 이 UI에서는 꽤 자연스럽게 녹아듭니다.</p>
+              <a href="#" class="card-action">채널 방문 →</a>
+            </article>
+          </div>
+
+          <div class="stack">
+            <article class="card">
+              <span class="pill">Quick Pick</span>
+              <h3>이번 달 주목 채널</h3>
+              <p>짧은 소개와 링크 하나만 넣는 소형 슬롯입니다.</p>
+            </article>
+            <article class="card">
+              <div class="thumb small">✦</div>
+              <span class="pill">Sponsored</span>
+              <h3>파트너 채널 하이라이트</h3>
+              <p>광고 채널도 톤만 잘 맞추면 과하지 않게 보입니다.</p>
+              <a href="#" class="card-action">자세히 보기 →</a>
+            </article>
+            <article class="card">
+              <span class="pill">Operator Note</span>
+              <h3>운영자 코멘트</h3>
+              <p>“이 채널은 부모님 세대도 보기 편한 편” 같은 짧은 평을 넣어도 좋습니다.</p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="locals">
+      <div class="container">
+        <div class="section-title">
+          <h2>지역 상점 섹션</h2>
+          <p>상호를 단순 업체 목록처럼 보여주지 않고, 공간 추천과 사람 추천의 중간쯤으로 보이게 하는 방식입니다.</p>
+        </div>
+
+        <div class="masonry">
+          <article class="card">
+            <div class="thumb tall">⌂</div>
+            <span class="pill">Local Feature</span>
+            <h3>부모님과 들르기 좋은 조용한 공간</h3>
+            <p>이런 식의 큰 카드 하나가 있으면 지역 상점 섹션 전체 분위기가 정리됩니다. 사진이 좋을수록 훨씬 강하게 작동합니다.</p>
+            <div class="meta">
+              <span>충북 충주</span>
+              <span>예약 가능</span>
+            </div>
+            <a href="#" class="card-action">가게 정보 보기 →</a>
+          </article>
+
+          <div class="stack">
+            <article class="card">
+              <div class="thumb small">☕</div>
+              <span class="pill">Cafe</span>
+              <h3>햇빛 좋은 브런치 카페</h3>
+              <p>짧은 추천형 문구에 적합합니다.</p>
+            </article>
+            <article class="card">
+              <div class="thumb mid">♨</div>
+              <span class="pill">Tea House</span>
+              <h3>차와 대화가 어울리는 공간</h3>
+              <p>찻집, 한방카페, 힐링 공간 같은 카테고리에 잘 맞습니다.</p>
+              <a href="#" class="card-action">상세 보기 →</a>
+            </article>
+          </div>
+
+          <div class="stack">
+            <article class="card">
+              <span class="pill">Wellness Spot</span>
+              <h3>가벼운 운동 프로그램</h3>
+              <p>커뮤니티형 공간도 자연스럽게 배치 가능합니다.</p>
+            </article>
+            <article class="card">
+              <div class="thumb small">☘</div>
+              <span class="pill">Service</span>
+              <h3>중장년 맞춤 서비스 소개</h3>
+              <p>운동, 체험, 클래스, 건강관리형 매장도 넣을 수 있습니다.</p>
+              <a href="#" class="card-action">자세히 보기 →</a>
+            </article>
+            <article class="card">
+              <span class="pill">Local Memo</span>
+              <h3>짧은 지역 추천 메모</h3>
+              <p>운영자 개인 취향이 담긴 추천 한 줄을 넣는 작은 칸입니다.</p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="partner">
+      <div class="container">
+        <div class="section-title">
+          <h2>파트너 등록 레이아웃</h2>
+          <p>이번 UI는 폼까지 조금 더 잡지 스타일로 보이게 좌우 분할 형태로 구성했습니다.</p>
+        </div>
+
+        <div class="partner-layout">
+          <div class="partner-box">
+            <span class="eyebrow">Partner Packages</span>
+            <h3>광고도 패키지보다 지면처럼</h3>
+            <p>처음부터 복잡하게 가지 말고, 지면 하나를 빌리는 느낌으로 단순한 패키지를 보여주는 것이 더 좋습니다.</p>
+            <div class="price-panel">
+              <div class="price-item">
+                <strong>채널 소개 슬롯</strong>
+                <span>유튜브 또는 SNS 채널 카드 1칸</span>
+              </div>
+              <div class="price-item">
+                <strong>로컬 상점 소개 슬롯</strong>
+                <span>공간 사진 + 소개 문구 + 링크</span>
+              </div>
+              <div class="price-item">
+                <strong>메인 하이라이트 슬롯</strong>
+                <span>메인 보드의 큰 카드 노출</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="partner-box">
+            <div class="form-grid">
+              <div class="field">
+                <label for="name">담당자</label>
+                <input id="name" type="text" placeholder="이름을 입력하세요">
+              </div>
+              <div class="field">
+                <label for="brand">상호 / 채널명</label>
+                <input id="brand" type="text" placeholder="브랜드명을 입력하세요">
+              </div>
+              <div class="field">
+                <label for="contact">연락처</label>
+                <input id="contact" type="text" placeholder="연락 가능한 번호">
+              </div>
+              <div class="field">
+                <label for="type">홍보 유형</label>
+                <select id="type">
+                  <option>유튜브 채널</option>
+                  <option>지역 상점</option>
+                  <option>행사 / 프로젝트</option>
+                  <option>브랜드 소개</option>
+                </select>
+              </div>
+              <div class="field full">
+                <label for="link">링크</label>
+                <input id="link" type="text" placeholder="유튜브, 인스타그램, 홈페이지 링크">
+              </div>
+              <div class="field full">
+                <label for="message">소개글</label>
+                <textarea id="message" placeholder="어떤 파트너인지, 어떤 방식의 노출을 원하는지 적어주세요"></textarea>
+              </div>
+            </div>
+            <div class="hero-actions" style="margin-top:18px;">
+              <button class="btn btn-primary" type="button">문의 보내기</button>
+              <button class="btn btn-secondary" type="button">패키지 안내</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-title">
+          <h2>간단 안내</h2>
+          <p>이 대안 UI는 기존 랜딩형보다 더 편집된 느낌이 강합니다. 그래서 브랜드가 조금 더 성숙해 보입니다.</p>
+        </div>
+        <div class="faq">
+          <details open>
+            <summary>기존 버전과 가장 큰 차이는 무엇인가요?</summary>
+            <p>기존 버전이 깔끔한 브랜드형 랜딩이라면, 이번 버전은 매거진이나 큐레이션 미디어에 더 가까운 구조입니다.</p>
+          </details>
+          <details>
+            <summary>광고 느낌이 덜 나는 이유는 무엇인가요?</summary>
+            <p>모든 요소를 동일한 카드로 나열하지 않고, 큰 기사형 카드와 작은 메모형 카드를 섞었기 때문입니다.</p>
+          </details>
+          <details>
+            <summary>지역 하나를 먼저 시작할 때도 괜찮나요?</summary>
+            <p>오히려 좋습니다. 충주 같은 한 지역의 채널과 상점을 깊게 모으면 더 미디어다운 정체성이 생깁니다.</p>
+          </details>
+          <details>
+            <summary>다음 변형은 어떤 방향이 가능합니까?</summary>
+            <p>더 미니멀한 다크 UI, 신문형 레이아웃, 지도 중심 UI, 카드보다 리스트 중심 UI로도 확장할 수 있습니다.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-box">
+        <div>
+          <div class="footer-brand">EVERFLOW CONTENT HUB</div>
+          <p>지역 안의 좋은 흐름을 발행하는 편집형 플랫폼 UI</p>
+        </div>
+        <div class="footer-links">
+          <a href="#showcase">쇼케이스</a>
+          <a href="#channels">채널</a>
+          <a href="#locals">로컬</a>
+          <a href="#partner">파트너</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
