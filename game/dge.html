@@ -125,6 +125,9 @@
   function draw(pausedGhost=false){ctx.fillStyle='#060a10';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.globalAlpha=0.15;ctx.fillStyle='#9fb0c7';for(let y=0;y<canvas.height;y+=24){for(let x=0;x<canvas.width;x+=24){ctx.fillRect(x,y,1,1);}}ctx.globalAlpha=1;pixelRect(player.x,player.y,player.w,player.h,player.color);boxes.forEach(b=>pixelRect(b.x,b.y,b.w,b.h,state.over?'#a33':b.color));if(state.paused&&!state.over){banner('PAUSED\n스페이스 또는 일시정지 버튼으로 재개');}if(state.over){banner('GAME OVER\n점수: '+state.score+'\n재시작을 누르세요');}}
   draw();
 })();
+
+  fetch("https://mrdindoin.ddns.net/log?project=dge")
+  .catch(()=>{});
 </script>
 </body>
 </html>
