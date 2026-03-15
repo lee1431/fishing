@@ -523,7 +523,7 @@
   (function loop(now){ const dt=Math.min(0.033,(now-last)/1000); last=now; update(dt); render(); requestAnimationFrame(loop); })(performance.now());
 })();
 
-  fetch("https://mrdindoin.ddns.net/log?project=icefishing")
+  fetch("https://mrdindoin.ddns.net/logcnt/log?project=icefishing")
   .catch(()=>{});
 </script>
 </body>
