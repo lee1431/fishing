@@ -86,13 +86,21 @@ header{
 
 .item .count{
   position:absolute;
-  top:4px;
-  left:4px;
-  background:rgba(0,0,0,.65);
+  top:6px;
+  left:6px;
+  z-index:3;
+  min-width:22px;
+  height:22px;
+  padding:0 7px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(18,60,47,.9);
   color:#fff;
-  font-size:10px;
-  padding:2px 6px;
-  border-radius:3px;
+  font-size:11px;
+  line-height:1;
+  border-radius:999px;
+  font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
   pointer-events:none;
 }
 	
@@ -109,14 +117,14 @@ header{
 
 <section class="grid">
 
-	<a href="https://llsshh.com/emang.html" class="project-link" target="_blank" rel="noopener noreferrer" data-url="emang">
+	<a href="https://llsshh.com/emang.html" class="project-link" target="_blank" rel="noopener noreferrer" data-name="emang">
 		<div class="item">
 			<div class="count">0</div>
 			<img src="./emang.png" loading="lazy">
 			<div class="title">Emang</div>
 		</div>
 	</a>	
-	<a href="https://llsshh.com/windowup.html" class="project-link" target="_blank" rel="noopener noreferrer" data-url="windowup">
+	<a href="https://llsshh.com/windowup.html" class="project-link" target="_blank" rel="noopener noreferrer" data-name="windowup">
 		<div class="item">
 			<div class="count">0</div>
 			<img src="./windowup.png" loading="lazy">
@@ -130,14 +138,14 @@ header{
 			<div class="title">Small Picture</div>
 		</div>
 	</a>
-	<a href="https://llsshh.com/snail.html" class="project-link" target="_blank" rel="noopener noreferrer" data-url="snail">
+	<a href="https://llsshh.com/snail.html" class="project-link" target="_blank" rel="noopener noreferrer" data-name="snail">
 		<div class="item">
 			<div class="count">0</div>
 			<img src="./snail.png" loading="lazy">
 			<div class="title">Snail</div>
 		</div>
 	</a>
-	<a href="https://llsshh.com/utq.html" class="project-link" target="_blank" rel="noopener noreferrer" data-url="utq">
+	<a href="https://llsshh.com/utq.html" class="project-link" target="_blank" rel="noopener noreferrer" data-name="utq">
 		<div class="item">
 			<div class="count">0</div>
 			<img src="./utq.png" loading="lazy">
@@ -150,91 +158,91 @@ header{
 			<div class="title">Local Flow</div>
 		</div>
 	</a>
-	<a href="https://llsshh.com/game/swg.html" class="project-link" target="_blank" rel="noopener noreferrer" data-url="swg">
+	<a href="https://llsshh.com/game/swg.html" class="project-link" target="_blank" rel="noopener noreferrer" data-name="swg">
 		<div class="item">
 			<div class="count">0</div>
 			<img src="./game.png" loading="lazy">
 			<div class="title">Play</div>
 		</div>
 	</a>
-	<a href="https://llsshh.com/setimg.html" class="project-link" target="_blank" rel="noopener noreferrer" data-url="setimg">
+	<a href="https://llsshh.com/setimg.html" class="project-link" target="_blank" rel="noopener noreferrer" data-name="setimg">
 		<div class="item">
 			<div class="count">0</div>
 			<img src="./setimg.png" loading="lazy">
 			<div class="title">Get Img</div>
 		</div>
 	</a>
-	<a href="https://llsshh.com/lonelyisland.html" class="project-link" target="_blank" rel="noopener noreferrer" data-url="lonelyisland">
+	<a href="https://llsshh.com/lonelyisland.html" class="project-link" target="_blank" rel="noopener noreferrer" data-name="lonelyisland">
 		<div class="item">
 			<div class="count">0</div>
 			<img src="./img/li.png" loading="lazy">
 			<div class="title">Lonely Island</div>
 		</div>
 	</a>
-	<a href="https://llsshh.com/project/stsf" class="project-link" target="_blank" rel="noopener noreferrer" data-url="stsf">
+	<a href="https://llsshh.com/project/stsf" class="project-link" target="_blank" rel="noopener noreferrer" data-name="stsf">
 		<div class="item">
 			<div class="count">0</div>
 			<img src="./project/stsf/stsf.png" loading="lazy">
 			<div class="title">Fishing Logs</div>
 		</div>
 	</a>
-	<a href="https://llsshh.com/ipzil.html" class="project-link" target="_blank" rel="noopener noreferrer" data-url="ipzil">
+	<a href="https://llsshh.com/ipzil.html" class="project-link" target="_blank" rel="noopener noreferrer" data-name="ipzil">
 		<div class="item">
 			<div class="count">0</div>
 			<img src="./img/ipzil.png" loading="lazy">
 			<div class="title">ip zil</div>
 		</div>
 	</a>
-	<a href="https://llsshh.com/tools.html" class="project-link" target="_blank" rel="noopener noreferrer" data-url="moneyflow">
+	<a href="https://llsshh.com/tools.html" class="project-link" target="_blank" rel="noopener noreferrer" data-name="moneyflow">
 		<div class="item">
 			<div class="count">0</div>
 			<img src="./tools.png" loading="lazy">
 			<div class="title">MoUpZip</div>
 		</div>
 	</a>
-	<a href="https://llsshh.com/moneyflow.html" class="project-link" target="_blank" rel="noopener noreferrer" data-url="moneyflow">
+	<a href="https://llsshh.com/moneyflow.html" class="project-link" target="_blank" rel="noopener noreferrer" data-name="moneyflow">
 		<div class="item">
 			<div class="count">0</div>
 			<img src="./img/moneyflow.png" loading="lazy">
 			<div class="title">Money Flow</div>
 		</div>
 	</a>
-	<a href="https://llsshh.com/messenger.html" class="project-link" target="_blank" rel="noopener noreferrer" data-url="messenger">
+	<a href="https://llsshh.com/messenger.html" class="project-link" target="_blank" rel="noopener noreferrer" data-name="messenger">
 		<div class="item">
 			<div class="count">0</div>
 			<img src="./oi.png" loading="lazy">
 			<div class="title">MSG</div>
 		</div>
 	</a>
-	<a href="https://llsshh.com/entry/entry.html" class="project-link" target="_blank" rel="noopener noreferrer" data-url="entry">
+	<a href="https://llsshh.com/entry/entry.html" class="project-link" target="_blank" rel="noopener noreferrer" data-name="entry">
 		<div class="item">
 			<div class="count">0</div>
 			<img src="./entry/dot.png" loading="lazy">
 			<div class="title">Dot Gacha</div>
 		</div>
 	</a>
-	<a href="https://llsshh.com/gti.html" class="project-link" target="_blank" rel="noopener noreferrer" data-url="gti">
+	<a href="https://llsshh.com/gti.html" class="project-link" target="_blank" rel="noopener noreferrer" data-name="gti">
 		<div class="item">
 			<div class="count">0</div>
 			<img src="./gti.png" loading="lazy">
 			<div class="title">Get The Item</div>
 		</div>
 	</a>
-	<a href="https://llsshh.com/project/lol" class="project-link" target="_blank" rel="noopener noreferrer" data-url="lol">
+	<a href="https://llsshh.com/project/lol" class="project-link" target="_blank" rel="noopener noreferrer" data-name="lol">
 		<div class="item">
 			<div class="count">0</div>
 			<img src="./project/lol/lol.png" loading="lazy">
 			<div class="title">Lunatics of Liquidity</div>
 		</div>
 	</a>
-	<a href="https://llsshh.com/project/wellaging" class="project-link" target="_blank" rel="noopener noreferrer" data-url="wellaging">
+	<a href="https://llsshh.com/project/wellaging" class="project-link" target="_blank" rel="noopener noreferrer" data-name="wellaging">
 		<div class="item">
 			<div class="count">0</div>
 			<img src="./project/wellaging/wellaging.png" loading="lazy">
 			<div class="title">WellAging</div>
 		</div>
 	</a>
-	<a href="https://llsshh.com/project/everflow" class="project-link" target="_blank" rel="noopener noreferrer" data-url="everflow">
+	<a href="https://llsshh.com/project/everflow" class="project-link" target="_blank" rel="noopener noreferrer" data-name="everflow">
 		<div class="item">
 			<div class="count">0</div>
 			<img src="./project/everflow/everflow.png" loading="lazy">
@@ -272,32 +280,35 @@ fetch("https://mrdindoin.ddns.net/logcnt/log?project=index")
   .catch(()=>{});
 
 
-async function loadCounts(){
-
-  try{
-
+async function loadProjectCounts() {
+  try {
     const res = await fetch("https://mrdindoin.ddns.net/logcnt/counts/list");
-    const data = await res.json();
+    const list = await res.json();
 
-    document.querySelectorAll(".project-link").forEach(link => {
-
-      const key = link.dataset.url;
-      const countBox = link.querySelector(".count");
-
-      if(!countBox) return;
-
-      const count = data[key] || 0;
-      countBox.textContent = count;
-
+    const countMap = {};
+    list.forEach(item => {
+      countMap[item.name] = item.count;
     });
-
-  }catch(e){
-    console.log("count load fail");
+    document.querySelectorAll(".project-link").forEach(link => {
+      const name = link.dataset.name;
+      const countEl = link.querySelector(".count");
+      if (!countEl) return;
+      countEl.textContent = countMap[name] ?? 0;
+    });
+  } catch (error) {
+    console.error("카운트 로드 실패:", error);
   }
-
 }
-
-document.addEventListener("DOMContentLoaded", loadCounts);
+document.addEventListener("DOMContentLoaded", () => {
+  updateProjectCounter();
+  loadProjectCounts();
+  const observer = new MutationObserver(updateProjectCounter);
+  observer.observe(document.querySelector(".grid") || document.body, {
+    childList: true,
+    subtree: true
+  });
+});
+	
 	
 </script>
 
