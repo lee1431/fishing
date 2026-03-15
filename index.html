@@ -255,6 +255,9 @@ header{
 
 <script>
 
+fetch("https://mrdindoin.ddns.net/logcnt/log?project=index")
+  .catch(()=>{});
+
 function updateProjectCounter() {
 	const count = document.querySelectorAll('.item').length;
 	const el = document.getElementById('project-count');
@@ -276,10 +279,11 @@ window.addEventListener("scroll", () => {
 });
 	
 
-fetch("https://mrdindoin.ddns.net/logcnt/log?project=index")
-  .catch(()=>{});
-
-
+function updateProjectCounter() {
+  const count = document.querySelectorAll('.item').length;
+  const el = document.getElementById('project-count');
+  if (el) el.textContent = String(count);
+}
 async function loadProjectCounts() {
   try {
     const res = await fetch("https://mrdindoin.ddns.net/logcnt/counts/list");
@@ -295,20 +299,27 @@ async function loadProjectCounts() {
       if (!countEl) return;
       countEl.textContent = countMap[name] ?? 0;
     });
-  } catch (error) {
-    console.error("카운트 로드 실패:", error);
+  } catch (e) {
+    console.log("count load fail", e);
   }
 }
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener('DOMContentLoaded', () => {
   updateProjectCounter();
   loadProjectCounts();
+
   const observer = new MutationObserver(updateProjectCounter);
-  observer.observe(document.querySelector(".grid") || document.body, {
+  observer.observe(document.querySelector('.grid') || document.body, {
     childList: true,
     subtree: true
   });
 });
-	
+window.addEventListener("scroll", () => {
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 400) {
+    if (typeof loadMore === "function") loadMore();
+  }
+});
+
+
 	
 </script>
 
