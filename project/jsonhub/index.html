@@ -156,8 +156,8 @@
 <body>
   <div class="wrap">
     <section class="hero">
-      <h1>JSONHUB 테스트 클라이언트</h1>
-      <p>API를 잘 모르는 사람도 바로 테스트할 수 있게 만든 단일 HTML 파일입니다. 프로젝트명과 파일명(name)을 넣고 JSON 저장 / 불러오기 / 목록 조회 / 이미지 업로드를 눌러보면 됩니다.</p>
+      <h1>HTML은 그대로 두고, 데이터만 바꿔보기</h1>
+      <p>이 페이지는 초보가 직접 체험하도록 만든 JSONHUB 학습용 예제입니다. HTML 소스를 매번 수정하지 않고, 서버에 저장된 JSON 데이터를 바꿔서 화면 내용이 달라지는 흐름을 확인할 수 있습니다.</p>
       <div class="inline" style="margin-top:14px;">
         <div class="pill">API BASE: <span id="apiBaseText"></span></div>
         <div class="pill">현재 상태: <span id="healthText">확인 전</span></div>
@@ -166,7 +166,7 @@
 
     <div class="grid">
       <section class="card">
-        <h2>테스트 입력</h2>
+        <h2>1. JSON 데이터 저장 / 불러오기 체험</h2>
         <div class="cardBody">
           <div class="row">
             <label for="apiBase">API Base URL</label>
@@ -198,9 +198,20 @@
             <button id="btnFillExample" class="alt">예시 JSON 넣기</button>
           </div>
           <div class="tiny">
+            이 영역의 핵심은 <strong>HTML을 수정하는 대신 JSON 데이터를 수정</strong>하는 것입니다.<br>
             저장은 <code>POST /api/json/&lt;project&gt;/&lt;name&gt;</code><br>
             불러오기는 <code>GET /api/json/&lt;project&gt;/&lt;name&gt;</code><br>
             목록은 <code>GET /api/list/&lt;project&gt;</code>
+          </div>
+
+          <div class="sampleBlock">
+            <strong>처음 배우는 사람을 위한 설명</strong>
+            <div class="tiny" style="margin-top:10px;">
+              1) JSON 입력창에서 제목이나 설명을 바꿉니다.<br>
+              2) <b>JSON 저장</b>을 누르면 서버에 저장됩니다.<br>
+              3) <b>JSON 불러오기</b>를 누르면 서버 데이터를 다시 받아옵니다.<br>
+              4) 아래 미리보기가 바뀌면, 데이터와 화면이 연결된 것입니다.
+            </div>
           </div>
 
           <div class="sampleBlock">
@@ -244,7 +255,7 @@
 
     <div class="grid" style="margin-top:16px;">
       <section class="card">
-        <h2>이미지 업로드 테스트</h2>
+        <h2>2. 이미지 업로드 체험</h2>
         <div class="cardBody">
           <div class="row">
             <label for="uploadProject">upload project</label>
@@ -257,23 +268,60 @@
           <div class="btnRow">
             <button id="btnUpload" class="green">이미지 업로드</button>
           </div>
-          <div class="tiny">업로드는 <code>POST /api/upload/&lt;project&gt;</code> 입니다.</div>
+          <div class="tiny">업로드는 <code>POST /api/upload/&lt;project&gt;</code> 입니다. 업로드가 끝나면 아래에 <strong>실제 접근 가능한 전체 URL</strong>이 표시됩니다.</div>
+          <div class="sampleBlock">
+            <strong>업로드 결과</strong>
+            <div class="tiny" style="margin-top:10px;">이 URL을 복사해서 JSON의 <code>hero_image</code> 같은 항목에 넣으면, 서버에 업로드한 이미지를 화면에서 바로 사용할 수 있습니다.</div>
+            <div style="margin-top:12px;">
+              <div class="tiny" style="margin:0 0 6px;">Full URL</div>
+              <input id="uploadedFullUrl" readonly placeholder="업로드 후 전체 URL이 여기에 표시됩니다." />
+            </div>
+            <div style="margin-top:12px;">
+              <img id="uploadedPreview" alt="uploaded preview" style="max-width:240px; border-radius:14px; border:1px solid var(--line); display:none;" />
+            </div>
+          </div>
         </div>
       </section>
 
       <section class="card">
-        <h2>불러온 JSON을 HTML 태그에 넣는 예시</h2>
+        <h2>3. 폼으로 항목 추가하고 JSON 만들기</h2>
         <div class="cardBody">
-<pre>&lt;div id="titleBox"&gt;&lt;/div&gt;
-&lt;div id="subtitleBox"&gt;&lt;/div&gt;
-
-&lt;script&gt;
-async function exampleRender() {
-  const data = await getJson("demo", "main");
-  document.querySelector("#titleBox").textContent = data.title || "";
-  document.querySelector("#subtitleBox").textContent = data.subtitle || "";
-}
-&lt;/script&gt;</pre>
+<div class="row">
+            <label for="formTitle">title</label>
+            <input id="formTitle" placeholder="예: STANCE FishingLog HUD" />
+          </div>
+          <div class="row">
+            <label for="formSubtitle">subtitle</label>
+            <input id="formSubtitle" placeholder="예: 위치와 시간의 흐름을 담는 FishingLog HUD" />
+          </div>
+          <div class="row">
+            <label for="formDescription">description</label>
+            <input id="formDescription" placeholder="예: JSON 데이터 실험용 설명" />
+          </div>
+          <div class="row">
+            <label for="formTags">tags</label>
+            <input id="formTags" placeholder="쉼표로 구분 예: 충주,배스,새벽" />
+          </div>
+          <div class="row">
+            <label for="formHeroImage">hero_image</label>
+            <input id="formHeroImage" placeholder="이미지 전체 URL을 넣으세요" />
+          </div>
+          <div class="btnRow">
+            <button id="btnBuildJson" class="green">폼 값으로 JSON 만들기</button>
+            <button id="btnUseUploadedUrl" class="alt">업로드한 URL 넣기</button>
+          </div>
+          <div class="tiny">
+            직접 JSON 문법을 쓰기 어렵다면, 위 폼에 값을 넣고 <b>폼 값으로 JSON 만들기</b>를 누르면 자동으로 JSON 본문이 생성됩니다.
+          </div>
+          <div class="sampleBlock">
+<pre>{
+  "title": "문자열",
+  "subtitle": "문자열",
+  "description": "문자열",
+  "tags": ["태그1", "태그2"],
+  "hero_image": "이미지 전체 URL"
+}</pre>
+          </div>
         </div>
       </section>
     </div>
@@ -281,6 +329,9 @@ async function exampleRender() {
 
   <script>
     const $ = (sel) => document.querySelector(sel);
+
+    const DEFAULT_PROJECT = "ace8";
+    const DEFAULT_NAME = "stories";
 
     const EXAMPLE_JSON = {
       title: "STANCE FishingLog HUD",
@@ -295,11 +346,11 @@ async function exampleRender() {
     }
 
     function getProject() {
-      return $("#project").value.trim();
+      return $("#project").value.trim() || DEFAULT_PROJECT;
     }
 
     function getName() {
-      return $("#name").value.trim();
+      return $("#name").value.trim() || DEFAULT_NAME;
     }
 
     function print(obj, title = "") {
@@ -454,8 +505,13 @@ async function exampleRender() {
           alert("업로드할 파일을 먼저 선택하세요.");
           return;
         }
-        const result = await uploadFile($("#uploadProject").value.trim(), file);
-        print(result, "upload 응답");
+        const project = $("#uploadProject").value.trim() || getProject();
+        const result = await uploadFile(project, file);
+        const fullUrl = new URL(result.url, getApiBase()).href;
+        $("#uploadedFullUrl").value = fullUrl;
+        $("#uploadedPreview").src = fullUrl;
+        $("#uploadedPreview").style.display = "block";
+        print({ ...result, full_url: fullUrl }, "upload 응답");
       } catch (err) {
         print(err.message, "upload 에러");
       }
@@ -479,10 +535,47 @@ async function exampleRender() {
       }
     });
 
+    function buildJsonFromForm() {
+      const tags = $("#formTags").value.trim()
+        ? $("#formTags").value.split(",").map(s => s.trim()).filter(Boolean)
+        : [];
+
+      const data = {
+        title: $("#formTitle").value.trim(),
+        subtitle: $("#formSubtitle").value.trim(),
+        description: $("#formDescription").value.trim(),
+        tags,
+        hero_image: $("#formHeroImage").value.trim()
+      };
+
+      $("#jsonText").value = JSON.stringify(data, null, 2);
+      renderPreview(data);
+      print(data, "폼으로 만든 JSON");
+    }
+
+    $("#btnBuildJson").addEventListener("click", buildJsonFromForm);
+
+    $("#btnUseUploadedUrl").addEventListener("click", () => {
+      const url = $("#uploadedFullUrl").value.trim();
+      if (!url) {
+        alert("먼저 이미지를 업로드하세요.");
+        return;
+      }
+      $("#formHeroImage").value = url;
+    });
+
     function init() {
       $("#apiBaseText").textContent = getApiBase();
+      $("#project").value = DEFAULT_PROJECT;
+      $("#name").value = DEFAULT_NAME;
+      $("#uploadProject").value = DEFAULT_PROJECT;
       renderPreview(EXAMPLE_JSON);
       $("#jsonText").value = JSON.stringify(EXAMPLE_JSON, null, 2);
+      $("#formTitle").value = EXAMPLE_JSON.title;
+      $("#formSubtitle").value = EXAMPLE_JSON.subtitle;
+      $("#formDescription").value = EXAMPLE_JSON.description;
+      $("#formTags").value = EXAMPLE_JSON.tags.join(", ");
+      $("#formHeroImage").value = EXAMPLE_JSON.hero_image;
     }
 
     $("#apiBase").addEventListener("input", () => {
@@ -491,5 +584,249 @@ async function exampleRender() {
 
     init();
   </script>
+  
+  <!-- ============================= -->
+  <!-- 4. 리스트 데이터(stories) 만들기 -->
+  <!-- ============================= -->
+  <div class="wrap" style="margin-top:40px;">
+    <section class="card">
+      <h2>4. 여러 개의 항목(stories 배열) 만들기</h2>
+        <div class="tiny" style="margin-top:8px;">이제부터는 JSON 한 덩어리만 다루는 것이 아니라, 여러 개의 story를 추가해서 <b>간이 CMS</b>처럼 다뤄보는 단계입니다.</div>
+      <div class="cardBody">
+        <div class="tiny">
+          실제 서비스에서는 하나의 글이 아니라 여러 개의 항목이 필요합니다.<br>
+          아래 폼으로 <b>story</b> 항목을 계속 추가하면 JSON 배열이 만들어집니다.
+        </div>
+
+        <div class="row">
+          <label>story 제목</label>
+          <input id="storyTitle" placeholder="예: 충주호 새벽 낚시" />
+        </div>
+
+        <div class="row">
+          <label>story 설명</label>
+          <input id="storyDesc" placeholder="예: 안개가 짙고 입질 활발" />
+        </div>
+
+        <div class="row">
+          <label>이미지 URL</label>
+          <input id="storyImg" placeholder="이미지 전체 URL" />
+        </div>
+
+        <div class="btnRow">
+          <button id="btnAddStory" class="green">스토리 추가</button>
+          <button id="btnClearStories" class="alt">목록 초기화</button>
+        </div>
+
+        <div class="sampleBlock" style="margin-top:16px;">
+          <strong>현재 stories 배열</strong>
+          <pre id="storiesJson">[]</pre>
+        </div>
+
+        <div class="sampleBlock" style="margin-top:16px;">
+          <strong>5. stories 배열을 카드 UI로 자동 출력</strong>
+          <div class="tiny" style="margin-top:10px;">
+            아래 영역은 stories 배열을 읽어서 자동으로 카드 모양으로 그려주는 예시입니다.<br>
+            즉, <b>데이터가 늘어나면 화면도 자동으로 늘어납니다.</b>
+          </div>
+          <div id="storyPreviewList" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:14px;"></div>
+          <div class="tiny" style="margin-top:12px;">
+            카드 아래의 <b>수정</b> / <b>삭제</b> 버튼으로 간단한 CMS처럼 항목을 관리할 수 있습니다.
+          </div>
+        </div>
+
+        <div class="sampleBlock" style="margin-top:16px;">
+          <strong>6. stories 배열을 서버에 저장 / 불러오기</strong>
+          <div class="tiny" style="margin-top:10px;">
+            지금 만든 stories 배열을 JSONHUB에 저장하면, HTML 파일을 수정하지 않아도 서버 데이터를 바꿔서 화면을 바꿀 수 있습니다.
+          </div>
+          <div class="btnRow">
+            <button id="btnSaveStories" class="green">stories 배열 저장</button>
+            <button id="btnLoadStories" class="alt">stories 배열 불러오기</button>
+            <button id="btnLoadStoriesToEditor" class="alt">불러온 데이터로 위 JSON 에디터 채우기</button>
+          </div>
+        </div>
+
+        <div class="sampleBlock" style="margin-top:16px;">
+          <strong>7. 여기서 배우는 핵심 개념</strong>
+          <div class="tiny" style="margin-top:10px; line-height:1.7;">
+            <b>HTML</b>은 구조, <b>JSON</b>은 내용, <b>API</b>는 저장소, <b>JavaScript</b>는 연결입니다.<br>
+            아래 데모는 결국 <b>콘텐츠 관리 페이지(CMS)의 축소판</b>입니다.<br>
+            글 목록, 상품 목록, 낚시 로그, 갤러리, 포트폴리오가 전부 같은 원리로 움직인다는 점을 체험하는 것이 목적입니다.
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+<script>
+let stories = [];
+let editingStoryId = null;
+
+function escapeHtml(str){
+  return String(str ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function renderStoryCards(){
+  const box = document.querySelector("#storyPreviewList");
+  if(!box) return;
+
+  if(!stories.length){
+    box.innerHTML = '<div class="pill">아직 story 항목이 없습니다.</div>';
+    return;
+  }
+
+  box.innerHTML = stories.map(story => `
+    <div style="background:#09101f; border:1px solid #1e2943; border-radius:16px; overflow:hidden; position:relative;">
+      ${story.image ? `<img src="${escapeHtml(story.image)}" alt="" style="width:100%; height:160px; object-fit:cover; display:block;">` : `<div style="height:160px; display:flex; align-items:center; justify-content:center; color:#9fb0d9; background:#0f1730;">NO IMAGE</div>`}
+      <div style="padding:14px;">
+        <div style="font-size:18px; font-weight:800; letter-spacing:-.02em;">${escapeHtml(story.title)}</div>
+        <div style="margin-top:8px; color:#9fb0d9; line-height:1.5; min-height:44px;">${escapeHtml(story.description || "")}</div>
+        <div style="margin-top:10px; font-size:12px; color:#7f90b9; font-family:ui-monospace, monospace;">id: ${escapeHtml(story.id)}</div>
+        <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+          <button type="button" data-edit-story="${escapeHtml(story.id)}" class="alt" style="width:auto; padding:8px 12px;">수정</button>
+          <button type="button" data-delete-story="${escapeHtml(story.id)}" class="red" style="width:auto; padding:8px 12px;">삭제</button>
+        </div>
+      </div>
+    </div>
+  `).join("");
+
+  box.querySelectorAll("[data-edit-story]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-edit-story");
+      startEditStory(id);
+    });
+  });
+
+  box.querySelectorAll("[data-delete-story]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-delete-story");
+      deleteStory(id);
+    });
+  });
+}
+
+function renderStories(){
+  document.querySelector("#storiesJson").textContent = JSON.stringify(stories, null, 2);
+  renderStoryCards();
+}
+
+function resetStoryForm(){
+  document.querySelector("#storyTitle").value = "";
+  document.querySelector("#storyDesc").value = "";
+  document.querySelector("#storyImg").value = "";
+  editingStoryId = null;
+  const addBtn = document.querySelector("#btnAddStory");
+  if(addBtn) addBtn.textContent = "스토리 추가";
+}
+
+function startEditStory(id){
+  const item = stories.find(story => String(story.id) === String(id));
+  if(!item) return;
+
+  editingStoryId = String(item.id);
+  document.querySelector("#storyTitle").value = item.title || "";
+  document.querySelector("#storyDesc").value = item.description || "";
+  document.querySelector("#storyImg").value = item.image || "";
+  const addBtn = document.querySelector("#btnAddStory");
+  if(addBtn) addBtn.textContent = "스토리 수정 완료";
+  window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+}
+
+function deleteStory(id){
+  stories = stories.filter(story => String(story.id) !== String(id));
+  if(editingStoryId === String(id)) resetStoryForm();
+  renderStories();
+  print({ deleted_id: id, remaining: stories.length }, "story 삭제");
+}
+
+function buildStoriesPayload(){
+  return {
+    title: "stories demo",
+    subtitle: "stories 배열 저장 예제",
+    total: stories.length,
+    stories: stories
+  };
+}
+
+document.querySelector("#btnAddStory").addEventListener("click",()=>{
+  const title = document.querySelector("#storyTitle").value.trim();
+  const desc = document.querySelector("#storyDesc").value.trim();
+  const img = document.querySelector("#storyImg").value.trim();
+
+  if(!title){
+    alert("story 제목을 입력하세요");
+    return;
+  }
+
+  if(editingStoryId){
+    stories = stories.map(item => String(item.id) === String(editingStoryId)
+      ? { ...item, title,resetStoryForm();
+renderStories();sc, image: img }
+      : item
+    );
+    print({ updated_id: editingStoryId }, "story 수정");
+  }else{
+    const item = {
+      id: String(Date.now()),
+      title,
+      description: desc,
+      image: img
+    };
+    stories.push(item);
+    print(item, "story 추가");
+  }
+
+  renderStories();
+  resetStoryForm();
+});
+
+document.querySelector("#btnClearStories").addEventListener("click",()=>{
+  stories = [];
+  resetStoryForm();
+  renderStories();
+});
+
+document.querySelector("#btnSaveStories").addEventListener("click", async ()=>{
+  try{
+    const payload = buildStoriesPayload();
+    const result = await saveJson(getProject(), getName(), payload);
+    print({ request_payload: payload, response: result }, "stories 저장 응답");
+  }catch(err){
+    print(err.message, "stories 저장 에러");
+  }
+});
+
+document.querySelector("#btnLoadStories").addEventListener("click", async ()=>{
+  try{
+    const data = await getJson(getProject(), getName());
+    stories = Array.isArray(data.stories) ? data.stories : [];
+    resetStoryForm();
+    renderStories();
+    print(data, "stories 불러오기 응답");
+  }catch(err){
+    print(err.message, "stories 불러오기 에러");
+  }
+});
+
+document.querySelector("#btnLoadStoriesToEditor").addEventListener("click", async ()=>{
+  try{
+    const data = await getJson(getProject(), getName());
+    document.querySelector("#jsonText").value = JSON.stringify(data, null, 2);
+    renderPreview(data);
+    print(data, "에디터 채우기 응답");
+  }catch(err){
+    print(err.message, "에디터 채우기 에러");
+  }
+});
+
+renderStories();
+</script>
+
 </body>
 </html>
