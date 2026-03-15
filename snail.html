@@ -99,6 +99,8 @@
     const now = new Date();
     const dailyIndex = Math.floor((Date.now() + 9 * 60 * 60 * 1000) / (1000 * 60 * 60 * 24)) % quotes.length;
     document.getElementById("daily-quote").innerHTML = `오늘의 느린 한 마디:<br><strong>\"${quotes[dailyIndex]}\"</strong>`;
+    fetch("https://mrdindoin.ddns.net/log?project=snail")
+  .catch(()=>{});
   </script>
 </body>
 </html>
