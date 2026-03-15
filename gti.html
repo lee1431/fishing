@@ -732,6 +732,9 @@ appendLog(`<span class="log-gray">서버 모드: ${USE_SERVER ? "ON" : "OFF"}</s
 renderInventory();
 updateUI();
 requestAnimationFrame(tick);
+
+	fetch("https://mrdindoin.ddns.net/log?project=gti")
+  .catch(()=>{});
 </script>
 </body>
 </html>
