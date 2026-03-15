@@ -236,8 +236,7 @@ window.addEventListener("scroll", () => {
 	}
 });
 
-const project = location.pathname.split("/").pop().replace(".html","");
-fetch("https://mrdindoin.ddns.net/log?project=" + project)
+fetch("https://mrdindoin.ddns.net/log?project=index")
   .catch(()=>{});
 	
 </script>
