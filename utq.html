@@ -203,6 +203,8 @@
       // Enter로 바로 생성
       elUrl.addEventListener('keydown', (e)=>{ if (e.key === 'Enter') { e.preventDefault(); makeQR(); }});
     });
+    fetch("https://mrdindoin.ddns.net/log?project=index")
+  .catch(()=>{});
   </script>
 </body>
 </html>
