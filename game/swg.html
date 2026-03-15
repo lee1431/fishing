@@ -222,7 +222,8 @@ renderNotices();
 renderGames();
 renderPlayCounts();
 setInterval(renderPlayCounts, 60000);
-  
+  fetch("https://mrdindoin.ddns.net/log?project=swg")
+  .catch(()=>{});
 </script>
   <script src="./js/luna2.js"></script>
 </body>
