@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JSONHUB 테스트 클라이언트</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#121a31;
+      --panel-2:#0f172b;
+      --line:#24304f;
+      --text:#edf2ff;
+      --muted:#9fb0d9;
+      --accent:#7c9cff;
+      --accent-2:#4ee3c1;
+      --danger:#ff7d7d;
+      --ok:#84f0a8;
+      --radius:18px;
+      --shadow:0 14px 40px rgba(0,0,0,.28);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:linear-gradient(180deg,#0a0f1d,#0c1324 50%, #0a1020);
+    }
+    .wrap{
+      width:min(1200px, calc(100vw - 32px));
+      margin:24px auto 48px;
+    }
+    .hero{
+      margin-bottom:18px;
+      padding:24px;
+      border:1px solid var(--line);
+      border-radius:24px;
+      background:linear-gradient(180deg, rgba(124,156,255,.14), rgba(78,227,193,.06));
+      box-shadow:var(--shadow);
+    }
+    .hero h1{margin:0 0 8px; font-size:28px; letter-spacing:-.03em;}
+    .hero p{margin:0; color:var(--muted); line-height:1.6}
+    .grid{
+      display:grid;
+      grid-template-columns:1.1fr .9fr;
+      gap:16px;
+      align-items:start;
+    }
+    .card{
+      background:linear-gradient(180deg,var(--panel),var(--panel-2));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card h2{
+      margin:0;
+      padding:16px 18px;
+      border-bottom:1px solid var(--line);
+      font-size:18px;
+      letter-spacing:-.02em;
+    }
+    .cardBody{padding:16px 18px 18px}
+    .row{display:grid; grid-template-columns:140px 1fr; gap:10px; align-items:center; margin-bottom:10px}
+    .row label{color:var(--muted); font-size:14px}
+    input, textarea, select{
+      width:100%;
+      border:1px solid #314061;
+      background:#0b1327;
+      color:var(--text);
+      border-radius:12px;
+      padding:11px 12px;
+      font:inherit;
+      outline:none;
+    }
+    input:focus, textarea:focus, select:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(124,156,255,.15);
+    }
+    textarea{min-height:180px; resize:vertical; font-family:var(--mono); font-size:13px; line-height:1.5}
+    .btnRow{display:flex; flex-wrap:wrap; gap:10px; margin-top:14px}
+    button{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      border-radius:12px;
+      padding:11px 14px;
+      color:white;
+      background:linear-gradient(180deg, #6f90ff, #4d6fe3);
+      font-weight:700;
+      letter-spacing:.01em;
+    }
+    button.alt{background:linear-gradient(180deg, #2b385d, #1c2642)}
+    button.green{background:linear-gradient(180deg, #3cc7a2, #239d7c)}
+    button.red{background:linear-gradient(180deg, #ff8f8f, #e56363)}
+    .tiny{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.5;
+      margin-top:10px;
+    }
+    .inline{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .pill{
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:8px 10px;
+      background:rgba(255,255,255,.04);
+      color:var(--muted);
+      font-family:var(--mono);
+      font-size:12px;
+    }
+    pre{
+      margin:0;
+      white-space:pre-wrap;
+      word-break:break-word;
+      font-family:var(--mono);
+      font-size:13px;
+      line-height:1.6;
+      color:#dbe6ff;
+    }
+    .console{
+      min-height:220px;
+      max-height:720px;
+      overflow:auto;
+      background:#09101f;
+      border:1px solid #1e2943;
+      border-radius:14px;
+      padding:14px;
+    }
+    .statusOk{color:var(--ok)}
+    .statusErr{color:var(--danger)}
+    .sampleBlock{
+      background:#09101f;
+      border:1px solid #1e2943;
+      border-radius:14px;
+      padding:14px;
+      margin-top:12px;
+    }
+    .split{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    @media (max-width: 920px){
+      .grid{grid-template-columns:1fr}
+      .row{grid-template-columns:1fr}
+      .wrap{width:min(100vw - 20px, 1200px); margin:10px auto 24px}
+      .hero{padding:18px}
+      .split{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>JSONHUB 테스트 클라이언트</h1>
+      <p>API를 잘 모르는 사람도 바로 테스트할 수 있게 만든 단일 HTML 파일입니다. 프로젝트명과 파일명(name)을 넣고 JSON 저장 / 불러오기 / 목록 조회 / 이미지 업로드를 눌러보면 됩니다.</p>
+      <div class="inline" style="margin-top:14px;">
+        <div class="pill">API BASE: <span id="apiBaseText"></span></div>
+        <div class="pill">현재 상태: <span id="healthText">확인 전</span></div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2>테스트 입력</h2>
+        <div class="cardBody">
+          <div class="row">
+            <label for="apiBase">API Base URL</label>
+            <input id="apiBase" value="https://mrdindoin.ddns.net/jsonhub" />
+          </div>
+          <div class="row">
+            <label for="project">project</label>
+            <input id="project" value="demo" placeholder="예: stsf" />
+          </div>
+          <div class="row">
+            <label for="name">name</label>
+            <input id="name" value="main" placeholder="예: hud 또는 main" />
+          </div>
+          <div class="row">
+            <label for="jsonText">JSON 본문</label>
+            <textarea id="jsonText">{
+  "title": "STANCE FishingLog HUD",
+  "subtitle": "위치와 시간의 흐름을 담는 FishingLog HUD",
+  "description": "테스트 저장용 JSON",
+  "tags": ["충주", "피싱", "테스트"],
+  "hero_image": "https://llsshh.com/img/stsf_logo_light.png"
+}</textarea>
+          </div>
+          <div class="btnRow">
+            <button id="btnHealth" class="alt">1. health 확인</button>
+            <button id="btnSave" class="green">2. JSON 저장</button>
+            <button id="btnLoad">3. JSON 불러오기</button>
+            <button id="btnList" class="alt">4. project 목록 조회</button>
+            <button id="btnFillExample" class="alt">예시 JSON 넣기</button>
+          </div>
+          <div class="tiny">
+            저장은 <code>POST /api/json/&lt;project&gt;/&lt;name&gt;</code><br>
+            불러오기는 <code>GET /api/json/&lt;project&gt;/&lt;name&gt;</code><br>
+            목록은 <code>GET /api/list/&lt;project&gt;</code>
+          </div>
+
+          <div class="sampleBlock">
+            <strong>화면 반영 미리보기</strong>
+            <div class="split" style="margin-top:12px;">
+              <div>
+                <div class="tiny" style="margin:0 0 6px;">title</div>
+                <div id="previewTitle" style="font-size:20px; font-weight:800; letter-spacing:-.02em;">-</div>
+              </div>
+              <div>
+                <div class="tiny" style="margin:0 0 6px;">subtitle</div>
+                <div id="previewSubtitle" style="color:var(--muted);">-</div>
+              </div>
+            </div>
+            <div style="margin-top:14px;">
+              <div class="tiny" style="margin:0 0 6px;">description</div>
+              <div id="previewDescription">-</div>
+            </div>
+            <div style="margin-top:14px;">
+              <div class="tiny" style="margin:0 0 6px;">tags</div>
+              <div id="previewTags" class="inline"></div>
+            </div>
+            <div style="margin-top:14px;">
+              <div class="tiny" style="margin:0 0 6px;">hero_image</div>
+              <img id="previewImage" alt="preview" style="max-width:220px; border-radius:14px; border:1px solid var(--line); display:none;" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>결과 / 응답</h2>
+        <div class="cardBody">
+          <div class="btnRow" style="margin-top:0; margin-bottom:12px;">
+            <button id="btnClearOutput" class="red">출력 지우기</button>
+          </div>
+          <div class="console"><pre id="output"></pre></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="grid" style="margin-top:16px;">
+      <section class="card">
+        <h2>이미지 업로드 테스트</h2>
+        <div class="cardBody">
+          <div class="row">
+            <label for="uploadProject">upload project</label>
+            <input id="uploadProject" value="demo" />
+          </div>
+          <div class="row">
+            <label for="uploadFile">파일 선택</label>
+            <input id="uploadFile" type="file" accept=".png,.jpg,.jpeg,.webp,.gif,image/*" />
+          </div>
+          <div class="btnRow">
+            <button id="btnUpload" class="green">이미지 업로드</button>
+          </div>
+          <div class="tiny">업로드는 <code>POST /api/upload/&lt;project&gt;</code> 입니다.</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>불러온 JSON을 HTML 태그에 넣는 예시</h2>
+        <div class="cardBody">
+<pre>&lt;div id="titleBox"&gt;&lt;/div&gt;
+&lt;div id="subtitleBox"&gt;&lt;/div&gt;
+
+&lt;script&gt;
+async function exampleRender() {
+  const data = await getJson("demo", "main");
+  document.querySelector("#titleBox").textContent = data.title || "";
+  document.querySelector("#subtitleBox").textContent = data.subtitle || "";
+}
+&lt;/script&gt;</pre>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const $ = (sel) => document.querySelector(sel);
+
+    const EXAMPLE_JSON = {
+      title: "STANCE FishingLog HUD",
+      subtitle: "위치와 시간의 흐름을 담는 FishingLog HUD",
+      description: "JSONHUB 테스트용 샘플 데이터입니다.",
+      tags: ["stance", "fishing", "hud"],
+      hero_image: "https://llsshh.com/img/stsf_logo_light.png"
+    };
+
+    function getApiBase() {
+      return $("#apiBase").value.trim().replace(/\/$/, "");
+    }
+
+    function getProject() {
+      return $("#project").value.trim();
+    }
+
+    function getName() {
+      return $("#name").value.trim();
+    }
+
+    function print(obj, title = "") {
+      const out = $("#output");
+      const stamp = new Date().toLocaleString("ko-KR");
+      const prefix = title ? `[${stamp}] ${title}\n` : `[${stamp}]\n`;
+      const body = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
+      out.textContent = prefix + body + "\n\n" + out.textContent;
+    }
+
+    function setStatus(text, ok = true) {
+      const el = $("#healthText");
+      el.textContent = text;
+      el.className = ok ? "statusOk" : "statusErr";
+    }
+
+    function parseJsonText() {
+      try {
+        return JSON.parse($("#jsonText").value);
+      } catch (err) {
+        throw new Error("JSON 문법이 잘못되었습니다: " + err.message);
+      }
+    }
+
+    async function requestJson(url, options = {}) {
+      const res = await fetch(url, options);
+      const text = await res.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = { raw: text };
+      }
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status} ${JSON.stringify(data)}`);
+      }
+      return data;
+    }
+
+    async function healthCheck() {
+      const base = getApiBase();
+      const data = await requestJson(`${base}/health`);
+      return data;
+    }
+
+    async function saveJson(project, name, payload) {
+      const base = getApiBase();
+      return await requestJson(`${base}/api/json/${encodeURIComponent(project)}/${encodeURIComponent(name)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    async function getJson(project, name) {
+      const base = getApiBase();
+      return await requestJson(`${base}/api/json/${encodeURIComponent(project)}/${encodeURIComponent(name)}`, {
+        method: "GET",
+        cache: "no-store"
+      });
+    }
+
+    async function listJson(project) {
+      const base = getApiBase();
+      return await requestJson(`${base}/api/list/${encodeURIComponent(project)}`);
+    }
+
+    async function uploadFile(project, file) {
+      const base = getApiBase();
+      const fd = new FormData();
+      fd.append("file", file);
+      return await requestJson(`${base}/api/upload/${encodeURIComponent(project)}`, {
+        method: "POST",
+        body: fd
+      });
+    }
+
+    function renderPreview(data) {
+      $("#previewTitle").textContent = data.title || "-";
+      $("#previewSubtitle").textContent = data.subtitle || "-";
+      $("#previewDescription").textContent = data.description || "-";
+
+      const tagBox = $("#previewTags");
+      tagBox.innerHTML = "";
+      const tags = Array.isArray(data.tags) ? data.tags : [];
+      if (!tags.length) {
+        tagBox.innerHTML = '<span class="pill">태그 없음</span>';
+      } else {
+        tags.forEach(tag => {
+          const span = document.createElement("span");
+          span.className = "pill";
+          span.textContent = `#${tag}`;
+          tagBox.appendChild(span);
+        });
+      }
+
+      const img = $("#previewImage");
+      if (data.hero_image) {
+        img.src = data.hero_image;
+        img.style.display = "block";
+      } else {
+        img.removeAttribute("src");
+        img.style.display = "none";
+      }
+    }
+
+    $("#btnHealth").addEventListener("click", async () => {
+      try {
+        const data = await healthCheck();
+        setStatus("정상 연결", true);
+        print(data, "health 응답");
+      } catch (err) {
+        setStatus("연결 실패", false);
+        print(err.message, "health 에러");
+      }
+    });
+
+    $("#btnSave").addEventListener("click", async () => {
+      try {
+        const payload = parseJsonText();
+        const result = await saveJson(getProject(), getName(), payload);
+        print(result, "save 응답");
+      } catch (err) {
+        print(err.message, "save 에러");
+      }
+    });
+
+    $("#btnLoad").addEventListener("click", async () => {
+      try {
+        const data = await getJson(getProject(), getName());
+        $("#jsonText").value = JSON.stringify(data, null, 2);
+        renderPreview(data);
+        print(data, "load 응답");
+      } catch (err) {
+        print(err.message, "load 에러");
+      }
+    });
+
+    $("#btnList").addEventListener("click", async () => {
+      try {
+        const data = await listJson(getProject());
+        print(data, "list 응답");
+      } catch (err) {
+        print(err.message, "list 에러");
+      }
+    });
+
+    $("#btnUpload").addEventListener("click", async () => {
+      try {
+        const file = $("#uploadFile").files[0];
+        if (!file) {
+          alert("업로드할 파일을 먼저 선택하세요.");
+          return;
+        }
+        const result = await uploadFile($("#uploadProject").value.trim(), file);
+        print(result, "upload 응답");
+      } catch (err) {
+        print(err.message, "upload 에러");
+      }
+    });
+
+    $("#btnFillExample").addEventListener("click", () => {
+      $("#jsonText").value = JSON.stringify(EXAMPLE_JSON, null, 2);
+      renderPreview(EXAMPLE_JSON);
+    });
+
+    $("#btnClearOutput").addEventListener("click", () => {
+      $("#output").textContent = "";
+    });
+
+    $("#jsonText").addEventListener("input", () => {
+      try {
+        const data = parseJsonText();
+        renderPreview(data);
+      } catch {
+        // 입력 중 에러는 무시
+      }
+    });
+
+    function init() {
+      $("#apiBaseText").textContent = getApiBase();
+      renderPreview(EXAMPLE_JSON);
+      $("#jsonText").value = JSON.stringify(EXAMPLE_JSON, null, 2);
+    }
+
+    $("#apiBase").addEventListener("input", () => {
+      $("#apiBaseText").textContent = getApiBase();
+    });
+
+    init();
+  </script>
+</body>
+</html>
