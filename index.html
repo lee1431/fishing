@@ -84,6 +84,7 @@ header{
   opacity:1;
 }
 </style>
+	
 </head>
 
 <body>
@@ -234,6 +235,10 @@ window.addEventListener("scroll", () => {
 		loadMore();
 	}
 });
+
+const project = location.pathname.split("/").pop().replace(".html","");
+fetch("https://mrdindoin.ddns.net/log?project=" + project)
+  .catch(()=>{});
 	
 </script>
 
