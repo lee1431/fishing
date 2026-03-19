@@ -758,6 +758,23 @@
         font-size: 24px;
       }
     }
+
+    .winner-email.is-stepping {
+      animation: winnerStepPop 0.28s ease;
+    }
+    
+    @keyframes winnerStepPop {
+      0% {
+        transform: scale(0.96);
+        opacity: 0.55;
+        filter: blur(2px);
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+        filter: blur(0);
+      }
+    }
   </style>
 </head>
 <body>
@@ -1010,20 +1027,69 @@
       }
     }
 
-    function typeWinnerEmail(email) {
+    function parseMaskedEmail(maskedEmail) {
+      const safe = String(maskedEmail || "-");
+    
+      if (!safe.includes("@")) {
+        return {
+          visibleHead: safe,
+          maskedPart: "",
+          domain: ""
+        };
+      }
+    
+      const [local, domain] = safe.split("@", 2);
+    
+      const visibleHeadMatch = local.match(/^[^*]+/);
+      const maskedPartMatch = local.match(/\*+/);
+    
+      const visibleHead = visibleHeadMatch ? visibleHeadMatch[0] : "";
+      const maskedPart = maskedPartMatch ? maskedPartMatch[0] : "";
+    
+      return {
+        visibleHead,
+        maskedPart,
+        domain
+      };
+    }
+    
+    function typeWinnerEmail(maskedEmail) {
       stopWinnerTyping();
-      const text = String(email || "-");
+    
+      const { visibleHead, maskedPart, domain } = parseMaskedEmail(maskedEmail);
+    
+      const steps = [];
+    
+      if (domain) {
+        steps.push(domain);
+        steps.push(`@${domain}`);
+      }    
+      if (maskedPart) {
+        steps.push(`${maskedPart}@${domain}`);
+      }    
+      if (visibleHead) {
+        steps.push(`${visibleHead}${maskedPart}@${domain}`);
+      }    
+      if (steps.length === 0) {
+        steps.push(String(maskedEmail || "-"));
+      }    
       let index = 0;
       winnerEmailEl.textContent = "";
-
+    
       winnerTypingTimer = setInterval(() => {
+        winnerEmailEl.classList.remove("is-stepping");
+        void winnerEmailEl.offsetWidth;
+    
+        winnerEmailEl.textContent = steps[index];
+        winnerEmailEl.classList.add("is-stepping");
+    
         index += 1;
-        winnerEmailEl.textContent = text.slice(0, index);
-        if (index >= text.length) {
+    
+        if (index >= steps.length) {
           clearInterval(winnerTypingTimer);
           winnerTypingTimer = null;
         }
-      }, 55);
+      }, 420);
     }
 
     function renderEntryMode(data) {
