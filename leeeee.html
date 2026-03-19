@@ -223,7 +223,7 @@
         0 0 0 8px rgba(111, 198, 171, 0.08),
         0 0 18px rgba(111, 198, 171, 0.38);
       transform: translate(-50%, -50%);
-      transition: transform 0.35s ease, opacity 0.35s ease;
+      transition: transform 0.35s ease, opacity 0.35s ease, box-shadow 0.35s ease;
     }
 
     .orbit-dot.small {
@@ -233,6 +233,33 @@
       box-shadow:
         0 0 0 6px rgba(111, 198, 171, 0.06),
         0 0 14px rgba(111, 198, 171, 0.22);
+    }
+
+    .system.mode-drawing .orbit-dot {
+      animation: nodePulse 0.85s ease-in-out infinite alternate;
+    }
+
+    .system.mode-drawing .orbit-dot:nth-child(2n) {
+      animation-duration: 0.7s;
+    }
+
+    .system.mode-drawing .orbit-dot:nth-child(3n) {
+      animation-duration: 1.05s;
+    }
+
+    @keyframes nodePulse {
+      from {
+        opacity: 0.55;
+        box-shadow:
+          0 0 0 8px rgba(111, 198, 171, 0.04),
+          0 0 10px rgba(111, 198, 171, 0.18);
+      }
+      to {
+        opacity: 1;
+        box-shadow:
+          0 0 0 12px rgba(111, 198, 171, 0.10),
+          0 0 28px rgba(111, 198, 171, 0.44);
+      }
     }
 
     .center-core {
@@ -340,13 +367,30 @@
     .core-inner {
       position: relative;
       z-index: 2;
+      width: 100%;
+      height: 100%;
+      padding: 20px;
+    }
+
+    .core-screen {
+      position: absolute;
+      inset: 0;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       gap: 10px;
       align-items: center;
       justify-content: center;
-      padding: 20px;
-      width: 100%;
+      opacity: 0;
+      transform: scale(0.96);
+      transition: opacity 0.45s ease, transform 0.45s ease;
+      pointer-events: none;
+    }
+
+    .core-screen.is-active {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
     }
 
     .core-kicker {
@@ -387,6 +431,10 @@
       color: var(--text);
       word-break: break-word;
       max-width: 85%;
+      min-height: 2.4em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .winner-prize {
@@ -395,6 +443,76 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
       font-weight: 700;
+    }
+
+    .drawing-text {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .drawing-dots span {
+      opacity: 0.2;
+      animation: dotBlink 1s infinite;
+    }
+
+    .drawing-dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .drawing-dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes dotBlink {
+      0%, 20% { opacity: 0.15; }
+      50% { opacity: 1; }
+      100% { opacity: 0.15; }
+    }
+
+    .scan-beam {
+      position: absolute;
+      left: -20%;
+      top: 50%;
+      width: 140%;
+      height: 2px;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(111, 198, 171, 0.0) 20%,
+        rgba(111, 198, 171, 0.95) 50%,
+        rgba(111, 198, 171, 0.0) 80%,
+        transparent 100%
+      );
+      box-shadow: 0 0 18px rgba(111, 198, 171, 0.6);
+      opacity: 0;
+      transform: translateY(-50%) rotate(-12deg);
+      pointer-events: none;
+    }
+
+    .center-core.mode-drawing .scan-beam {
+      animation: sweepBeam 1.6s linear infinite;
+    }
+
+    @keyframes sweepBeam {
+      0% {
+        opacity: 0;
+        transform: translate(-30%, -80px) rotate(-12deg);
+      }
+      12% {
+        opacity: 0.95;
+      }
+      50% {
+        opacity: 1;
+        transform: translate(0%, 0px) rotate(-12deg);
+      }
+      88% {
+        opacity: 0.9;
+      }
+      100% {
+        opacity: 0;
+        transform: translate(30%, 80px) rotate(-12deg);
+      }
     }
 
     .count-pill {
@@ -597,6 +715,12 @@
       border: 1px solid rgba(255,255,255,0.08);
     }
 
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+      transform: none;
+    }
+
     .modal-message {
       min-height: 24px;
       margin-top: 12px;
@@ -661,11 +785,32 @@
       <div class="orbit-layer reverse" id="orbitInner"></div>
 
       <div class="center-core" id="core" aria-label="event core" role="button" tabindex="0">
+        <div class="scan-beam"></div>
+
         <div class="core-inner" id="coreInner">
-          <div class="core-kicker">Today Prize</div>
-          <div class="core-prize">₩5,000</div>
-          <div class="core-title">오늘 당첨 가능 금액</div>
-          <div class="core-time">오늘 추첨 시간 21:00</div>
+          <div class="core-screen is-active" id="screenEntry">
+            <div class="core-kicker">Today Prize</div>
+            <div class="core-prize" id="entryPrizeText">₩5,000</div>
+            <div class="core-title">오늘 당첨 가능 금액</div>
+            <div class="core-time">가운데 원을 클릭해 이메일 응모</div>
+          </div>
+
+          <div class="core-screen" id="screenDrawing">
+            <div class="core-kicker">System</div>
+            <div class="core-prize drawing-text">
+              DRAWING
+              <span class="drawing-dots"><span>.</span><span>.</span><span>.</span></span>
+            </div>
+            <div class="core-title">당첨자 선정 중</div>
+            <div class="core-time">응모가 마감되었습니다</div>
+          </div>
+
+          <div class="core-screen" id="screenWinner">
+            <div class="core-kicker">Winner</div>
+            <div class="winner-email" id="winnerEmail">-</div>
+            <div class="core-title">축하합니다</div>
+            <div class="winner-prize" id="winnerPrizeText">PRIZE ₩5,000</div>
+          </div>
         </div>
       </div>
 
@@ -714,7 +859,6 @@
   <script>
     const API_BASE = "https://mrdindoin.ddns.net/r";
 
-    const entryCountEl = document.getElementById("entryCount");
     const orbitOuter = document.getElementById("orbitOuter");
     const orbitInner = document.getElementById("orbitInner");
     const orbitInfo = document.getElementById("orbitInfo");
@@ -722,9 +866,15 @@
     const countLabel = document.getElementById("countLabel");
     const countValue = document.getElementById("countValue");
     const core = document.getElementById("core");
-    const coreInner = document.getElementById("coreInner");
     const system = document.getElementById("system");
     const drawText = document.getElementById("drawText");
+
+    const screenEntry = document.getElementById("screenEntry");
+    const screenDrawing = document.getElementById("screenDrawing");
+    const screenWinner = document.getElementById("screenWinner");
+    const entryPrizeText = document.getElementById("entryPrizeText");
+    const winnerEmailEl = document.getElementById("winnerEmail");
+    const winnerPrizeText = document.getElementById("winnerPrizeText");
 
     const entryModal = document.getElementById("entryModal");
     const emailInput = document.getElementById("emailInput");
@@ -736,10 +886,12 @@
     let entryCount = 0;
     let previousCount = 0;
     let currentMode = "entry";
+    let lastMode = null;
     let entryOpen = true;
     let currentPrize = 5000;
     let currentDrawTime = "21:00";
     let currentWinnerEmail = null;
+    let winnerTypingTimer = null;
 
     function formatWon(value) {
       return `₩${Number(value || 0).toLocaleString("ko-KR")}`;
@@ -763,9 +915,9 @@
       let orbitSpeed = Math.max(9, 22 - Math.floor(count / 9));
 
       if (mode === "drawing") {
-        ring1Speed = Math.max(6, ring1Speed - 8);
-        ring2Speed = Math.max(5, ring2Speed - 6);
-        orbitSpeed = Math.max(5, orbitSpeed - 7);
+        ring1Speed = 5.5;
+        ring2Speed = 4.2;
+        orbitSpeed = 4.8;
       }
 
       if (mode === "winner") {
@@ -798,11 +950,6 @@
         if (currentMode === "winner" && i % 4 === 0) scale += 0.10;
 
         dot.style.transform = `translate(-50%, -50%) scale(${scale})`;
-
-        if (currentMode === "drawing") {
-          dot.style.opacity = small ? "0.95" : "1";
-        }
-
         container.appendChild(dot);
       }
     }
@@ -835,11 +982,14 @@
       if (!force && newCount === previousCount) return;
 
       entryCount = Number(newCount) || 0;
-      entryCountEl.textContent = entryCount;
+      previousCount = entryCount;
+
+      if (currentMode === "entry") {
+        countValue.innerHTML = `<span id="entryCount">${entryCount}</span>명`;
+      }
+
       renderOrbit(entryCount);
       animateUpdate();
-
-      previousCount = entryCount;
     }
 
     function setCoreClickable(enabled) {
@@ -848,25 +998,50 @@
       core.tabIndex = enabled ? 0 : -1;
     }
 
+    function activateScreen(target) {
+      [screenEntry, screenDrawing, screenWinner].forEach((el) => el.classList.remove("is-active"));
+      target.classList.add("is-active");
+    }
+
+    function stopWinnerTyping() {
+      if (winnerTypingTimer) {
+        clearInterval(winnerTypingTimer);
+        winnerTypingTimer = null;
+      }
+    }
+
+    function typeWinnerEmail(email) {
+      stopWinnerTyping();
+      const text = String(email || "-");
+      let index = 0;
+      winnerEmailEl.textContent = "";
+
+      winnerTypingTimer = setInterval(() => {
+        index += 1;
+        winnerEmailEl.textContent = text.slice(0, index);
+        if (index >= text.length) {
+          clearInterval(winnerTypingTimer);
+          winnerTypingTimer = null;
+        }
+      }, 55);
+    }
+
     function renderEntryMode(data) {
       currentMode = "entry";
       entryOpen = true;
       currentWinnerEmail = null;
 
+      system.classList.remove("mode-drawing");
       core.classList.remove("mode-drawing", "mode-winner");
       setCoreClickable(true);
 
-      coreInner.innerHTML = `
-        <div class="core-kicker">Today Prize</div>
-        <div class="core-prize">${escapeHtml(formatWon(data.today_prize))}</div>
-        <div class="core-title">오늘 당첨 가능 금액</div>
-        <div class="core-time">가운데 원을 클릭해 이메일 응모</div>
-      `;
-
+      entryPrizeText.textContent = formatWon(data.today_prize);
       countLabel.textContent = "Current Entries";
       countValue.innerHTML = `<span id="entryCount">${Number(data.entry_count || 0)}</span>명`;
       drawText.textContent = `TODAY DRAW / ${data.draw_time || currentDrawTime}`;
-      entryCountElRefreshed();
+
+      stopWinnerTyping();
+      activateScreen(screenEntry);
     }
 
     function renderDrawingMode(data) {
@@ -874,20 +1049,17 @@
       entryOpen = false;
       currentWinnerEmail = null;
 
+      system.classList.add("mode-drawing");
       core.classList.remove("mode-winner");
       core.classList.add("mode-drawing");
       setCoreClickable(false);
 
-      coreInner.innerHTML = `
-        <div class="core-kicker">Drawing</div>
-        <div class="core-prize">...</div>
-        <div class="core-title">당첨자 선정 중</div>
-        <div class="core-time">응모가 마감되었습니다</div>
-      `;
-
       countLabel.textContent = "Status";
       countValue.textContent = "DRAWING...";
       drawText.textContent = `ENTRY CLOSED / ${data.draw_time || currentDrawTime}`;
+
+      stopWinnerTyping();
+      activateScreen(screenDrawing);
     }
 
     function renderWinnerMode(data) {
@@ -895,22 +1067,20 @@
       entryOpen = false;
       currentWinnerEmail = data.winner_email_masked || null;
 
+      system.classList.remove("mode-drawing");
       core.classList.remove("mode-drawing");
       core.classList.add("mode-winner");
       setCoreClickable(false);
 
-      coreInner.innerHTML = `
-        <div class="core-kicker">Winner</div>
-        <div class="winner-email">${escapeHtml(data.winner_email_masked || "-")}</div>
-        <div class="core-title">축하합니다</div>
-        <div class="winner-prize">PRIZE ${escapeHtml(formatWon(data.today_prize))}</div>
-      `;
-
+      winnerPrizeText.textContent = `PRIZE ${formatWon(data.today_prize)}`;
       countLabel.textContent = "Status";
       countValue.textContent = "DRAW COMPLETE";
       drawText.textContent = data.winner_display_until
         ? `WINNER DISPLAY / UNTIL ${String(data.winner_display_until).slice(11, 16)}`
         : "WINNER DISPLAY";
+
+      activateScreen(screenWinner);
+      typeWinnerEmail(data.winner_email_masked || "-");
     }
 
     function renderClosedFallback(data) {
@@ -918,19 +1088,36 @@
       entryOpen = false;
       currentWinnerEmail = null;
 
+      system.classList.remove("mode-drawing");
       core.classList.remove("mode-drawing", "mode-winner");
       setCoreClickable(false);
 
-      coreInner.innerHTML = `
-        <div class="core-kicker">Entry Closed</div>
-        <div class="core-prize">${escapeHtml(formatWon(data.today_prize))}</div>
-        <div class="core-title">응모가 마감되었습니다</div>
-        <div class="core-time">잠시 후 당첨자 발표</div>
-      `;
-
+      entryPrizeText.textContent = formatWon(data.today_prize);
       countLabel.textContent = "Status";
       countValue.textContent = "CLOSED";
       drawText.textContent = `TODAY DRAW / ${data.draw_time || currentDrawTime}`;
+
+      stopWinnerTyping();
+      activateScreen(screenEntry);
+    }
+
+    function animateModeChange(mode) {
+      core.classList.remove("core-pop");
+      countPill.classList.remove("flash");
+
+      void core.offsetWidth;
+      void countPill.offsetWidth;
+
+      core.classList.add("core-pop");
+      countPill.classList.add("flash");
+
+      if (mode === "drawing") {
+        renderOrbit(entryCount);
+      }
+
+      if (mode === "winner") {
+        core.classList.add("core-pop");
+      }
     }
 
     function applyStats(data) {
@@ -939,6 +1126,7 @@
 
       const nextCount = Number(data.entry_count || 0);
       const nextMode = data.mode || "entry";
+      const modeChanged = lastMode !== null && nextMode !== lastMode;
 
       if (nextMode === "entry") {
         renderEntryMode(data);
@@ -951,13 +1139,12 @@
       }
 
       updateCount(nextCount, true);
-    }
 
-    function entryCountElRefreshed() {
-      const refreshed = document.getElementById("entryCount");
-      if (refreshed) {
-        entryCountEl.textContent = refreshed.textContent;
+      if (modeChanged) {
+        animateModeChange(nextMode);
       }
+
+      lastMode = nextMode;
     }
 
     function openModal() {
@@ -1098,7 +1285,7 @@
 
     renderOrbit(entryCount);
     fetchStats();
-    setInterval(fetchStats, 3000);
+    setInterval(fetchStats, 2000);
   </script>
 </body>
 </html>
