@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STANCE LIVE EVENT / BROADCAST MODE</title>
+  <style>
+    :root {
+      --bg: #090e0d;
+      --bg-deep: #050807;
+      --grid: rgba(120, 170, 152, 0.06);
+      --text: #edf5f1;
+      --muted: rgba(237, 245, 241, 0.56);
+      --line: rgba(120, 170, 152, 0.10);
+      --line-strong: rgba(120, 170, 152, 0.18);
+      --point: #6fc6ab;
+      --point-dark: #2c5f52;
+      --point-soft: rgba(111, 198, 171, 0.12);
+      --panel: rgba(16, 24, 22, 0.86);
+      --panel-strong: rgba(12, 18, 17, 0.94);
+      --live: #d85b5b;
+      --shadow: 0 30px 80px rgba(0, 0, 0, 0.42);
+      --success: #79d7b8;
+      --warning: #e8d98b;
+      --danger: #ff7b7b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Pretendard", "Noto Sans KR", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+        radial-gradient(circle at 50% 45%, rgba(111, 198, 171, 0.07), transparent 34%),
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.015), transparent 55%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+      background-size: 28px 28px, 28px 28px, auto, auto, auto;
+    }
+
+    body {
+      position: relative;
+    }
+
+    body::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 50%, transparent 0 26%, rgba(255,255,255,0.02) 26.1% 26.3%, transparent 26.4%),
+        radial-gradient(circle at 50% 50%, transparent 0 34%, rgba(255,255,255,0.018) 34.1% 34.25%, transparent 34.35%),
+        radial-gradient(circle at 50% 50%, transparent 0 42%, rgba(255,255,255,0.014) 42.1% 42.2%, transparent 42.3%);
+      opacity: 0.7;
+    }
+
+    .noise {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.045;
+      background-image:
+        radial-gradient(circle at 20% 20%, #fff 0.45px, transparent 0.45px),
+        radial-gradient(circle at 70% 60%, #fff 0.45px, transparent 0.45px),
+        radial-gradient(circle at 40% 80%, #fff 0.45px, transparent 0.45px);
+      background-size: 160px 160px, 210px 210px, 180px 180px;
+      mix-blend-mode: soft-light;
+    }
+
+    .top-left,
+    .top-right,
+    .bottom-left,
+    .bottom-right {
+      position: absolute;
+      z-index: 10;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .top-left {
+      top: 26px;
+      left: 28px;
+    }
+
+    .top-right {
+      top: 26px;
+      right: 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .bottom-left {
+      left: 28px;
+      bottom: 24px;
+    }
+
+    .bottom-right {
+      right: 28px;
+      bottom: 24px;
+      text-align: right;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--live);
+      box-shadow:
+        0 0 0 0 rgba(216, 91, 91, 0.38),
+        0 0 12px rgba(216, 91, 91, 0.75);
+      animation: livePulse 1.5s infinite;
+    }
+
+    @keyframes livePulse {
+      0% { box-shadow: 0 0 0 0 rgba(216, 91, 91, 0.38), 0 0 12px rgba(216, 91, 91, 0.75); }
+      75% { box-shadow: 0 0 0 12px rgba(216, 91, 91, 0), 0 0 16px rgba(216, 91, 91, 0.2); }
+      100% { box-shadow: 0 0 0 0 rgba(216, 91, 91, 0), 0 0 12px rgba(216, 91, 91, 0.75); }
+    }
+
+    .stage {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .system {
+      position: relative;
+      width: min(70vw, 860px);
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      pointer-events: none;
+      box-shadow: inset 0 0 40px rgba(255,255,255,0.01);
+    }
+
+    .ring-1 {
+      width: 100%;
+      height: 100%;
+      animation: spinA var(--ring1-speed, 26s) linear infinite;
+    }
+
+    .ring-2 {
+      width: 86%;
+      height: 86%;
+      border-style: dashed;
+      opacity: 0.7;
+      animation: spinB var(--ring2-speed, 18s) linear infinite;
+    }
+
+    .ring-3 {
+      width: 72%;
+      height: 72%;
+      opacity: 0.48;
+      animation: breathe 4.2s ease-in-out infinite;
+    }
+
+    .ring-4 {
+      width: 58%;
+      height: 58%;
+      opacity: 0.24;
+      border-color: var(--line-strong);
+    }
+
+    @keyframes spinA {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes spinB {
+      from { transform: rotate(360deg); }
+      to { transform: rotate(0deg); }
+    }
+
+    @keyframes breathe {
+      0%, 100% { transform: scale(1); opacity: 0.42; }
+      50% { transform: scale(1.018); opacity: 0.65; }
+    }
+
+    .orbit-layer {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      animation: spinOrbit var(--orbit-speed, 22s) linear infinite;
+      pointer-events: none;
+    }
+
+    .orbit-layer.reverse {
+      animation-direction: reverse;
+    }
+
+    @keyframes spinOrbit {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .orbit-dot {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--point);
+      box-shadow:
+        0 0 0 8px rgba(111, 198, 171, 0.08),
+        0 0 18px rgba(111, 198, 171, 0.38);
+      transform: translate(-50%, -50%);
+      transition: transform 0.35s ease, opacity 0.35s ease;
+    }
+
+    .orbit-dot.small {
+      width: 7px;
+      height: 7px;
+      opacity: 0.78;
+      box-shadow:
+        0 0 0 6px rgba(111, 198, 171, 0.06),
+        0 0 14px rgba(111, 198, 171, 0.22);
+    }
+
+    .center-core {
+      position: relative;
+      width: min(36vw, 360px);
+      height: min(36vw, 360px);
+      min-width: 260px;
+      min-height: 260px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 32% 28%, rgba(255,255,255,0.08), transparent 20%),
+        radial-gradient(circle at 50% 50%, rgba(111, 198, 171, 0.06), transparent 60%),
+        linear-gradient(180deg, rgba(21, 31, 28, 0.98), rgba(10, 16, 15, 0.98));
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.05),
+        inset 0 -24px 40px rgba(0,0,0,0.22),
+        0 30px 90px rgba(0,0,0,0.46),
+        0 0 40px rgba(111, 198, 171, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      z-index: 4;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+      transition:
+        transform 0.35s ease,
+        box-shadow 0.35s ease,
+        border-color 0.35s ease,
+        opacity 0.35s ease;
+    }
+
+    .center-core::before {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.035);
+      pointer-events: none;
+    }
+
+    .center-core::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at center, rgba(111, 198, 171, 0.08), transparent 62%);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    .center-core.is-clickable {
+      cursor: pointer;
+    }
+
+    .center-core.is-clickable:hover {
+      transform: scale(1.02);
+      border-color: rgba(111, 198, 171, 0.18);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.05),
+        inset 0 -24px 40px rgba(0,0,0,0.22),
+        0 30px 90px rgba(0,0,0,0.46),
+        0 0 55px rgba(111, 198, 171, 0.12);
+    }
+
+    .center-core.mode-drawing {
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.05),
+        inset 0 -24px 40px rgba(0,0,0,0.22),
+        0 30px 90px rgba(0,0,0,0.46),
+        0 0 70px rgba(111, 198, 171, 0.18);
+      animation: drawingPulse 1.4s ease-in-out infinite;
+    }
+
+    .center-core.mode-winner {
+      border-color: rgba(121, 215, 184, 0.24);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.05),
+        inset 0 -24px 40px rgba(0,0,0,0.22),
+        0 30px 90px rgba(0,0,0,0.46),
+        0 0 90px rgba(121, 215, 184, 0.16);
+    }
+
+    @keyframes drawingPulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,0.05),
+          inset 0 -24px 40px rgba(0,0,0,0.22),
+          0 30px 90px rgba(0,0,0,0.46),
+          0 0 70px rgba(111, 198, 171, 0.10);
+      }
+      50% {
+        transform: scale(1.02);
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,0.05),
+          inset 0 -24px 40px rgba(0,0,0,0.22),
+          0 30px 90px rgba(0,0,0,0.46),
+          0 0 100px rgba(111, 198, 171, 0.22);
+      }
+    }
+
+    .core-inner {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      width: 100%;
+    }
+
+    .core-kicker {
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .core-prize {
+      font-size: clamp(52px, 7vw, 84px);
+      font-weight: 800;
+      line-height: 0.95;
+      letter-spacing: -0.06em;
+      color: var(--text);
+      text-shadow: 0 0 18px rgba(111, 198, 171, 0.06);
+    }
+
+    .core-title {
+      font-size: clamp(20px, 2.3vw, 28px);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+
+    .core-time {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .winner-email {
+      font-size: clamp(24px, 3vw, 38px);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.04em;
+      color: var(--text);
+      word-break: break-word;
+      max-width: 85%;
+    }
+
+    .winner-prize {
+      font-size: 16px;
+      color: var(--success);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .count-pill {
+      position: absolute;
+      left: 50%;
+      bottom: 8%;
+      transform: translateX(-50%);
+      z-index: 6;
+      min-width: 260px;
+      padding: 16px 22px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(16, 24, 22, 0.72);
+      backdrop-filter: blur(18px);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.04),
+        0 18px 40px rgba(0,0,0,0.30);
+      text-align: center;
+    }
+
+    .count-label {
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .count-value {
+      font-size: clamp(24px, 2.8vw, 34px);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      color: var(--text);
+    }
+
+    .count-value span {
+      display: inline-block;
+      min-width: 2ch;
+    }
+
+    .flash {
+      animation: flash 0.5s ease;
+    }
+
+    .core-pop {
+      animation: corePop 0.65s ease;
+    }
+
+    @keyframes flash {
+      0% { transform: translateX(-50%) scale(1); }
+      30% { transform: translateX(-50%) scale(1.06); }
+      100% { transform: translateX(-50%) scale(1); }
+    }
+
+    @keyframes corePop {
+      0% { transform: scale(1); }
+      30% { transform: scale(1.035); }
+      100% { transform: scale(1); }
+    }
+
+    .scanline {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(111, 198, 171, 0.025) 50%,
+        transparent 100%
+      );
+      background-size: 100% 4px;
+      opacity: 0.20;
+      mix-blend-mode: screen;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(3, 5, 5, 0.70);
+      backdrop-filter: blur(12px);
+    }
+
+    .modal.is-open {
+      display: flex;
+    }
+
+    .modal-panel {
+      width: min(100%, 460px);
+      border-radius: 28px;
+      background: rgba(12, 18, 17, 0.94);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 30px 90px rgba(0,0,0,0.45);
+      padding: 28px;
+    }
+
+    .modal-kicker {
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .modal-title {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      margin: 0 0 10px;
+    }
+
+    .modal-desc {
+      margin: 0 0 20px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--muted);
+    }
+
+    .modal-field {
+      margin-bottom: 14px;
+    }
+
+    .modal-label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .modal-input {
+      width: 100%;
+      height: 54px;
+      padding: 0 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      color: var(--text);
+      font-size: 16px;
+      outline: none;
+    }
+
+    .modal-input:focus {
+      border-color: rgba(111, 198, 171, 0.28);
+      box-shadow: 0 0 0 4px rgba(111, 198, 171, 0.08);
+    }
+
+    .modal-check {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin: 16px 0 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .modal-check input {
+      margin-top: 3px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .btn {
+      flex: 1;
+      height: 52px;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(180deg, rgba(111, 198, 171, 0.20), rgba(111, 198, 171, 0.14));
+      color: var(--text);
+      border: 1px solid rgba(111, 198, 171, 0.22);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .modal-message {
+      min-height: 24px;
+      margin-top: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .modal-message.success {
+      color: var(--success);
+    }
+
+    .modal-message.error {
+      color: var(--danger);
+    }
+
+    .modal-message.info {
+      color: var(--warning);
+    }
+
+    @media (max-width: 900px) {
+      .system {
+        width: min(88vw, 760px);
+      }
+
+      .center-core {
+        min-width: 230px;
+        min-height: 230px;
+      }
+
+      .modal-panel {
+        padding: 22px;
+      }
+
+      .modal-title {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="noise"></div>
+  <div class="scanline"></div>
+
+  <div class="top-left">STANCE / LIVE EVENT BOARD</div>
+
+  <div class="top-right">
+    <span class="live-dot"></span>
+    <span>LIVE BROADCAST MODE</span>
+  </div>
+
+  <div class="bottom-left" id="drawText">TODAY DRAW / 21:00</div>
+  <div class="bottom-right" id="orbitInfo">ACTIVE ORBIT / 0 NODES</div>
+
+  <div class="stage">
+    <div class="system" id="system">
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
+      <div class="ring ring-3"></div>
+      <div class="ring ring-4"></div>
+
+      <div class="orbit-layer" id="orbitOuter"></div>
+      <div class="orbit-layer reverse" id="orbitInner"></div>
+
+      <div class="center-core" id="core" aria-label="event core" role="button" tabindex="0">
+        <div class="core-inner" id="coreInner">
+          <div class="core-kicker">Today Prize</div>
+          <div class="core-prize">₩5,000</div>
+          <div class="core-title">오늘 당첨 가능 금액</div>
+          <div class="core-time">오늘 추첨 시간 21:00</div>
+        </div>
+      </div>
+
+      <div class="count-pill" id="countPill">
+        <div class="count-label" id="countLabel">Current Entries</div>
+        <div class="count-value" id="countValue"><span id="entryCount">0</span>명</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="entryModal" aria-hidden="true">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-kicker">Email Entry</div>
+      <h2 class="modal-title" id="modalTitle">이메일 응모</h2>
+      <p class="modal-desc">
+        당첨 시 상품 발송을 위해 이메일이 필요합니다.<br />
+        하루 1회 응모 가능하며, 당첨자는 매일 21:00 발표됩니다.
+      </p>
+
+      <div class="modal-field">
+        <label class="modal-label" for="emailInput">Email Address</label>
+        <input
+          class="modal-input"
+          id="emailInput"
+          type="email"
+          inputmode="email"
+          autocomplete="email"
+          placeholder="example@email.com"
+        />
+      </div>
+
+      <label class="modal-check">
+        <input type="checkbox" id="agreeCheck" />
+        <span>이벤트 응모 및 당첨 안내를 위한 이메일 수집에 동의합니다.</span>
+      </label>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="closeModalBtn" type="button">닫기</button>
+        <button class="btn btn-primary" id="submitEntryBtn" type="button">응모하기</button>
+      </div>
+
+      <div class="modal-message" id="modalMessage"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "https://mrdindoin.ddns.net/r";
+
+    const entryCountEl = document.getElementById("entryCount");
+    const orbitOuter = document.getElementById("orbitOuter");
+    const orbitInner = document.getElementById("orbitInner");
+    const orbitInfo = document.getElementById("orbitInfo");
+    const countPill = document.getElementById("countPill");
+    const countLabel = document.getElementById("countLabel");
+    const countValue = document.getElementById("countValue");
+    const core = document.getElementById("core");
+    const coreInner = document.getElementById("coreInner");
+    const system = document.getElementById("system");
+    const drawText = document.getElementById("drawText");
+
+    const entryModal = document.getElementById("entryModal");
+    const emailInput = document.getElementById("emailInput");
+    const agreeCheck = document.getElementById("agreeCheck");
+    const submitEntryBtn = document.getElementById("submitEntryBtn");
+    const closeModalBtn = document.getElementById("closeModalBtn");
+    const modalMessage = document.getElementById("modalMessage");
+
+    let entryCount = 0;
+    let previousCount = 0;
+    let currentMode = "entry";
+    let entryOpen = true;
+    let currentPrize = 5000;
+    let currentDrawTime = "21:00";
+    let currentWinnerEmail = null;
+
+    function formatWon(value) {
+      return `₩${Number(value || 0).toLocaleString("ko-KR")}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function getOrbitConfig(count, mode = currentMode) {
+      const outerDots = Math.min(24, Math.max(4, Math.floor(count / 3) + 4));
+      const innerDots = Math.min(18, Math.max(2, Math.floor(count / 6) + 2));
+
+      let ring1Speed = Math.max(10, 26 - Math.floor(count / 8));
+      let ring2Speed = Math.max(8, 18 - Math.floor(count / 10));
+      let orbitSpeed = Math.max(9, 22 - Math.floor(count / 9));
+
+      if (mode === "drawing") {
+        ring1Speed = Math.max(6, ring1Speed - 8);
+        ring2Speed = Math.max(5, ring2Speed - 6);
+        orbitSpeed = Math.max(5, orbitSpeed - 7);
+      }
+
+      if (mode === "winner") {
+        ring1Speed = Math.max(8, ring1Speed - 3);
+        ring2Speed = Math.max(7, ring2Speed - 2);
+        orbitSpeed = Math.max(7, orbitSpeed - 2);
+      }
+
+      return { outerDots, innerDots, ring1Speed, ring2Speed, orbitSpeed };
+    }
+
+    function createDots(container, count, radiusPercent, small = false) {
+      container.innerHTML = "";
+      const size = container.clientWidth || container.parentElement.clientWidth;
+      const center = size / 2;
+      const radius = (size * radiusPercent) / 100;
+
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count;
+        const x = center + radius * Math.cos(angle);
+        const y = center + radius * Math.sin(angle);
+
+        const dot = document.createElement("span");
+        dot.className = small ? "orbit-dot small" : "orbit-dot";
+        dot.style.left = `${x}px`;
+        dot.style.top = `${y}px`;
+
+        let scale = 0.88 + ((i % 5) * 0.06);
+        if (currentMode === "drawing") scale += 0.16;
+        if (currentMode === "winner" && i % 4 === 0) scale += 0.10;
+
+        dot.style.transform = `translate(-50%, -50%) scale(${scale})`;
+
+        if (currentMode === "drawing") {
+          dot.style.opacity = small ? "0.95" : "1";
+        }
+
+        container.appendChild(dot);
+      }
+    }
+
+    function renderOrbit(count) {
+      const { outerDots, innerDots, ring1Speed, ring2Speed, orbitSpeed } = getOrbitConfig(count, currentMode);
+
+      system.style.setProperty("--ring1-speed", `${ring1Speed}s`);
+      system.style.setProperty("--ring2-speed", `${ring2Speed}s`);
+      system.style.setProperty("--orbit-speed", `${orbitSpeed}s`);
+
+      createDots(orbitOuter, outerDots, 47, false);
+      createDots(orbitInner, innerDots, 35, true);
+
+      orbitInfo.textContent = `ACTIVE ORBIT / ${outerDots + innerDots} NODES`;
+    }
+
+    function animateUpdate() {
+      countPill.classList.remove("flash");
+      core.classList.remove("core-pop");
+
+      void countPill.offsetWidth;
+      void core.offsetWidth;
+
+      countPill.classList.add("flash");
+      core.classList.add("core-pop");
+    }
+
+    function updateCount(newCount, force = false) {
+      if (!force && newCount === previousCount) return;
+
+      entryCount = Number(newCount) || 0;
+      entryCountEl.textContent = entryCount;
+      renderOrbit(entryCount);
+      animateUpdate();
+
+      previousCount = entryCount;
+    }
+
+    function setCoreClickable(enabled) {
+      core.classList.toggle("is-clickable", enabled);
+      core.setAttribute("aria-disabled", enabled ? "false" : "true");
+      core.tabIndex = enabled ? 0 : -1;
+    }
+
+    function renderEntryMode(data) {
+      currentMode = "entry";
+      entryOpen = true;
+      currentWinnerEmail = null;
+
+      core.classList.remove("mode-drawing", "mode-winner");
+      setCoreClickable(true);
+
+      coreInner.innerHTML = `
+        <div class="core-kicker">Today Prize</div>
+        <div class="core-prize">${escapeHtml(formatWon(data.today_prize))}</div>
+        <div class="core-title">오늘 당첨 가능 금액</div>
+        <div class="core-time">가운데 원을 클릭해 이메일 응모</div>
+      `;
+
+      countLabel.textContent = "Current Entries";
+      countValue.innerHTML = `<span id="entryCount">${Number(data.entry_count || 0)}</span>명`;
+      drawText.textContent = `TODAY DRAW / ${data.draw_time || currentDrawTime}`;
+      entryCountElRefreshed();
+    }
+
+    function renderDrawingMode(data) {
+      currentMode = "drawing";
+      entryOpen = false;
+      currentWinnerEmail = null;
+
+      core.classList.remove("mode-winner");
+      core.classList.add("mode-drawing");
+      setCoreClickable(false);
+
+      coreInner.innerHTML = `
+        <div class="core-kicker">Drawing</div>
+        <div class="core-prize">...</div>
+        <div class="core-title">당첨자 선정 중</div>
+        <div class="core-time">응모가 마감되었습니다</div>
+      `;
+
+      countLabel.textContent = "Status";
+      countValue.textContent = "DRAWING...";
+      drawText.textContent = `ENTRY CLOSED / ${data.draw_time || currentDrawTime}`;
+    }
+
+    function renderWinnerMode(data) {
+      currentMode = "winner";
+      entryOpen = false;
+      currentWinnerEmail = data.winner_email_masked || null;
+
+      core.classList.remove("mode-drawing");
+      core.classList.add("mode-winner");
+      setCoreClickable(false);
+
+      coreInner.innerHTML = `
+        <div class="core-kicker">Winner</div>
+        <div class="winner-email">${escapeHtml(data.winner_email_masked || "-")}</div>
+        <div class="core-title">축하합니다</div>
+        <div class="winner-prize">PRIZE ${escapeHtml(formatWon(data.today_prize))}</div>
+      `;
+
+      countLabel.textContent = "Status";
+      countValue.textContent = "DRAW COMPLETE";
+      drawText.textContent = data.winner_display_until
+        ? `WINNER DISPLAY / UNTIL ${String(data.winner_display_until).slice(11, 16)}`
+        : "WINNER DISPLAY";
+    }
+
+    function renderClosedFallback(data) {
+      currentMode = "closed";
+      entryOpen = false;
+      currentWinnerEmail = null;
+
+      core.classList.remove("mode-drawing", "mode-winner");
+      setCoreClickable(false);
+
+      coreInner.innerHTML = `
+        <div class="core-kicker">Entry Closed</div>
+        <div class="core-prize">${escapeHtml(formatWon(data.today_prize))}</div>
+        <div class="core-title">응모가 마감되었습니다</div>
+        <div class="core-time">잠시 후 당첨자 발표</div>
+      `;
+
+      countLabel.textContent = "Status";
+      countValue.textContent = "CLOSED";
+      drawText.textContent = `TODAY DRAW / ${data.draw_time || currentDrawTime}`;
+    }
+
+    function applyStats(data) {
+      currentPrize = data.today_prize ?? currentPrize;
+      currentDrawTime = data.draw_time ?? currentDrawTime;
+
+      const nextCount = Number(data.entry_count || 0);
+      const nextMode = data.mode || "entry";
+
+      if (nextMode === "entry") {
+        renderEntryMode(data);
+      } else if (nextMode === "drawing") {
+        renderDrawingMode(data);
+      } else if (nextMode === "winner") {
+        renderWinnerMode(data);
+      } else {
+        renderClosedFallback(data);
+      }
+
+      updateCount(nextCount, true);
+    }
+
+    function entryCountElRefreshed() {
+      const refreshed = document.getElementById("entryCount");
+      if (refreshed) {
+        entryCountEl.textContent = refreshed.textContent;
+      }
+    }
+
+    function openModal() {
+      if (!entryOpen || currentMode !== "entry") return;
+      entryModal.classList.add("is-open");
+      entryModal.setAttribute("aria-hidden", "false");
+      modalMessage.textContent = "";
+      modalMessage.className = "modal-message";
+      emailInput.focus();
+    }
+
+    function closeModal() {
+      entryModal.classList.remove("is-open");
+      entryModal.setAttribute("aria-hidden", "true");
+      modalMessage.textContent = "";
+      modalMessage.className = "modal-message";
+    }
+
+    function setModalMessage(text, type = "info") {
+      modalMessage.textContent = text;
+      modalMessage.className = `modal-message ${type}`;
+    }
+
+    function isValidEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim().toLowerCase());
+    }
+
+    async function submitEntry() {
+      const email = emailInput.value.trim().toLowerCase();
+      const agreed = agreeCheck.checked;
+
+      if (!entryOpen || currentMode !== "entry") {
+        setModalMessage("현재는 응모 가능 시간이 아닙니다.", "error");
+        return;
+      }
+
+      if (!email) {
+        setModalMessage("이메일을 입력해주세요.", "error");
+        return;
+      }
+
+      if (!isValidEmail(email)) {
+        setModalMessage("올바른 이메일 형식이 아닙니다.", "error");
+        return;
+      }
+
+      if (!agreed) {
+        setModalMessage("이벤트 안내를 위한 동의가 필요합니다.", "error");
+        return;
+      }
+
+      submitEntryBtn.disabled = true;
+      setModalMessage("응모를 등록하는 중입니다...", "info");
+
+      try {
+        const res = await fetch(`${API_BASE}/api/entry`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ email })
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok && data.ok) {
+          setModalMessage(data.message || "응모가 완료되었습니다.", "success");
+
+          if (typeof data.entry_count === "number") {
+            updateCount(data.entry_count, true);
+          }
+
+          setTimeout(() => {
+            closeModal();
+            emailInput.value = "";
+            agreeCheck.checked = false;
+          }, 900);
+
+          fetchStats();
+          return;
+        }
+
+        setModalMessage(
+          data.message || "응모 처리 중 문제가 발생했습니다.",
+          res.status === 409 ? "info" : "error"
+        );
+      } catch (err) {
+        setModalMessage("네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.", "error");
+      } finally {
+        submitEntryBtn.disabled = false;
+      }
+    }
+
+    async function fetchStats() {
+      try {
+        const res = await fetch(`${API_BASE}/api/stats`, { cache: "no-store" });
+        if (!res.ok) return;
+
+        const data = await res.json();
+        applyStats(data);
+      } catch (err) {
+      }
+    }
+
+    core.addEventListener("click", () => {
+      if (currentMode === "entry" && entryOpen) {
+        openModal();
+      }
+    });
+
+    core.addEventListener("keydown", (e) => {
+      if ((e.key === "Enter" || e.key === " ") && currentMode === "entry" && entryOpen) {
+        e.preventDefault();
+        openModal();
+      }
+    });
+
+    closeModalBtn.addEventListener("click", closeModal);
+    submitEntryBtn.addEventListener("click", submitEntry);
+
+    entryModal.addEventListener("click", (e) => {
+      if (e.target === entryModal) {
+        closeModal();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && entryModal.classList.contains("is-open")) {
+        closeModal();
+      }
+    });
+
+    emailInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        submitEntry();
+      }
+    });
+
+    renderOrbit(entryCount);
+    fetchStats();
+    setInterval(fetchStats, 3000);
+  </script>
+</body>
+</html>
