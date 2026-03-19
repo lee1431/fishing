@@ -424,17 +424,70 @@
     }
 
     .winner-email {
-      font-size: clamp(24px, 3vw, 38px);
-      font-weight: 800;
-      line-height: 1.1;
-      letter-spacing: -0.04em;
-      color: var(--text);
-      word-break: break-word;
-      max-width: 85%;
-      min-height: 2.4em;
+      max-width: 88%;
+      min-height: 2.8em;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      text-align: center;
+      line-height: 1;
+      opacity: 0;
+      transform: scale(0.92);
+    }
+    
+    .winner-email.show-winner {
+      animation:
+        winnerBounce 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+        winnerGlow 1.8s ease-in-out 0.7s infinite;
+    }
+    
+    .email-name {
+      font-size: clamp(28px, 3.2vw, 42px);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    
+    .email-domain {
+      margin-top: 6px;
+      font-size: clamp(20px, 2.2vw, 30px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: rgba(237, 245, 241, 0.82);
+      white-space: nowrap;
+    }
+    
+    @keyframes winnerBounce {
+      0% {
+        opacity: 0;
+        transform: scale(0.78) translateY(14px);
+        filter: blur(4px);
+      }
+      58% {
+        opacity: 1;
+        transform: scale(1.08) translateY(-3px);
+        filter: blur(0);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+        filter: blur(0);
+      }
+    }
+    
+    @keyframes winnerGlow {
+      0%, 100% {
+        text-shadow:
+          0 0 0 rgba(111, 198, 171, 0),
+          0 0 0 rgba(111, 198, 171, 0);
+      }
+      50% {
+        text-shadow:
+          0 0 16px rgba(111, 198, 171, 0.20),
+          0 0 30px rgba(111, 198, 171, 0.08);
+      }
     }
 
     .winner-prize {
@@ -759,23 +812,12 @@
       }
     }
 
-    .winner-email.is-stepping {
-      animation: winnerStepPop 0.28s ease;
-    }
     
-    @keyframes winnerStepPop {
-      0% {
-        transform: scale(0.96);
-        opacity: 0.55;
-        filter: blur(2px);
-      }
-      100% {
-        transform: scale(1);
-        opacity: 1;
-        filter: blur(0);
-      }
-    }
   </style>
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9382191250873184"
+     crossorigin="anonymous"></script>
+  
 </head>
 <body>
   <div class="noise"></div>
@@ -1027,70 +1069,42 @@
       }
     }
 
-    function parseMaskedEmail(maskedEmail) {
-      const safe = String(maskedEmail || "-");
+
+    function splitMaskedEmail(maskedEmail) {
+      const safe = String(maskedEmail || "-").trim();
     
       if (!safe.includes("@")) {
         return {
-          visibleHead: safe,
-          maskedPart: "",
+          name: safe,
           domain: ""
         };
       }
     
-      const [local, domain] = safe.split("@", 2);
-    
-      const visibleHeadMatch = local.match(/^[^*]+/);
-      const maskedPartMatch = local.match(/\*+/);
-    
-      const visibleHead = visibleHeadMatch ? visibleHeadMatch[0] : "";
-      const maskedPart = maskedPartMatch ? maskedPartMatch[0] : "";
+      const [name, domain] = safe.split("@", 2);
     
       return {
-        visibleHead,
-        maskedPart,
-        domain
+        name: name || "-",
+        domain: domain ? `@${domain}` : ""
       };
     }
     
-    function typeWinnerEmail(maskedEmail) {
+    function renderWinnerEmail(maskedEmail) {
       stopWinnerTyping();
     
-      const { visibleHead, maskedPart, domain } = parseMaskedEmail(maskedEmail);
+      const { name, domain } = splitMaskedEmail(maskedEmail);
     
-      const steps = [];
+      winnerEmailEl.classList.remove("show-winner");
+      void winnerEmailEl.offsetWidth;
     
-      if (domain) {
-        steps.push(domain);
-        steps.push(`@${domain}`);
-      }    
-      if (maskedPart) {
-        steps.push(`${maskedPart}@${domain}`);
-      }    
-      if (visibleHead) {
-        steps.push(`${visibleHead}${maskedPart}@${domain}`);
-      }    
-      if (steps.length === 0) {
-        steps.push(String(maskedEmail || "-"));
-      }    
-      let index = 0;
-      winnerEmailEl.textContent = "";
+      winnerEmailEl.innerHTML = `
+        <div class="email-name">${escapeHtml(name)}</div>
+        <div class="email-domain">${escapeHtml(domain)}</div>
+      `;
     
-      winnerTypingTimer = setInterval(() => {
-        winnerEmailEl.classList.remove("is-stepping");
-        void winnerEmailEl.offsetWidth;
-    
-        winnerEmailEl.textContent = steps[index];
-        winnerEmailEl.classList.add("is-stepping");
-    
-        index += 1;
-    
-        if (index >= steps.length) {
-          clearInterval(winnerTypingTimer);
-          winnerTypingTimer = null;
-        }
-      }, 420);
+      winnerEmailEl.classList.add("show-winner");
     }
+
+    
 
     function renderEntryMode(data) {
       currentMode = "entry";
@@ -1146,7 +1160,7 @@
         : "WINNER DISPLAY";
 
       activateScreen(screenWinner);
-      typeWinnerEmail(data.winner_email_masked || "-");
+      renderWinnerEmail(data.winner_email_masked || "-");
     }
 
     function renderClosedFallback(data) {
