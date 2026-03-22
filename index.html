@@ -295,18 +295,17 @@ function bindProjectLogging() {
 
       const url = `https://mrdindoin.ddns.net/logcnt/log?project=${encodeURIComponent(name)}`;
 
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon(url);
-      } else {
-        fetch(url, {
-          method: "GET",
-          keepalive: true
-        }).catch(() => {});
-      }
+      fetch(url, {
+        method: "GET",
+        keepalive: true
+      }).catch(err => {
+        console.error("project log error:", err);
+      });
     });
   });
 }
 
+	
 document.addEventListener("DOMContentLoaded", () => {
   fetch("https://mrdindoin.ddns.net/logcnt/log?project=index").catch(() => {});
 
