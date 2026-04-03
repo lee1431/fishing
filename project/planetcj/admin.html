@@ -1,0 +1,55 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>플래닛충주 관리자</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <h1>플래닛충주 웹앱 푸시??</h1>
+  <h4>https://mrdindoin.ddns.net/planetcj/   접속 후 아이폰은 홈 화면에 추가 시 웹앱으로 추가 안드로이드는 크롬으로 홈화면에 추가</h4>
+  <h4>홈 화면에 추가된 것을 클릭 후  들어간 홈페이지에서 긴급 알림 등록 버튼 클릭 후 알림 허용 승락</h4>
+  <h4>https://mrdindoin.ddns.net/planetcj/admin  에서 등록 토큰 확인 후 전 체 발 송</h4>
+  <div style="max-width: 520px;">
+    <label>제목</label><br>
+    <input id="title" value="플래닛충주 긴급 알림" style="width:100%;"><br><br>
+
+    <label>내용</label><br>
+    <textarea id="body" style="width:100%; height:120px;">충주 지역 긴급 상황 발생</textarea><br><br>
+
+    <label>클릭 시 이동 URL</label><br>
+    <input id="url" value="https://llsshh.com" style="width:100%;"><br><br>
+
+    <button id="sendBtn">전체 발송</button>
+    <button id="tokenBtn">등록 토큰 확인</button>
+  </div>
+
+  <pre id="result" style="margin-top:20px;"></pre>
+
+  <script>
+    const result = document.getElementById("result");
+
+    document.getElementById("sendBtn").addEventListener("click", async () => {
+      const title = document.getElementById("title").value;
+      const body = document.getElementById("body").value;
+      const url = document.getElementById("url").value;
+
+      const res = await fetch("https://mrdindoin.ddns.net/planetcj/api/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, body, url })
+      });
+
+      const data = await res.json();
+      result.textContent = JSON.stringify(data, null, 2);
+    });
+
+    document.getElementById("tokenBtn").addEventListener("click", async () => {
+      const res = await fetch("https://mrdindoin.ddns.net/planetcj/api/tokens");
+      const data = await res.json();
+      result.textContent = JSON.stringify(data, null, 2);
+    });
+  </script>
+</body>
+</html>
